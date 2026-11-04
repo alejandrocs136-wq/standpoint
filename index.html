@@ -215,7 +215,7 @@
   <div class="seam" aria-hidden="true"></div>
   <main id="view"></main>
   <footer>
-    <div>Level ranges: <a href="https://getrecruited.cc/baseball-recruiting-standards">GetRecruited baseball standards</a> (updated June 4, 2026); JUCO from <a href="https://ncsasports.org/baseball/recruiting-guidelines">NCSA</a>, which gives no JUCO exit velo or catcher arm. Ranges are first-screen filters, not cutoffs. "Close" = within 3 mph, 0.15 sec on the 60, or 0.05 sec on pop time.</div>
+    <div>Level ranges: <a href="https://getrecruited.cc/baseball-recruiting-standards">GetRecruited baseball standards</a> (updated June 4, 2026); JUCO from <a href="https://ncsasports.org/baseball/recruiting-guidelines">NCSA</a>, which gives no JUCO exit velo or catcher arm. Ranges are typical numbers and first-screen filters, not cutoffs. StandPoint doesn't guarantee offers, roster spots or scholarships. "Close" = within 3 mph, 0.15 sec on the 60, or 0.05 sec on pop time.</div>
     <div>Prototype: player info is saved in this browser on this device only.</div>
   </footer>
 </div>
@@ -795,6 +795,7 @@
     var stale = since > 42 ? '<div class="warn">Last tested ' + since + " days ago. Re-test every 4–6 weeks.</div>" : "";
     var hero = '<section class="card hero">' + head + headline +
       '<div class="small muted">Latest numbers: ' + fmtDate(last.date) + (last.where ? " · " + esc(last.where) : "") + " " + verifPill(last) + "</div>" + stale +
+      (sportOf(p) === "softball" ? "" : '<div class="small muted">Level ranges are typical numbers for players at each level, not fixed cutoffs. Being in a range doesn\'t guarantee an offer or a roster spot, and missing one doesn\'t rule you out. Coaches also weigh film, grades, position and fit.</div>') +
       '<div class="btns"><button type="button" class="btn primary" id="h-add">Add new numbers</button></div></section>';
 
     var cards = (sportOf(p) === "softball" ? [] : ev.evals).map(function (e) {
@@ -2512,7 +2513,9 @@
       '<div class="btns"><button type="button" class="btn primary" id="pl-save">Save links</button></div><div id="pl-err" class="warn" style="display:none"></div>' +
       '<span class="hint">Prototype: links save on this device only. In the full app they live on the server, and Stripe tells the app when someone pays, renews or cancels.</span></div></details></section>';
     $("#view").innerHTML = moreBack() + '<section class="card"><div><div class="eyebrow">Plans and payments</div><h2>Two ways to buy, plus one add-on</h2></div>' +
-      '<p class="small" style="margin:0">Players on a club\'s license are covered by the club. Everyone else uses the individual plan. Prices come from the cost model.</p></section>' + cards + setup;
+      '<p class="small" style="margin:0">Players on a club\'s license are covered by the club. Everyone else uses the individual plan. Prices come from the cost model.</p></section>' +
+      '<section class="card"><h3>What you\'re paying for</h3><p class="small" style="margin:0">StandPoint gives you the tools: level ranges, school lists, steps for reaching out to coaches, and training plans. It doesn\'t guarantee an offer, a roster spot or a scholarship. The player still does the work, and coaches decide.</p>' +
+      '<p class="small" style="margin:0">Level ranges are typical numbers for players at each level, not fixed cutoffs. Being in a range doesn\'t guarantee an offer or a roster spot, and missing one doesn\'t rule you out. Coaches also weigh film, grades, position and fit.</p></section>' + cards + setup;
     bindMore();
     onAll("[data-testplan]", "click", function (b) {
       var k = b.getAttribute("data-testplan");
