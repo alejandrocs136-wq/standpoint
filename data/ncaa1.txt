@@ -1,0 +1,179 @@
+AL|University of Alabama|I|Southeastern Conference|rolltide.com
+AL|Alabama A&M University|I|Southwestern Athletic Conf.|aamusports.com
+AL|University of Alabama in Huntsville|II|Gulf South Conference|uahchargers.com
+AL|Alabama State University|I|Southwestern Athletic Conf.|bamastatesports.com
+AL|University of Alabama at Birmingham|I|American Conference|uabsports.com
+AL|Auburn University|I|Southeastern Conference|auburntigers.com
+AL|Auburn University at Montgomery|II|Gulf South Conference|aumathletics.com
+AL|Huntingdon College|III|Collegiate Conference of the South|huntingdonhawks.com
+AL|Jacksonville State University|I|Conference USA|jaxstatesports.com
+AL|Miles College|II|Southern Intercol. Ath. Conf.|milesgoldenbears.com
+AL|University of Montevallo|II|Gulf South Conference|montevallofalcons.com
+AL|University of North Alabama|I|United Athletic Conference|roarlions.com
+AL|Samford University|I|Southern Conference|samfordsports.com
+AL|University of South Alabama|I|Sun Belt Conference|usajaguars.com
+AL|Spring Hill College|II|Southern Intercol. Ath. Conf.|shcbadgers.com
+AL|Troy University|I|Sun Belt Conference|troytrojans.com
+AL|Tuskegee University|II|Southern Intercol. Ath. Conf.|goldentigersports.com
+AL|University of West Alabama|II|Gulf South Conference|uwaathletics.com
+AZ|University of Arizona|I|Big 12 Conference|arizonawildcats.com
+AZ|Arizona State University|I|Big 12 Conference|sundevils.com
+AZ|Grand Canyon University|I|Mountain West Conference|gculopes.com
+AR|Arkansas State University|I|Sun Belt Conference|astateredwolves.com
+AR|Arkansas Tech University|II|Great American Conference|arkansastechsports.com
+AR|University of Arkansas, Fayetteville|I|Southeastern Conference|arkansasrazorbacks.com
+AR|University of Arkansas, Fort Smith|II|Mid-America Intercollegiate Athletics Association|uafortsmithlions.com
+AR|University of Arkansas at Little Rock|I|United Athletic Conference|lrtrojans.com
+AR|University of Arkansas, Monticello|II|Great American Conference|uamsports.com
+AR|University of Arkansas, Pine Bluff|I|Southwestern Athletic Conf.|uapblionsroar.com
+AR|University of Central Arkansas|I|United Athletic Conference|ucasports.com
+AR|Harding University|II|Great American Conference|hardingsports.com
+AR|Henderson State University|II|Great American Conference|hsusports.com
+AR|Hendrix College|III|Southern Collegiate Athletic Conference|hendrixwarriors.com
+AR|Lyon College|III|St. Louis Intercollegiate Athletic Conference|lyonscots.com
+AR|Ouachita Baptist University|II|Great American Conference|obutigers.com
+AR|University of the Ozarks (Arkansas)|III|Southern Collegiate Athletic Conference|uofoathletics.com
+AR|Southern Arkansas University|II|Great American Conference|muleriderathletics.com
+CA|Azusa Pacific University|III|Southern California Intercollegiate Athletic Conf.|athletics.apu.edu
+CA|Biola University|II|Pacific West Conference|athletics.biola.edu
+CA|California State Polytechnic University, Pomona|II|California Collegiate Athletic Association|broncoathletics.com
+CA|California Baptist University|I|Big West Conference|cbulancers.com
+CA|California Lutheran University|III|Southern California Intercollegiate Athletic Conf.|clusports.com
+CA|California Polytechnic State University|I|Big West Conference|gopoly.com
+CA|California State University, Monterey Bay|II|California Collegiate Athletic Association|otterathletics.com
+CA|California State University, Bakersfield|I|Big West Conference|gorunners.com
+CA|California State University, Chico|II|California Collegiate Athletic Association|chicowildcats.com
+CA|California State University, Dominguez Hills|II|California Collegiate Athletic Association|gotoros.com
+CA|California State University, East Bay|II|California Collegiate Athletic Association|eastbaypioneers.com
+CA|California State University, Fresno|I|Pac-12 Conference|gobulldogs.com
+CA|California State University, Fullerton|I|Big West Conference|fullertontitans.com
+CA|California State University, Northridge|I|Big West Conference|gomatadors.com
+CA|California State University, Sacramento|I|Big West Conference|hornetsports.com
+CA|California State University, San Bernardino|II|California Collegiate Athletic Association|csusbathletics.com
+CA|California State University, Stanislaus|II|California Collegiate Athletic Association|warriorathletics.com
+CA|California State University, Los Angeles|II|California Collegiate Athletic Association|lagoldeneagles.com
+CA|California State University, San Marcos|II|California Collegiate Athletic Association|csusmcougars.com
+CA|University of California, Berkeley|I|Atlantic Coast Conference|calbears.com
+CA|University of California, Davis|I|Mountain West Conference|ucdavisaggies.com
+CA|University of California, Irvine|I|Big West Conference|ucirvinesports.com
+CA|University of California, Los Angeles|I|Big Ten Conference|uclabruins.com
+CA|University of California, Riverside|I|Big West Conference|gohighlanders.com
+CA|University of California, San Diego|I|Big West Conference|ucsdtritons.com
+CA|University of California, Santa Barbara|I|Big West Conference|ucsbgauchos.com
+CA|California Institute of Technology|III|Southern California Intercollegiate Athletic Conf.|gocaltech.com
+CA|Chapman University|III|Southern California Intercollegiate Athletic Conf.|chapmanathletics.com
+CA|Claremont McKenna-Harvey Mudd-Scripps Colleges|III|Southern California Intercollegiate Athletic Conf.|cmsathletics.org
+CA|Concordia University Irvine|II|Pacific West Conference|cuigoldeneagles.com
+CA|Fresno Pacific University|II|California Collegiate Athletic Association|fpuathletics.com
+CA|Jessup University|II|Pacific West Conference|jessupathletics.com
+CA|University of La Verne|III|Southern California Intercollegiate Athletic Conf.|leopardathletics.com
+CA|Long Beach State University|I|Big West Conference|longbeachstate.com
+CA|Loyola Marymount University|I|West Coast Conference|lmulions.com
+CA|Menlo College|II|California Collegiate Athletic Association|menloathletics.com
+CA|Occidental College|III|Southern California Intercollegiate Athletic Conf.|oxyathletics.com
+CA|University of the Pacific|I|West Coast Conference|pacifictigers.com
+CA|Pepperdine University|I|West Coast Conference|pepperdinewaves.com
+CA|Point Loma Nazarene University|II|Pacific West Conference|plnusealions.com
+CA|Pomona-Pitzer Colleges|III|Southern California Intercollegiate Athletic Conf.|sagehens.com
+CA|University of Redlands|III|Southern California Intercollegiate Athletic Conf.|goredlands.com
+CA|University of San Diego|I|West Coast Conference|usdtoreros.com
+CA|San Diego State University|I|Pac-12 Conference|goaztecs.com
+CA|University of San Francisco|I|West Coast Conference|usfdons.com
+CA|San Jose State University|I|Mountain West Conference|sjsuspartans.com
+CA|Santa Clara University|I|West Coast Conference|santaclarabroncos.com
+CA|University of Southern California|I|Big Ten Conference|usctrojans.com
+CA|Saint Mary's College of California|I|West Coast Conference|smcgaels.com
+CA|Stanford University|I|Atlantic Coast Conference|gostanford.com
+CA|Vanguard University|II|Pacific West Conference|vanguardlions.com
+CA|Westmont College|II|Pacific West Conference|athletics.westmont.edu
+CA|Whittier College|III|Southern California Intercollegiate Athletic Conf.|wcpoets.com
+CO|Adams State University|II|Rocky Mountain Athletic Conference|asugrizzlies.com
+CO|Colorado Christian University|II|Rocky Mountain Athletic Conference|ccucougars.com
+CO|University of Colorado Colorado Springs|II|Rocky Mountain Athletic Conference|gomountainlions.com
+CO|Colorado Mesa University|II|Rocky Mountain Athletic Conference|cmumavericks.com
+CO|Colorado School of Mines|II|Rocky Mountain Athletic Conference|minesathletics.com
+CO|Colorado State University Pueblo|II|Rocky Mountain Athletic Conference|gothunderwolves.com
+CO|Metropolitan State University of Denver|II|Rocky Mountain Athletic Conference|roadrunnersathletics.com
+CO|University of Northern Colorado|I|The Summit League|uncbears.com
+CO|Regis University (Colorado)|II|Rocky Mountain Athletic Conference|regisrangers.com
+CO|U.S. Air Force Academy|I|Mountain West Conference|goairforcefalcons.com
+CT|Albertus Magnus College|III|Great Northeast Athletic Conference|albertusfalcons.com
+CT|University of Bridgeport|II|Central Atlantic Collegiate Conference|ubknights.com
+CT|Central Connecticut State University|I|Northeast Conference|ccsubluedevils.com
+CT|University of Connecticut|I|BIG EAST Conference|uconnhuskies.com
+CT|Eastern Connecticut State University|III|Little East Conference|gowarriorathletics.com
+CT|Fairfield University|I|Metro Conference|fairfieldstags.com
+CT|University of Hartford|III|Conference of New England|hartfordhawks.com
+CT|Mitchell College|III|Great Northeast Athletic Conference|mitchellathletics.com
+CT|University of New Haven|I|Northeast Conference|newhavenchargers.com
+CT|Post University|II|Central Atlantic Collegiate Conference|posteagles.com
+CT|Quinnipiac University|I|Metro Conference|gobobcats.com
+CT|Sacred Heart University|I|Metro Conference|sacredheartpioneers.com
+CT|University of Saint Joseph (Connecticut)|III|Great Northeast Athletic Conference|usjbluejays.com
+CT|Southern Connecticut State University|II|Northeast 10 Conference|scsuowls.com
+CT|Trinity College (Connecticut)|III|New England Small College Athletic Conference|bantamsports.com
+CT|U.S. Coast Guard Academy|III|New England Women's and Men's Athletic Conference|coastguardathletics.com
+CT|Wesleyan University (Connecticut)|III|New England Small College Athletic Conference|wesleyan.edu/athletics
+CT|Western Connecticut State University|III|Little East Conference|westconnathletics.com
+CT|Yale University|I|The Ivy League|yalebulldogs.com
+DE|University of Delaware|I|Conference USA|bluehens.com
+DE|Delaware State University|I|Northeast Conference|dsuhornets.com
+DE|Goldey-Beacom College|II|Central Atlantic Collegiate Conference|gbcathletics.com
+DE|Wilmington University (Delaware)|II|Central Atlantic Collegiate Conference|athletics.wilmu.edu
+DC|Catholic University|III|Landmark Conference|catholicathletics.com
+DC|George Washington University|I|Atlantic 10 Conference|gwsports.com
+DC|Georgetown University|I|BIG EAST Conference|guhoyas.com
+FL|Barry University|II|Sunshine State Conference|gobarrybucs.com
+FL|Bethune-Cookman University|I|Southwestern Athletic Conf.|bcuathletics.com
+FL|University of Central Florida|I|Big 12 Conference|ucfknights.com
+FL|Eckerd College|II|Sunshine State Conference|eckerdtritons.com
+FL|Edward Waters University|II|Southern Intercol. Ath. Conf.|ewutigerpride.com
+FL|Embry-Riddle Aeronautical University (Florida)|II|Sunshine State Conference|erauathletics.com
+FL|Flagler College|II|Peach Belt Conference|flaglerathletics.com
+FL|University of Florida|I|Southeastern Conference|floridagators.com
+FL|Florida A&M University|I|Southwestern Athletic Conf.|famuathletics.com
+FL|Florida Atlantic University|I|American Conference|fausports.com
+FL|Florida Gulf Coast University|I|Atlantic Sun Conference|fgcuathletics.com
+FL|Florida Institute of Technology|II|Sunshine State Conference|floridatechsports.com
+FL|Florida International University|I|Conference USA|fiusports.com
+FL|Florida Southern College|II|Sunshine State Conference|fscmocs.com
+FL|Florida State University|I|Atlantic Coast Conference|seminoles.com
+FL|Jacksonville University|I|Atlantic Sun Conference|judolphins.com
+FL|Lynn University|II|Sunshine State Conference|lynnfightingknights.com
+FL|University of Miami (Florida)|I|Atlantic Coast Conference|miamihurricanes.com
+FL|University of North Florida|I|Atlantic Sun Conference|unfospreys.com
+FL|Nova Southeastern University|II|Sunshine State Conference|nsusharks.com
+FL|Palm Beach Atlantic University|II|Sunshine State Conference|pbasailfish.com
+FL|Rollins College|II|Sunshine State Conference|rollinssports.com
+FL|University of South Florida|I|American Conference|gousfbulls.com
+FL|Saint Leo University|II|Sunshine State Conference|saintleolions.com
+FL|Stetson University|I|Atlantic Sun Conference|gohatters.com
+FL|University of Tampa|II|Sunshine State Conference|tampaspartans.com
+FL|University of West Florida|I|Atlantic Sun Conference|goargos.com
+GA|Albany State University (Georgia)|II|Southern Intercol. Ath. Conf.|asugoldenrams.com
+GA|Augusta University|II|Peach Belt Conference|augustajags.com
+GA|Berry College|III|Southern Athletic Association|berryvikings.com
+GA|Clark Atlanta University|II|Southern Intercol. Ath. Conf.|clarkatlantasports.com
+GA|Columbus State University|II|Peach Belt Conference|csucougars.com
+GA|Covenant College|III|Collegiate Conference of the South|athletics.covenant.edu
+GA|Emmanuel University (Georgia)|II|Conference Carolinas|goeclions.com
+GA|Emory University|III|University Athletic Association|emoryathletics.com
+GA|University of Georgia|I|Southeastern Conference|georgiadogs.com
+GA|Georgia College|II|Peach Belt Conference|gcsubobcats.com
+GA|Georgia Institute of Technology|I|Atlantic Coast Conference|ramblinwreck.com
+GA|Georgia Southern University|I|Sun Belt Conference|gseagles.com
+GA|Georgia Southwestern State University|II|Peach Belt Conference|gswcanes.com
+GA|Georgia State University|I|Sun Belt Conference|georgiastatesports.com
+GA|Kennesaw State University|I|Conference USA|ksuowls.com
+GA|LaGrange College|III|Collegiate Conference of the South|lagrangepanthers.com
+GA|Mercer University|I|Southern Conference|mercerbears.com
+GA|Middle Georgia State University|II|Peach Belt Conference|
+GA|Morehouse College|II|Southern Intercol. Ath. Conf.|morehouseathletics.com
+GA|University of North Georgia|II|Peach Belt Conference|ungathletics.com
+GA|Oglethorpe University|III|Southern Athletic Association|gopetrels.com
+GA|Piedmont University|III|Collegiate Conference of the South|piedmontlions.com
+GA|Savannah State University|II|Southern Intercol. Ath. Conf.|ssuathletics.com
+GA|Shorter University|II|Conference Carolinas|goshorterhawks.com
+GA|Valdosta State University|II|Gulf South Conference|vstateblazers.com
+GA|University of West Georgia|I|United Athletic Conference|uwgathletics.com
+GA|Young Harris College|II|Conference Carolinas|yhcathletics.com

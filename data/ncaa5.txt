@@ -1,0 +1,171 @@
+NY|Adelphi University|II|Northeast 10 Conference|aupanthers.com
+NY|University at Albany|I|America East Conference|ualbanysports.com
+NY|Alfred State College|III|State University of New York Athletic Conference|alfredstateathletics.com
+NY|Alfred University|III|Empire 8|gosaxons.com
+NY|Bard College|III|Liberty League|bardathletics.com
+NY|Baruch College|III|City University of New York Athletic Conference|baruchathletics.com
+NY|Binghamton University|I|America East Conference|bubearcats.com
+NY|SUNY Brockport|III|Empire 8|gobrockport.com
+NY|Canisius University|I|Metro Conference|gogriffs.com
+NY|SUNY Canton|III|State University of New York Athletic Conference|rooathletics.com
+NY|The City College of New York|III|City University of New York Athletic Conference|ccnyathletics.com
+NY|Clarkson University|III|Liberty League|clarksonathletics.com
+NY|SUNY Cobleskill|III|State University of New York Athletic Conference|fightingtigers.cobleskill.edu
+NY|Columbia University|I|The Ivy League|gocolumbialions.com
+NY|Cornell University|I|The Ivy League|cornellbigred.com
+NY|SUNY Cortland|III|State University of New York Athletic Conference|cortland.edu/athletics
+NY|D'Youville University|II|East Coast Conference|athletics.dyc.edu
+NY|Dominican University New York|II|Central Atlantic Collegiate Conference|chargerathletics.com
+NY|Elmira College|III|Empire 8|athletics.elmira.edu
+NY|Farmingdale State College|III|Skyline Conference|farmingdalesports.com
+NY|Fordham University|I|Atlantic 10 Conference|fordhamsports.com
+NY|SUNY Fredonia|III|State University of New York Athletic Conference|fredoniabluedevils.com
+NY|Hamilton College|III|New England Small College Athletic Conference|hamilton.edu/athletics
+NY|Hilbert College|III|Allegheny Mountain Collegiate Conference|hilberthawks.com
+NY|Hobart and William Smith Colleges|III|Liberty League|hwsathletics.com
+NY|Hofstra University|I|Coastal Athletic Association|gohofstra.com
+NY|Houghton University|III|Empire 8|athletics.houghton.edu
+NY|Iona University|I|Metro Conference|ionagaels.com
+NY|Ithaca College|III|Liberty League|athletics.ithaca.edu
+NY|John Jay College of Criminal Justice|III|City University of New York Athletic Conference|johnjayathletics.com
+NY|Keuka College|III|Empire 8|keukaathletics.com
+NY|Le Moyne College|I|Northeast Conference|lemoynedolphins.com
+NY|Lehman College|III|City University of New York Athletic Conference|lehmanathletics.com
+NY|Long Island University|I|Northeast Conference|liuathletics.com
+NY|Manhattan University|I|Metro Conference|gojaspers.com
+NY|Manhattanville University|III|Skyline Conference|govaliants.com
+NY|Marist University|I|Metro Conference|goredfoxes.com
+NY|SUNY Maritime College|III|Skyline Conference|maritimeathletics.com
+NY|Mercy University|II|East Coast Conference|mercyathletics.com
+NY|Molloy University|II|East Coast Conference|molloylions.com
+NY|University of Mount Saint Vincent|III|Skyline Conference|umsvathletics.com
+NY|Mount Saint Mary College (New York)|III|Skyline Conference|msmcknights.com
+NY|SUNY New Paltz|III|New Jersey Athletic Conference|nphawks.com
+NY|New York University|III|University Athletic Association|gonyuathletics.com
+NY|Niagara University|I|Metro Conference|purpleeagles.com
+NY|SUNY Oneonta|III|State University of New York Athletic Conference|oneontaathletics.com
+NY|SUNY Oswego|III|State University of New York Athletic Conference|oswegolakers.com
+NY|Pace University|II|Northeast 10 Conference|paceuathletics.com
+NY|SUNY Plattsburgh|III|State University of New York Athletic Conference|gocardinalsports.com
+NY|SUNY Polytechnic Institute|III|Empire 8|wildcats.sunypoly.edu
+NY|Purchase College|III|Skyline Conference|purchasecollegeathletics.com
+NY|Queens College (New York)|II|East Coast Conference|queensknights.com
+NY|Rensselaer Polytechnic Institute|III|Liberty League|rpiathletics.com
+NY|University of Rochester|III|Liberty League|rochester.edu/athletics
+NY|Rochester Institute of Technology|III|Liberty League|ritathletics.com
+NY|Russell Sage College|III|Empire 8|sagegators.com
+NY|Siena University|I|Metro Conference|sienasaints.com
+NY|Skidmore College|III|Liberty League|skidmoreathletics.com
+NY|St. Bonaventure University|I|Atlantic 10 Conference|gobonnies.com
+NY|St. John Fisher University|III|Empire 8|sjfathletics.com
+NY|St. John's University (New York)|I|BIG EAST Conference|redstormsports.com
+NY|St. Joseph's University NY (Brooklyn)|III|Skyline Conference|sjbkathletics.com
+NY|St. Joseph's University NY (Long Island)|III|Skyline Conference|sjliathletics.com
+NY|St. Lawrence University|III|Liberty League|saintsathletics.com
+NY|St. Thomas Aquinas College|II|East Coast Conference|stacathletics.com
+NY|College of Staten Island|II|East Coast Conference|csidolphins.com
+NY|Stony Brook University|I|Coastal Athletic Association|stonybrookathletics.com
+NY|SUNY Old Westbury|III|Skyline Conference|oldwestburypanthers.com
+NY|U.S. Merchant Marine Academy|III|Skyline Conference|usmmasports.com
+NY|U.S. Military Academy (Army)|I|Patriot League|goarmywestpoint.com
+NY|Union College (New York)|III|Liberty League|unionathletics.com
+NY|Utica University|III|Empire 8|uticapioneers.com
+NY|Vassar College|III|Liberty League|vassarathletics.com
+NY|Wagner College|I|Northeast Conference|wagnerathletics.com
+NY|Yeshiva University|III|Skyline Conference|yumacs.com
+SD|Augustana University (South Dakota)|II|Northern Sun Intercollegiate Conference|goaugie.com
+SD|Northern State University|II|Northern Sun Intercollegiate Conference|nsuwolves.com
+SD|University of Sioux Falls|II|Northern Sun Intercollegiate Conference|usfcougars.com
+SD|South Dakota State University|I|The Summit League|gojacks.com
+UT|Brigham Young University|I|Big 12 Conference|byucougars.com
+UT|University of Utah|I|Big 12 Conference|utahutes.com
+UT|Utah Tech University|I|Mountain West Conference|utahtechtrailblazers.com
+UT|Utah Valley University|I|Big West Conference|gouvu.com
+VT|Middlebury College|III|New England Small College Athletic Conference|middlebury.edu/athletics
+VT|Norwich University|III|Great Northeast Athletic Conference|norwichathletics.com
+VT|Saint Michael's College|II|Northeast 10 Conference|smcathletics.com
+VT|Vermont State University Castleton|III|Little East Conference|castletonsports.com
+VT|Vermont State University Lyndon|III|North Atlantic Conference|lyndonhornets.com
+VA|Averett University|III|Old Dominion Athletic Conf.|averettcougars.com
+VA|Batten University|III|Old Dominion Athletic Conf.|vwuathletics.com
+VA|Bridgewater College (Virginia)|III|Old Dominion Athletic Conf.|bridgewatereagles.com
+VA|Christopher Newport University|III|Coast-To-Coast Athletic Conference|cnusports.com
+VA|Eastern Mennonite University|III|Old Dominion Athletic Conf.|emuroyals.com
+VA|Emory & Henry University|II|South Atlantic Conference|gowasps.com
+VA|Ferrum College|II|Conference Carolinas|ferrumpanthers.com
+VA|George Mason University|I|Atlantic 10 Conference|gomason.com
+VA|Hampden-Sydney College|III|Old Dominion Athletic Conf.|hscathletics.com
+VA|James Madison University|I|Sun Belt Conference|jmusports.com
+VA|Liberty University|I|Conference USA|libertyflames.com
+VA|Longwood University|I|Big South Conference|longwoodlancers.com
+VA|University of Lynchburg|III|Old Dominion Athletic Conf.|lynchburgsports.com
+VA|Mary Baldwin University|III|USA South Athletic Conference|marybaldwinathletics.com
+VA|University of Mary Washington|III|Coast-To-Coast Athletic Conference|umweagles.com
+VA|Marymount University (Virginia)|III|Atlantic East Conference|marymountsaints.com
+VA|Norfolk State University|I|Northeast Conference|nsuspartans.com
+VA|Old Dominion University|I|Sun Belt Conference|odusports.com
+VA|Radford University|I|Big South Conference|radfordathletics.com
+VA|Randolph-Macon College|III|Old Dominion Athletic Conf.|rmcathletics.com
+VA|Regent University|III|Coast-To-Coast Athletic Conference|regentroyals.com
+VA|University of Richmond|I|Atlantic 10 Conference|richmondspiders.com
+VA|Roanoke College|III|Old Dominion Athletic Conf.|maroons.roanoke.edu
+VA|Shenandoah University|III|Old Dominion Athletic Conf.|suhornets.com
+VA|Southern Virginia University|III|USA South Athletic Conference|knightathletics.com
+VA|University of Virginia|I|Atlantic Coast Conference|virginiasports.com
+VA|UVA Wise|II|South Atlantic Conference|uvawisecavs.com
+VA|Virginia Commonwealth University|I|Atlantic 10 Conference|vcuathletics.com
+VA|Virginia Military Institute|I|Southern Conference|vmikeydets.com
+VA|Virginia Tech|I|Atlantic Coast Conference|hokiesports.com
+VA|Virginia State University|II|Independent|govsutrojans.com
+VA|Washington and Lee University|III|Old Dominion Athletic Conf.|generalssports.com
+VA|William & Mary|I|Coastal Athletic Association|tribeathletics.com
+WA|Central Washington University|II|Great Northwest Athletic Conference|wildcatsports.com
+WA|Gonzaga University|I|Pac-12 Conference|gozags.com
+WA|Pacific Lutheran University|III|Northwest Conference|golutes.com
+WA|University of Puget Sound|III|Northwest Conference|loggerathletics.com
+WA|Seattle University|I|West Coast Conference|goseattleu.com
+WA|Saint Martin's University|II|Great Northwest Athletic Conference|smusaints.com
+WA|University of Washington|I|Big Ten Conference|gohuskies.com
+WA|Washington State University|I|Pac-12 Conference|wsucougars.com
+WA|Whitman College|III|Northwest Conference|whitman.edu/athletics
+WA|Whitworth University|III|Northwest Conference|whitworthpirates.com
+WV|Bethany College (West Virginia)|III|Presidents' Athletic Conference|bethanybison.com
+WV|Bluefield State University|II|Independent|gobstate.com
+WV|University of Charleston (West Virginia)|II|Mountain East Conference|ucgoldeneagles.com
+WV|Concord University|II|Mountain East Conference|cumountainlions.com
+WV|Davis & Elkins College|II|Mountain East Conference|senatornation.com
+WV|Fairmont State University|II|Mountain East Conference|fightingfalcons.com
+WV|Glenville State University|II|Mountain East Conference|gscpioneers.com
+WV|Marshall University|I|Sun Belt Conference|herdzone.com
+WV|Salem University (West Virginia)|II|Independent|salemtigers.com
+WV|Shepherd University|II|Pennsylvania State Athletic Conference|shepherdrams.com
+WV|West Liberty University|II|Mountain East Conference|hilltoppersports.com
+WV|West Virginia State University|II|Mountain East Conference|wvsuyellowjackets.com
+WV|West Virginia University|I|Big 12 Conference|wvusports.com
+WV|West Virginia Wesleyan College|II|Mountain East Conference|wesleyanbobcats.com
+WV|Wheeling University|II|Mountain East Conference|wucardinals.com
+WI|Beloit College|III|Midwest Conference|beloit.edu/bucs
+WI|Carroll University (Wisconsin)|III|College Conference of Illinois & Wisconsin|gopios.com
+WI|Carthage College|III|College Conference of Illinois & Wisconsin|athletics.carthage.edu
+WI|Concordia University Wisconsin|III|Northern Athletics Collegiate Conference|cuwfalcons.com
+WI|Edgewood University|III|Northern Athletics Collegiate Conference|edgewoodeagles.com
+WI|Lakeland University|III|Northern Athletics Collegiate Conference|lakelandmuskies.com
+WI|Lawrence University|III|Midwest Conference|vikings.lawrence.edu
+WI|Maranatha Baptist University|III|Independent|mbusabercats.com
+WI|Marian University (Wisconsin)|III|Northern Athletics Collegiate Conference|sabreathletics.com
+WI|Milwaukee School of Engineering|III|Northern Athletics Collegiate Conference|go-raiders.com
+WI|Ripon College|III|Midwest Conference|riponredhawks.com
+WI|St. Norbert College|III|Northern Athletics Collegiate Conference|athletics.snc.edu
+WI|Wisconsin Lutheran College|III|Northern Athletics Collegiate Conference|wlcsports.com
+WI|UW-Eau Claire|III|Wisconsin Intercollegiate Athletic Conference|blugolds.com
+WI|UW-La Crosse|III|Wisconsin Intercollegiate Athletic Conference|uwlathletics.com
+WI|UW-Milwaukee|I|Horizon League|mkepanthers.com
+WI|UW-Oshkosh|III|Wisconsin Intercollegiate Athletic Conference|uwoshkoshtitans.com
+WI|UW-Parkside|II|Great Lakes Intercollegiate Athletic Conference|parksiderangers.com
+WI|UW-Platteville|III|Wisconsin Intercollegiate Athletic Conference|letsgopioneers.com
+WI|UW-River Falls|III|Wisconsin Intercollegiate Athletic Conference|uwrfsports.com
+WI|UW-Stevens Point|III|Wisconsin Intercollegiate Athletic Conference|athletics.uwsp.edu
+WI|UW-Stout|III|Wisconsin Intercollegiate Athletic Conference|stoutbluedevils.com
+WI|UW-Superior|III|Upper Midwest Athletic Conference|uwsyellowjackets.com
+WI|UW-Whitewater|III|Wisconsin Intercollegiate Athletic Conference|uwwsports.com
+MT|Montana State University Billings|II|Great Northwest Athletic Conference|msubsports.com

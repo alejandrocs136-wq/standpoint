@@ -1,0 +1,166 @@
+MA|American International College|II|Northeast 10 Conference|aicyellowjackets.com
+MA|Amherst College|III|New England Small College Athletic Conference|athletics.amherst.edu
+MA|Assumption University|II|Northeast 10 Conference|assumptiongreyhounds.com
+MA|Babson College|III|New England Women's and Men's Athletic Conference|babsonathletics.com
+MA|Bentley University|II|Northeast 10 Conference|bentley.edu/athletics
+MA|Boston College|I|Atlantic Coast Conference|bceagles.com
+MA|Brandeis University|III|University Athletic Association|brandeisjudges.com
+MA|Bridgewater State University|III|Massachusetts State Collegiate Athletic Conference|bsubears.com
+MA|Clark University (Massachusetts)|III|New England Women's and Men's Athletic Conference|clarkathletics.com
+MA|Curry College|III|Conference of New England|curryathletics.com
+MA|Dean College|III|Great Northeast Athletic Conference|deanbulldogs.com
+MA|Elms College|III|Great Northeast Athletic Conference|ecblazers.com
+MA|Emerson College|III|New England Women's and Men's Athletic Conference|emersonlions.com
+MA|Endicott College|III|Conference of New England|ecgulls.com
+MA|Fitchburg State University|III|Massachusetts State Collegiate Athletic Conference|fitchburgfalcons.com
+MA|Framingham State University|III|Massachusetts State Collegiate Athletic Conference|fsurams.com
+MA|Gordon College|III|Conference of New England|athletics.gordon.edu
+MA|Harvard University|I|The Ivy League|gocrimson.com
+MA|College of the Holy Cross|I|Patriot League|goholycross.com
+MA|Lasell University|III|Great Northeast Athletic Conference|laserpride.lasell.edu
+MA|Lesley University|III|North Atlantic Conference|lesleyathletics.com
+MA|Massachusetts College of Liberal Arts|III|Massachusetts State Collegiate Athletic Conference|athletics.mcla.edu
+MA|Massachusetts Institute of Technology|III|New England Women's and Men's Athletic Conference|mitathletics.com
+MA|Massachusetts Maritime Academy|III|Massachusetts State Collegiate Athletic Conference|mmabucs.com
+MA|University of Massachusetts, Amherst|I|Mid-American Conference|umassathletics.com
+MA|University of Massachusetts Boston|III|Little East Conference|beaconsathletics.com
+MA|University of Massachusetts, Dartmouth|III|Little East Conference|corsairathletics.com
+MA|University of Massachusetts Lowell|I|America East Conference|goriverhawks.com
+MA|Merrimack College|I|Metro Conference|merrimackathletics.com
+MA|Nichols College|III|Conference of New England|nicholsathletics.com
+MA|Northeastern University|I|Coastal Athletic Association|nuhuskies.com
+MA|Salem State University|III|Massachusetts State Collegiate Athletic Conference|salemstatevikings.com
+MA|Springfield College|III|New England Women's and Men's Athletic Conference|springfield.edu/directory/athletics
+MA|Stonehill College|I|Northeast Conference|stonehillskyhawks.com
+MA|Suffolk University|III|Conference of New England|gosuffolkrams.com
+MA|Tufts University|III|New England Small College Athletic Conference|gotuftsjumbos.com
+MA|Wentworth Institute of Technology|III|Conference of New England|wentworthathletics.com
+MA|Western New England University|III|Conference of New England|wnegoldenbears.com
+MA|Westfield State University|III|Massachusetts State Collegiate Athletic Conference|westfieldstateowls.com
+MA|Wheaton College (Massachusetts)|III|New England Women's and Men's Athletic Conference|wheatoncollegelyons.com
+MA|Williams College|III|New England Small College Athletic Conference|ephsports.williams.edu
+MA|Worcester Polytechnic Institute|III|New England Women's and Men's Athletic Conference|athletics.wpi.edu
+MA|Worcester State University|III|Massachusetts State Collegiate Athletic Conference|wsulancers.com
+MI|Adrian College|III|Michigan Intercollegiate Athletic Association|adrianbulldogs.com
+MI|Albion College|III|Michigan Intercollegiate Athletic Association|gobrits.com
+MI|Alma College|III|Michigan Intercollegiate Athletic Association|almascots.com
+MI|Calvin University|III|Michigan Intercollegiate Athletic Association|calvinknights.com
+MI|Central Michigan University|I|Mid-American Conference|cmuchippewas.com
+MI|Davenport University|II|Great Lakes Intercollegiate Athletic Conference|dupanthers.com
+MI|Eastern Michigan University|I|Mid-American Conference|emueagles.com
+MI|Grand Valley State University|II|Great Lakes Intercollegiate Athletic Conference|gvsulakers.com
+MI|Hillsdale College|II|Great Midwest Athletic Conference|hillsdalechargers.com
+MI|Hope College|III|Michigan Intercollegiate Athletic Association|athletics.hope.edu
+MI|Kalamazoo College|III|Michigan Intercollegiate Athletic Association|hornets.kzoo.edu
+MI|University of Michigan|I|Big Ten Conference|mgoblue.com
+MI|Michigan State University|I|Big Ten Conference|msuspartans.com
+MI|Northwood University|II|Great Midwest Athletic Conference|gonorthwood.com
+MI|Oakland University|I|Horizon League|goldengrizzlies.com
+MI|The University of Olivet|III|Michigan Intercollegiate Athletic Association|olivetcomets.com
+MI|Saginaw Valley State University|II|Great Lakes Intercollegiate Athletic Conference|svsucardinals.com
+MI|Wayne State University (Michigan)|II|Great Lakes Intercollegiate Athletic Conference|wsuathletics.com
+MI|Western Michigan University|I|Mid-American Conference|wmubroncos.com
+MN|Augsburg University|III|Minnesota Intercollegiate Athletic Conference|athletics.augsburg.edu
+MN|Bemidji State University|II|Northern Sun Intercollegiate Conference|bsubeavers.com
+MN|Bethany Lutheran College|III|Upper Midwest Athletic Conference|blcvikings.com
+MN|Bethel University (Minnesota)|III|Minnesota Intercollegiate Athletic Conference|athletics.bethel.edu
+MN|Carleton College|III|Minnesota Intercollegiate Athletic Conference|apps.carleton.edu/athletics
+MN|Concordia College, Moorhead|III|Minnesota Intercollegiate Athletic Conference|gocobbers.com
+MN|Concordia University, St. Paul|II|Northern Sun Intercollegiate Conference|cspbears.com
+MN|Crown College (Minnesota)|III|Upper Midwest Athletic Conference|athletics.crown.edu
+MN|Gustavus Adolphus College|III|Minnesota Intercollegiate Athletic Conference|gustavus.edu/athletics
+MN|Hamline University|III|Minnesota Intercollegiate Athletic Conference|hamlineathletics.com
+MN|Macalester College|III|Minnesota Intercollegiate Athletic Conference|macalester.edu/athletics
+MN|Martin Luther College|III|Upper Midwest Athletic Conference|mlcknights.com
+MN|Minnesota State University, Mankato|II|Northern Sun Intercollegiate Conference|msumavericks.com
+MN|University of Minnesota, Crookston|II|Northern Sun Intercollegiate Conference|goldeneaglesports.com
+MN|University of Minnesota Duluth|II|Northern Sun Intercollegiate Conference|umdbulldogs.com
+MN|University of Minnesota, Twin Cities|I|Big Ten Conference|gophersports.com
+MN|University of Minnesota, Morris|III|Upper Midwest Athletic Conference|morriscougars.com
+MN|North Central University|III|Upper Midwest Athletic Conference|ncurams.com
+MN|University of Northwestern-St. Paul|III|Upper Midwest Athletic Conference|unweagles.com
+MN|Southwest Minnesota State University|II|Northern Sun Intercollegiate Conference|smsumustangs.com
+MN|St. Cloud State University|II|Northern Sun Intercollegiate Conference|stcloudstate.edu/athletics
+MN|Saint John's University (Minnesota)|III|Minnesota Intercollegiate Athletic Conference|gojohnnies.com
+MN|Saint Mary's University of Minnesota|III|Minnesota Intercollegiate Athletic Conference|saintmaryssports.com
+MN|St. Olaf College|III|Minnesota Intercollegiate Athletic Conference|athletics.stolaf.edu
+MN|The College of St. Scholastica|III|Minnesota Intercollegiate Athletic Conference|csssaints.com
+MN|University of St. Thomas (Minnesota)|I|The Summit League|tommiesports.com
+MN|Winona State University|II|Northern Sun Intercollegiate Conference|winonastatewarriors.com
+MS|Alcorn State University|I|Southwestern Athletic Conf.|alcornsports.com
+MS|Belhaven University|III|Collegiate Conference of the South|blazers.belhaven.edu
+MS|Delta State University|II|Gulf South Conference|gostatesmen.com
+MS|Jackson State University|I|Southwestern Athletic Conf.|gojsutigers.com
+MS|Millsaps College|III|Southern Athletic Association|gomajors.com
+MS|University of Mississippi|I|Southeastern Conference|olemisssports.com
+MS|Mississippi Christian University|II|Gulf South Conference|gochoctaws.com
+MS|Mississippi State University|I|Southeastern Conference|hailstate.com
+MS|Mississippi University for Women|III|St. Louis Intercollegiate Athletic Conference|owlsathletics.com
+MS|Mississippi Valley State University|I|Southwestern Athletic Conf.|mvsusports.com
+MS|The University of Southern Mississippi|I|Sun Belt Conference|southernmiss.com
+MO|University of Central Missouri|II|Mid-America Intercollegiate Athletics Association|ucmathletics.com
+MO|Drury University|II|Great Lakes Valley Conference|drurypanthers.com
+MO|Lincoln University (Missouri)|II|Great Lakes Valley Conference|lubluetigers.com
+MO|Lindenwood University|I|Ohio Valley Conference|lindenwoodlions.com
+MO|Maryville University of Saint Louis|II|Great Lakes Valley Conference|maryvillesaints.com
+MO|Missouri University of Science and Technology|II|Great Lakes Valley Conference|minerathletics.com
+MO|Missouri Southern State University|II|Mid-America Intercollegiate Athletics Association|mssulions.com
+MO|Missouri State University|I|Conference USA|missouristatebears.com
+MO|Missouri Western State University|II|Mid-America Intercollegiate Athletics Association|gogriffons.com
+MO|University of Missouri, Columbia|I|Southeastern Conference|mutigers.com
+MO|University of Missouri-St. Louis|II|Great Lakes Valley Conference|umsltritons.com
+MO|Northwest Missouri State University|II|Mid-America Intercollegiate Athletics Association|bearcatsports.com
+MO|Rockhurst University|II|Great Lakes Valley Conference|rockhursthawks.com
+MO|Southeast Missouri State University|I|Ohio Valley Conference|semoredhawks.com
+MO|Southwest Baptist University|II|Great Lakes Valley Conference|sbubearcats.com
+MO|Saint Louis University|I|Atlantic 10 Conference|slubillikens.com
+MO|Truman State University|II|Great Lakes Valley Conference|trumanbulldogs.com
+MO|Washington University in St. Louis|III|University Athletic Association|washubears.com
+MO|Webster University|III|St. Louis Intercollegiate Athletic Conference|websterathletics.com
+MO|Westminster College (Missouri)|III|St. Louis Intercollegiate Athletic Conference|wcbluejays.com
+MO|William Jewell College|II|Great Lakes Valley Conference|jewellcardinals.com
+NE|Creighton University|I|BIG EAST Conference|gocreighton.com
+NE|University of Nebraska at Omaha|I|The Summit League|omavs.com
+NE|Nebraska Wesleyan University|III|American Rivers Conference|nwusports.com
+NE|University of Nebraska-Lincoln|I|Big Ten Conference|huskers.com
+NE|Wayne State College (Nebraska)|II|Northern Sun Intercollegiate Conference|wscwildcats.com
+NV|University of Nevada, Las Vegas|I|Mountain West Conference|unlvrebels.com
+NV|University of Nevada, Reno|I|Mountain West Conference|nevadawolfpack.com
+NH|Colby-Sawyer College|III|Great Northeast Athletic Conference|colby-sawyerathletics.com
+NH|Dartmouth College|I|The Ivy League|dartmouthsports.com
+NH|Franklin Pierce University|II|Northeast 10 Conference|fpuravens.com
+NH|Keene State College|III|Little East Conference|keeneowls.com
+NH|New England College|III|Great Northeast Athletic Conference|athletics.nec.edu
+NH|Plymouth State University|III|Little East Conference|athletics.plymouth.edu
+NH|Rivier University|III|Great Northeast Athletic Conference|rivierathletics.com
+NH|Southern New Hampshire University|II|Northeast 10 Conference|snhupenmen.com
+NH|Saint Anselm College|II|Northeast 10 Conference|saintanselmhawks.com
+NJ|Caldwell University|II|Central Atlantic Collegiate Conference|caldwellathletics.com
+NJ|Centenary University (New Jersey)|III|Atlantic East Conference|centenarycyclones.com
+NJ|Drew University|III|Landmark Conference|drewrangers.com
+NJ|Fairleigh Dickinson University, Florham|III|Middle Atlantic Conference Freedom|fdudevils.com
+NJ|Fairleigh Dickinson University, Metropolitan Campus|I|Northeast Conference|fduknights.com
+NJ|Felician University|II|Central Atlantic Collegiate Conference|felicianuathletics.com
+NJ|Georgian Court University|II|Central Atlantic Collegiate Conference|gculions.com
+NJ|Kean University|III|New Jersey Athletic Conference|keanathletics.com
+NJ|Monmouth University|I|Coastal Athletic Association|monmouthhawks.com
+NJ|Montclair State University|III|New Jersey Athletic Conference|montclairathletics.com
+NJ|New Jersey Institute of Technology|I|America East Conference|njithighlanders.com
+NJ|The College of New Jersey|III|New Jersey Athletic Conference|tcnjathletics.com
+NJ|Princeton University|I|The Ivy League|goprincetontigers.com
+NJ|Ramapo College|III|New Jersey Athletic Conference|ramapoathletics.com
+NJ|Rider University|I|Metro Conference|gobroncs.com
+NJ|Rowan University|III|New Jersey Athletic Conference|rowanathletics.com
+NJ|Rutgers University-Camden|III|New Jersey Athletic Conference|scarletraptors.com
+NJ|Rutgers University-Newark|III|New Jersey Athletic Conference|rutgersnewarkathletics.com
+NJ|Rutgers University|I|Big Ten Conference|scarletknights.com
+NJ|Saint Elizabeth University|III|Atlantic East Conference|seueagles.com
+NJ|Seton Hall University|I|BIG EAST Conference|shupirates.com
+NJ|Saint Peter's University|I|Metro Conference|saintpeterspeacocks.com
+NJ|Stevens Institute of Technology|III|Middle Atlantic Conference Freedom|stevensducks.com
+NJ|Stockton University|III|New Jersey Athletic Conference|stocktonathletics.com
+NJ|William Paterson University of New Jersey|III|New Jersey Athletic Conference|wpupioneers.com
+NM|Eastern New Mexico University|II|Lone Star Conference|goeasternathletics.com
+NM|University of New Mexico|I|Mountain West Conference|golobos.com
+NM|New Mexico Highlands University|II|Rocky Mountain Athletic Conference|nmhuathletics.com
+NM|New Mexico State University|I|Conference USA|nmstatesports.com

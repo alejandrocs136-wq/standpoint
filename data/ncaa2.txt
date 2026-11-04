@@ -1,0 +1,135 @@
+HI|Chaminade University|II|Pacific West Conference|goswords.com
+HI|University of Hawaii, Manoa|I|Mountain West Conference|hawaiiathletics.com
+HI|University of Hawaii at Hilo|II|Pacific West Conference|hiloathletics.com
+HI|Hawaii Pacific University|II|Pacific West Conference|hpusharks.com
+ID|Northwest Nazarene University|II|Great Northwest Athletic Conference|nnusports.com
+IL|Augustana College (Illinois)|III|College Conference of Illinois & Wisconsin|athletics.augustana.edu
+IL|Aurora University|III|Northern Athletics Collegiate Conference|athletics.aurora.edu
+IL|Benedictine University (Illinois)|III|Northern Athletics Collegiate Conference|benueagles.com
+IL|Blackburn College|III|St. Louis Intercollegiate Athletic Conference|blackburnbeavers.com
+IL|Bradley University|I|Missouri Valley Conference|bradleybraves.com
+IL|University of Chicago|III|University Athletic Association|athletics.uchicago.edu
+IL|Concordia University Chicago|III|Northern Athletics Collegiate Conference|cucougars.com
+IL|Dominican University (Illinois)|III|Northern Athletics Collegiate Conference|dustars.com
+IL|Eastern Illinois University|I|Ohio Valley Conference|eiupanthers.com
+IL|Elmhurst University|III|College Conference of Illinois & Wisconsin|elmhurstbluejays.com
+IL|Eureka College|III|St. Louis Intercollegiate Athletic Conference|eurekareddevils.com
+IL|Greenville University|III|St. Louis Intercollegiate Athletic Conference|greenville.edu/athletics
+IL|Illinois College|III|Midwest Conference|illinoiscollegeathletics.com
+IL|Illinois Institute of Technology|III|Northern Athletics Collegiate Conference|illinoistechathletics.com
+IL|Illinois State University|I|Missouri Valley Conference|goredbirds.com
+IL|Illinois Wesleyan University|III|College Conference of Illinois & Wisconsin|iwusports.com
+IL|University of Illinois Chicago|I|Missouri Valley Conference|uicflames.com
+IL|University of Illinois Springfield|II|Great Lakes Valley Conference|uisprairiestars.com
+IL|University of Illinois Urbana-Champaign|I|Big Ten Conference|fightingillini.com
+IL|Knox College|III|Midwest Conference|prairiefire.knox.edu
+IL|Lewis University|II|Great Lakes Valley Conference|lewisflyers.com
+IL|McKendree University|II|Great Lakes Valley Conference|mckbearcats.com
+IL|Millikin University|III|College Conference of Illinois & Wisconsin|athletics.millikin.edu
+IL|Monmouth College (Illinois)|III|Midwest Conference|monmouthscots.com
+IL|North Central College|III|College Conference of Illinois & Wisconsin|northcentralcardinals.com
+IL|North Park University|III|College Conference of Illinois & Wisconsin|northpark.edu/athletics
+IL|Northern Illinois University|I|Horizon League|niuhuskies.com
+IL|Northwestern University|I|Big Ten Conference|nusports.com
+IL|Principia College|III|St. Louis Intercollegiate Athletic Conference|principiaathletics.com
+IL|Quincy University|II|Great Lakes Valley Conference|quhawks.com
+IL|Rockford University|III|Northern Athletics Collegiate Conference|rockfordregents.com
+IL|Roosevelt University|II|Great Lakes Intercollegiate Athletic Conference|rooseveltlakers.com
+IL|Southern Illinois University at Carbondale|I|Missouri Valley Conference|siusalukis.com
+IL|Southern Illinois University Edwardsville|I|Ohio Valley Conference|siuecougars.com
+IL|Western Illinois University|I|Ohio Valley Conference|goleathernecks.com
+IL|Wheaton College (Illinois)|III|College Conference of Illinois & Wisconsin|athletics.wheaton.edu
+IN|Anderson University (Indiana)|III|Heartland Collegiate Athletic Conference|athletics.anderson.edu
+IN|Ball State University|I|Mid-American Conference|ballstatesports.com
+IN|Butler University|I|BIG EAST Conference|butlersports.com
+IN|DePauw University|III|North Coast Athletic Conference|depauwtigers.com
+IN|Earlham College|III|Heartland Collegiate Athletic Conference|goearlham.com
+IN|University of Evansville|I|Missouri Valley Conference|gopurpleaces.com
+IN|Franklin College|III|Heartland Collegiate Athletic Conference|franklingrizzlies.com
+IN|Hanover College|III|Heartland Collegiate Athletic Conference|athletics.hanover.edu
+IN|Indiana State University|I|Missouri Valley Conference|gosycamores.com
+IN|Indiana University, Bloomington|I|Big Ten Conference|iuhoosiers.com
+IN|University of Indianapolis|II|Great Lakes Valley Conference|uindyathletics.com
+IN|Manchester University|III|Heartland Collegiate Athletic Conference|muspartans.com
+IN|University of Notre Dame|I|Atlantic Coast Conference|fightingirish.com
+IN|Purdue University|I|Big Ten Conference|purduesports.com
+IN|Purdue University Northwest|II|Great Lakes Intercollegiate Athletic Conference|pnwathletics.com
+IN|Rose-Hulman Institute of Technology|III|Heartland Collegiate Athletic Conference|rose-hulman.edu/athletics
+IN|University of Southern Indiana|I|Ohio Valley Conference|usiscreamingeagles.com
+IN|Trine University|III|Michigan Intercollegiate Athletic Association|trinethunder.com
+IN|Valparaiso University|I|Missouri Valley Conference|valpoathletics.com
+IN|Wabash College|III|North Coast Athletic Conference|sports.wabash.edu
+IA|Buena Vista University|III|American Rivers Conference|bvuathletics.com
+IA|Central College (Iowa)|III|American Rivers Conference|central.edu/athletics
+IA|Coe College|III|American Rivers Conference|kohawkathletics.com
+IA|Cornell College|III|Midwest Conference|cornellrams.com
+IA|University of Dubuque|III|American Rivers Conference|dbq.edu/athletics
+IA|Grinnell College|III|Midwest Conference|pioneers.grinnell.edu
+IA|University of Iowa|I|Big Ten Conference|hawkeyesports.com
+IA|Loras College|III|American Rivers Conference|duhawks.com
+IA|Luther College|III|Midwest Conference|sports.luther.edu
+IA|Simpson College|III|American Rivers Conference|simpsonathletics.com
+IA|Upper Iowa University|II|Great Lakes Valley Conference|uiupeacocks.com
+IA|Wartburg College|III|American Rivers Conference|go-knights.net
+KS|Emporia State University|II|Mid-America Intercollegiate Athletics Association|esuhornets.com
+KS|Fort Hays State University|II|Mid-America Intercollegiate Athletics Association|fhsuathletics.com
+KS|University of Kansas|I|Big 12 Conference|kuathletics.com
+KS|Kansas State University|I|Big 12 Conference|kstatesports.com
+KS|Newman University|II|Mid-America Intercollegiate Athletics Association|newmanjets.com
+KS|Pittsburg State University|II|Mid-America Intercollegiate Athletics Association|pittstategorillas.com
+KS|Washburn University|II|Mid-America Intercollegiate Athletics Association|wusports.com
+KS|Wichita State University|I|American Conference|goshockers.com
+KY|Asbury University|III|Collegiate Conference of the South|asburyeagles.com
+KY|Bellarmine University|I|Atlantic Sun Conference|athletics.bellarmine.edu
+KY|Berea College|III|Heartland Collegiate Athletic Conference|bereaathletics.com
+KY|Centre College|III|Southern Athletic Association|centrecolonels.com
+KY|Eastern Kentucky University|I|United Athletic Conference|ekusports.com
+KY|University of Kentucky|I|Southeastern Conference|ukathletics.com
+KY|Kentucky Wesleyan College|II|Great Midwest Athletic Conference|kwcpanthers.com
+KY|University of Louisville|I|Atlantic Coast Conference|gocards.com
+KY|Morehead State University|I|Ohio Valley Conference|msueagles.com
+KY|Murray State University|I|Missouri Valley Conference|goracers.com
+KY|Northern Kentucky University|I|Horizon League|nkunorse.com
+KY|Spalding University|III|St. Louis Intercollegiate Athletic Conference|spaldingathletics.com
+KY|Thomas More University|II|Great Midwest Athletic Conference|thomasmoresaints.com
+KY|Transylvania University|III|Heartland Collegiate Athletic Conference|transysports.com
+KY|Western Kentucky University|I|Conference USA|wkusports.com
+LA|Centenary College (Louisiana)|III|Southern Collegiate Athletic Conference|gocentenary.com
+LA|Grambling State University|I|Southwestern Athletic Conf.|gsutigers.com
+LA|Louisiana State University|I|Southeastern Conference|lsusports.net
+LA|Louisiana Tech University|I|Sun Belt Conference|latechsports.com
+LA|University of Louisiana at Lafayette|I|Sun Belt Conference|ragincajuns.com
+LA|University of Louisiana Monroe|I|Sun Belt Conference|ulmwarhawks.com
+LA|McNeese State University|I|Southland Conference|mcneesesports.com
+LA|LSU New Orleans|I|Southland Conference|unoprivateers.com
+LA|Nicholls State University|I|Southland Conference|geauxcolonels.com
+LA|Northwestern State University|I|Southland Conference|nsudemons.com
+LA|Southeastern Louisiana University|I|Southland Conference|lionsports.net
+LA|Southern University, Baton Rouge|I|Southwestern Athletic Conf.|gojagsports.com
+LA|Tulane University|I|American Conference|tulanegreenwave.com
+ME|Bates College|III|New England Small College Athletic Conference|gobatesbobcats.com
+ME|Bowdoin College|III|New England Small College Athletic Conference|bowdoin.edu/athletics
+ME|Colby College|III|New England Small College Athletic Conference|colby.edu/athletics
+ME|Husson University|III|North Atlantic Conference|hussoneagles.com
+ME|University of Maine|I|America East Conference|goblackbears.com
+ME|University of Maine, Farmington|III|North Atlantic Conference|goumfbeavers.com
+ME|University of Maine at Presque Isle|III|North Atlantic Conference|owls.umpi.edu
+ME|Saint Joseph's College (Maine)|III|Great Northeast Athletic Conference|gomonks.com
+ME|University of Southern Maine|III|Little East Conference|southernmainehuskies.com
+ME|Thomas College|III|North Atlantic Conference|thomasathletics.com
+MD|Coppin State University|I|Northeast Conference|coppinstatesports.com
+MD|Frostburg State University|II|Mountain East Conference|frostburgsports.com
+MD|Hood College|III|Middle Atlantic Conference Commonwealth|hoodathletics.com
+MD|Johns Hopkins University|III|Centennial Conference|hopkinssports.com
+MD|University of Maryland Eastern Shore|I|Northeast Conference|umeshawksports.com
+MD|University of Maryland, Baltimore County|I|America East Conference|umbcretrievers.com
+MD|University of Maryland, College Park|I|Big Ten Conference|umterps.com
+MD|McDaniel College|III|Centennial Conference|mcdaniel.edu/athletics
+MD|Mount St. Mary's University|I|Metro Conference|mountathletics.com
+MD|Notre Dame of Maryland University|III|United East Conference|notredamegators.com
+MD|Salisbury University|III|Coast-To-Coast Athletic Conference|suseagulls.com
+MD|St. Mary's College of Maryland|III|United East Conference|smcmathletics.com
+MD|Stevenson University|III|Middle Atlantic Conference Commonwealth|gomustangsports.com
+MD|Towson University|I|Coastal Athletic Association|towsontigers.com
+MD|U.S. Naval Academy|I|Patriot League|navysports.com
+MD|Washington College (Maryland)|III|Centennial Conference|washingtoncollegesports.com

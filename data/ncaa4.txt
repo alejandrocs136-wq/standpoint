@@ -1,0 +1,219 @@
+NC|Appalachian State University|I|Sun Belt Conference|appstatesports.com
+NC|Barton College|II|Conference Carolinas|bartonbulldogs.com
+NC|Belmont Abbey College|II|Conference Carolinas|abbeyathletics.com
+NC|Brevard College|III|USA South Athletic Conference|bctornados.com
+NC|Campbell University|I|Coastal Athletic Association|gocamels.com
+NC|Catawba College|II|South Atlantic Conference|catawbaathletics.com
+NC|Chowan University|II|Conference Carolinas|gocuhawks.com
+NC|Davidson College|I|Atlantic 10 Conference|davidsonwildcats.com
+NC|Duke University|I|Atlantic Coast Conference|goduke.com
+NC|East Carolina University|I|American Conference|ecupirates.com
+NC|Elon University|I|Coastal Athletic Association|elonphoenix.com
+NC|Gardner-Webb University|I|Big South Conference|gwusports.com
+NC|Greensboro College|III|USA South Athletic Conference|greensborocollegesports.com
+NC|Guilford College|III|Old Dominion Athletic Conf.|guilford.edu/athletics
+NC|High Point University|I|Big South Conference|highpointpanthers.com
+NC|Johnson & Wales University Charlotte|III|Coast-To-Coast Athletic Conference|charlotte.jwuathletics.com
+NC|Lenoir-Rhyne University|II|South Atlantic Conference|lrbears.com
+NC|Mars Hill University|II|South Atlantic Conference|marshilllions.com
+NC|Methodist University|III|USA South Athletic Conference|mumonarchs.com
+NC|University of Mount Olive|II|Conference Carolinas|umotrojans.com
+NC|University of North Carolina Asheville|I|Big South Conference|uncabulldogs.com
+NC|North Carolina A&T State University|I|Coastal Athletic Association|ncataggies.com
+NC|North Carolina State University|I|Atlantic Coast Conference|gopack.com
+NC|North Carolina Wesleyan University|III|USA South Athletic Conference|ncwsports.com
+NC|University of North Carolina Wilmington|I|Coastal Athletic Association|uncwsports.com
+NC|University of North Carolina, Chapel Hill|I|Atlantic Coast Conference|goheels.com
+NC|University of North Carolina at Charlotte|I|American Conference|charlotte49ers.com
+NC|University of North Carolina at Greensboro|I|Southern Conference|uncgspartans.com
+NC|University of North Carolina at Pembroke|II|Conference Carolinas|uncpbraves.com
+NC|Pfeiffer University|III|USA South Athletic Conference|gofalconsports.com
+NC|Queens University of Charlotte|I|Atlantic Sun Conference|queensathletics.com
+NC|Wake Forest University|I|Atlantic Coast Conference|godeacs.com
+NC|Western Carolina University|I|Southern Conference|catamountsports.com
+NC|William Peace University|III|USA South Athletic Conference|gopeacepacers.com
+NC|Wingate University|II|South Atlantic Conference|wingatebulldogs.com
+ND|University of Jamestown|II|Northern Sun Intercollegiate Conference|jimmiepride.com
+ND|University of Mary|II|Northern Sun Intercollegiate Conference|goumary.com
+ND|Minot State University|II|Northern Sun Intercollegiate Conference|msubeavers.com
+ND|North Dakota State University|I|The Summit League|gobison.com
+OH|University of Akron|I|Mid-American Conference|gozips.com
+OH|Ashland University|II|Great Midwest Athletic Conference|goashlandeagles.com
+OH|Baldwin Wallace University|III|Ohio Athletic Conference|bwyellowjackets.com
+OH|Bluffton University|III|Heartland Collegiate Athletic Conference|blufftonbeavers.com
+OH|Bowling Green State University|I|Mid-American Conference|bgsufalcons.com
+OH|Capital University|III|Ohio Athletic Conference|capital.edu/athletics
+OH|Case Western Reserve University|III|University Athletic Association|athletics.case.edu
+OH|Cedarville University|II|Great Midwest Athletic Conference|yellowjackets.cedarville.edu
+OH|University of Cincinnati|I|Big 12 Conference|gobearcats.com
+OH|University of Dayton|I|Atlantic 10 Conference|daytonflyers.com
+OH|Denison University|III|North Coast Athletic Conference|denisonbigred.com
+OH|University of Findlay|II|Great Midwest Athletic Conference|findlayoilers.com
+OH|Franciscan University of Steubenville|III|Presidents' Athletic Conference|franciscanathletics.com
+OH|Heidelberg University|III|Ohio Athletic Conference|bergathletics.com
+OH|Hiram College|III|Presidents' Athletic Conference|hiramterriers.com
+OH|John Carroll University|III|North Coast Athletic Conference|jcusports.com
+OH|Kent State University|I|Mid-American Conference|kentstatesports.com
+OH|Kenyon College|III|North Coast Athletic Conference|athletics.kenyon.edu
+OH|Lake Erie College|II|Great Midwest Athletic Conference|lakeeriestorm.com
+OH|Malone University|II|Great Midwest Athletic Conference|malonepioneers.com
+OH|Marietta College|III|Ohio Athletic Conference|pioneers.marietta.edu
+OH|Miami University (Ohio)|I|Mid-American Conference|miamiredhawks.com
+OH|Mount St. Joseph University|III|Heartland Collegiate Athletic Conference|msjlions.com
+OH|University of Mount Union|III|Ohio Athletic Conference|athletics.mountunion.edu
+OH|Muskingum University|III|Ohio Athletic Conference|fightingmuskies.com
+OH|Oberlin College|III|North Coast Athletic Conference|goyeo.com
+OH|Ohio Dominican University|II|Great Midwest Athletic Conference|ohiodominicanpanthers.com
+OH|Ohio Northern University|III|Ohio Athletic Conference|onusports.com
+OH|The Ohio State University|I|Big Ten Conference|ohiostatebuckeyes.com
+OH|Ohio University|I|Mid-American Conference|ohiobobcats.com
+OH|Ohio Wesleyan University|III|North Coast Athletic Conference|battlingbishops.com
+OH|Otterbein University|III|Ohio Athletic Conference|otterbeincardinals.com
+OH|Shawnee State University|II|Mountain East Conference|ssubears.com
+OH|Tiffin University|II|Great Midwest Athletic Conference|gotiffindragons.com
+OH|University of Toledo|I|Mid-American Conference|utrockets.com
+OH|Walsh University|II|Great Midwest Athletic Conference|athletics.walsh.edu
+OH|Wilmington College (Ohio)|III|Ohio Athletic Conference|wilmington.edu/athletics
+OH|Wittenberg University|III|North Coast Athletic Conference|wittenbergtigers.com
+OH|The College of Wooster|III|North Coast Athletic Conference|woosterathletics.com
+OH|Wright State University|I|Horizon League|wsuraiders.com
+OH|Xavier University|I|BIG EAST Conference|goxavier.com
+OH|Youngstown State University|I|Horizon League|ysusports.com
+OR|George Fox University|III|Northwest Conference|gfubruins.com
+OR|Lewis & Clark College|III|Northwest Conference|golcathletics.com
+OR|Linfield University|III|Northwest Conference|golinfieldwildcats.com
+OR|University of Oregon|I|Big Ten Conference|goducks.com
+OR|Oregon State University|I|Pac-12 Conference|osubeavers.com
+OR|Pacific University (Oregon)|III|Northwest Conference|goboxers.com
+OR|University of Portland|I|West Coast Conference|portlandpilots.com
+OR|Western Oregon University|II|Great Northwest Athletic Conference|wouwolves.com
+OR|Willamette University|III|Northwest Conference|willamette.prestosports.com
+PA|Albright College|III|Middle Atlantic Conference Commonwealth|albrightathletics.com
+PA|Allegheny College|III|Presidents' Athletic Conference|alleghenygators.com
+PA|Alvernia University|III|Middle Atlantic Conference Commonwealth|athletics.alvernia.edu
+PA|Arcadia University|III|Middle Atlantic Conference Freedom|arcadiaknights.com
+PA|Bloomsburg University of Pennsylvania|II|Pennsylvania State Athletic Conference|bloomsburgathletics.com
+PA|Bucknell University|I|Patriot League|bucknellbison.com
+PA|Cairn University|III|United East Conference|cairnhighlanders.com
+PA|Pennsylvania Western University, California|II|Pennsylvania State Athletic Conference|calvulcans.com
+PA|Carlow University|III|Allegheny Mountain Collegiate Conference|athletics.carlow.edu
+PA|Chatham University|III|Presidents' Athletic Conference|gochathamcougars.com
+PA|Chestnut Hill College|II|Central Atlantic Collegiate Conference|griffinathletics.com
+PA|Pennsylvania Western University, Clarion|II|Pennsylvania State Athletic Conference|clariongoldeneagles.com
+PA|Delaware Valley University|III|Middle Atlantic Conference Freedom|delval.edu/athletics
+PA|DeSales University|III|Middle Atlantic Conference Freedom|athletics.desales.edu
+PA|Dickinson College|III|Centennial Conference|dickinsonathletics.com
+PA|East Stroudsburg University of Pennsylvania|II|Pennsylvania State Athletic Conference|esuwarriors.com
+PA|Eastern University|III|Middle Atlantic Conference Commonwealth|goeasterneagles.com
+PA|Elizabethtown College|III|Landmark Conference|etownbluejays.com
+PA|Franklin & Marshall College|III|Centennial Conference|godiplomats.com
+PA|Gannon University|II|Pennsylvania State Athletic Conference|gannonsports.com
+PA|Geneva College|III|Presidents' Athletic Conference|athletics.geneva.edu
+PA|Gettysburg College|III|Centennial Conference|gettysburgsports.com
+PA|Grove City College|III|Presidents' Athletic Conference|athletics.gcc.edu
+PA|Gwynedd Mercy University|III|Atlantic East Conference|gwyneddathletics.com
+PA|Haverford College|III|Centennial Conference|haverfordathletics.com
+PA|Holy Family University|II|Central Atlantic Collegiate Conference|athletics.holyfamily.edu
+PA|Immaculata University|III|Atlantic East Conference|gomightymacs.com
+PA|Indiana University of Pennsylvania|II|Pennsylvania State Athletic Conference|iupathletics.com
+PA|Juniata College|III|Landmark Conference|juniatasports.net
+PA|Keystone College|III|United East Conference|gokcgiants.com
+PA|King's College (Pennsylvania)|III|Middle Atlantic Conference Freedom|kings.edu/athletics
+PA|Kutztown University of Pennsylvania|II|Pennsylvania State Athletic Conference|kubears.com
+PA|La Roche University|III|Allegheny Mountain Collegiate Conference|larochesports.com
+PA|La Salle University|I|Atlantic 10 Conference|goexplorers.com
+PA|Lafayette College|I|Patriot League|goleopards.com
+PA|Lancaster Bible College|III|United East Conference|lbcchargers.com
+PA|Lebanon Valley College|III|Middle Atlantic Conference Freedom|godutchmen.com
+PA|Lehigh University|I|Patriot League|lehighsports.com
+PA|Lincoln University (Pennsylvania)|II|Central Atlantic Collegiate Conference|lulions.com
+PA|Lock Haven University of Pennsylvania|II|Pennsylvania State Athletic Conference|lockhavenathletics.com
+PA|Lycoming College|III|Landmark Conference|lycomingathletics.com
+PA|Mansfield University of Pennsylvania|II|Pennsylvania State Athletic Conference|gomounties.com
+PA|Marywood University|III|Middle Atlantic Conference Freedom|marywoodpacers.com
+PA|Mercyhurst University|I|Northeast Conference|hurstathletics.com
+PA|Messiah University|III|Middle Atlantic Conference Commonwealth|gomessiah.com
+PA|Millersville University of Pennsylvania|II|Pennsylvania State Athletic Conference|millersvilleathletics.com
+PA|Misericordia University|III|Middle Atlantic Conference Freedom|misericordia.edu/athletics
+PA|Moravian University|III|Landmark Conference|moraviansports.com
+PA|Mount Aloysius College|III|Allegheny Mountain Collegiate Conference|mountieathletics.com
+PA|Muhlenberg College|III|Centennial Conference|muhlenbergsports.com
+PA|Neumann University|III|Middle Atlantic Conference Commonwealth|neumannathletics.com
+PA|Pennsylvania College of Technology|III|United East Conference|athletics.pct.edu
+PA|Penn State Altoona|III|Allegheny Mountain Collegiate Conference|psaltoonalions.com
+PA|Penn State Behrend|III|Allegheny Mountain Collegiate Conference|psblions.com
+PA|Penn State Harrisburg|III|United East Conference|athletics.hbg.psu.edu
+PA|Penn State Berks|III|United East Conference|psuberksathletics.com
+PA|University of Pennsylvania|I|The Ivy League|pennathletics.com
+PA|Penn State Abington|III|United East Conference|abingtonsports.com
+PA|Penn State Brandywine|III|United East Conference|psubrandywineathletics.com
+PA|Pennsylvania State University|I|Big Ten Conference|gopsusports.com
+PA|University of Pittsburgh|I|Atlantic Coast Conference|pittsburghpanthers.com
+PA|University of Pittsburgh, Bradford|III|Allegheny Mountain Collegiate Conference|athletics.pittbradford.org
+PA|University of Pittsburgh, Greensburg|III|Allegheny Mountain Collegiate Conference|pittgreensburgathletics.com
+PA|University of Pittsburgh, Johnstown|II|Pennsylvania State Athletic Conference|pittjohnstownathletics.com
+PA|Point Park University|II|Mountain East Conference|pointparksports.com
+PA|University of Scranton|III|Landmark Conference|athletics.scranton.edu
+PA|Seton Hill University|II|Pennsylvania State Athletic Conference|setonhill.edu/athletics
+PA|Shippensburg University of Pennsylvania|II|Pennsylvania State Athletic Conference|shipraiders.com
+PA|Slippery Rock University of Pennsylvania|II|Pennsylvania State Athletic Conference|rockathletics.com
+PA|Saint Joseph's University|I|Atlantic 10 Conference|sjuhawks.com
+PA|Saint Vincent College|III|Presidents' Athletic Conference|athletics.stvincent.edu
+PA|Susquehanna University|III|Landmark Conference|gosusqu.com
+PA|Swarthmore College|III|Centennial Conference|swarthmoreathletics.com
+PA|Thiel College|III|Presidents' Athletic Conference|thielathletics.com
+PA|Thomas Jefferson University|II|Central Atlantic Collegiate Conference|jeffersonrams.com
+PA|Ursinus College|III|Centennial Conference|ursinusathletics.com
+PA|University of Valley Forge|III|United East Conference|uvfpatriots.com
+RI|Brown University|I|The Ivy League|brownbears.com
+RI|Bryant University|I|America East Conference|bryantbulldogs.com
+RI|Johnson & Wales University (Providence)|III|Conference of New England|providence.jwuathletics.com
+RI|University of Rhode Island|I|Atlantic 10 Conference|gorhody.com
+RI|Rhode Island College|III|Little East Conference|goanchormen.com
+RI|Roger Williams University|III|Conference of New England|rwuhawks.com
+RI|Salve Regina University|III|New England Women's and Men's Athletic Conference|salveathletics.com
+SC|Anderson University (South Carolina)|II|South Atlantic Conference|autrojans.com
+SC|Benedict College|II|Southern Intercol. Ath. Conf.|benedicttigers.com
+SC|College of Charleston|I|Coastal Athletic Association|cofcsports.com
+SC|Charleston Southern University|I|Big South Conference|csusports.com
+SC|The Citadel|I|Southern Conference|citadelsports.com
+SC|Claflin University|II|Peach Belt Conference|athletics.claflin.edu
+SC|Clemson University|I|Atlantic Coast Conference|clemsontigers.com
+SC|Coastal Carolina University|I|Sun Belt Conference|goccusports.com
+SC|Coker University|II|South Atlantic Conference|cokercobras.com
+SC|Erskine College|II|Conference Carolinas|erskinesports.com
+SC|Francis Marion University|II|Conference Carolinas|fmupatriots.com
+SC|Lander University|II|Peach Belt Conference|landerbearcats.com
+SC|Newberry College|II|South Atlantic Conference|newberrywolves.com
+SC|North Greenville University|II|Conference Carolinas|nguathletics.com
+SC|Presbyterian College|I|Big South Conference|gobluehose.com
+SC|University of South Carolina, Columbia|I|Southeastern Conference|gamecocksonline.com
+SC|University of South Carolina Aiken|II|Peach Belt Conference|pacersports.com
+SC|University of South Carolina Beaufort|II|Peach Belt Conference|uscbathletics.com
+SC|University of South Carolina Upstate|I|Big South Conference|upstatespartans.com
+SC|Southern Wesleyan University|II|Conference Carolinas|swuathletics.com
+SC|Winthrop University|I|Big South Conference|winthropeagles.com
+SC|Wofford College|I|Southern Conference|wofford.edu/athletics
+TN|Austin Peay State University|I|United Athletic Conference|letsgopeay.com
+TN|Belmont University|I|Missouri Valley Conference|belmontbruins.com
+TN|Carson-Newman University|II|South Atlantic Conference|cneagles.com
+TN|Christian Brothers University|II|Gulf South Conference|cbubucs.com
+TN|East Tennessee State University|I|Southern Conference|etsubucs.com
+TN|King University|II|Conference Carolinas|kingtornado.com
+TN|Lane College|II|Southern Intercol. Ath. Conf.|golcdragons.com
+TN|Lee University|II|Gulf South Conference|leeuflames.com
+TN|LeMoyne-Owen College|II|Southern Intercol. Ath. Conf.|athletics.loc.edu
+TN|Lincoln Memorial University|II|South Atlantic Conference|lmurailsplitters.com
+TN|Lipscomb University|I|Atlantic Sun Conference|lipscombsports.com
+TN|Maryville College (Tennessee)|III|Southern Athletic Association|mcscots.com
+TN|University of Memphis|I|American Conference|gotigersgo.com
+TN|Middle Tennessee State University|I|Conference USA|goblueraiders.com
+TN|Rhodes College|III|Southern Athletic Association|rhodeslynx.com
+TN|University of the South|III|Southern Athletic Association|sewaneetigers.com
+TN|Tennessee Technological University|I|Southern Conference|ttusports.com
+TN|University of Tennessee, Knoxville|I|Southeastern Conference|utsports.com
+TN|University of Tennessee at Martin|I|Ohio Valley Conference|utmsports.com
+TN|Trevecca Nazarene University|II|Gulf South Conference|tnutrojans.com
+TN|Tusculum University|II|South Atlantic Conference|tusculumpioneers.com
+TN|Union University|II|Gulf South Conference|uuathletics.com
+TN|Vanderbilt University|I|Southeastern Conference|vucommodores.com
