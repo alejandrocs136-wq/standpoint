@@ -522,6 +522,14 @@
   try { window.addEventListener("popstate", function () { pushedSchool = false; if (tab === "schools" && schoolView) { schoolView = null; render(); window.scrollTo(0, 0); } }); } catch (e) {}
 
   function renderTabs() {
+    $("#tabs").style.gridTemplateColumns = "";
+    if (isCoachApp()) {
+      var ok = !!store.club && !clubView.edit;
+      $("#tabs").style.gridTemplateColumns = "repeat(5, 1fr)";
+      $("#tabs").innerHTML = Object.keys(COACH_TABS).map(function (k) { return '<button type="button" id="ctab-' + k + '"' + (coachTab === k ? ' aria-current="page"' : "") + (ok ? "" : " disabled") + ">" + CICONS[k] + "<span>" + COACH_TABS[k] + "</span></button>"; }).join("");
+      Object.keys(COACH_TABS).forEach(function (k) { $("#ctab-" + k).addEventListener("click", function () { coachTab = k; clubPlayer = null; render(); window.scrollTo(0, 0); }); });
+      return;
+    }
     var p = cur();
     $("#tabs").innerHTML = Object.keys(TAB_NAMES).map(function (k) {
       return '<button type="button" id="tab-' + k + '"' + (tab === k ? ' aria-current="page"' : "") + (p && !p._setup ? "" : " disabled") + ">" + ICONS[k] + "<span>" + TAB_NAMES[k] + "</span></button>";
@@ -545,6 +553,9 @@
   }
 
   function render() {
+    if (tab === "club") { tab = "home"; store.app = "coach"; }
+    if (isCoachApp()) { renderCoachApp(); renderCoachBar(); renderTabs(); setBadge(); return; }
+    setBadge();
     var p = cur();
     if (!p) { renderProfileForm(null); }
     else if (tab === "profile") renderProfileForm(p);
@@ -577,7 +588,8 @@
     var tog = function (group, key, label, on) { return '<button type="button" class="tog" data-group="' + group + '" data-key="' + key + '" aria-pressed="' + (on ? "true" : "false") + '">' + label + "</button>"; };
     $("#view").innerHTML =
       '<form class="card" id="pform" autocomplete="off">' +
-        "<div><h2>" + (isNew ? "Set up your player profile" : "Edit profile") + '</h2><p class="muted small" style="margin:4px 0 0">' + (isNew ? "Fill this in once. After that you only add new numbers." : "Changes save to this player.") + "</p></div>" +
+        "<div><h2>" + (isNew ? "Set up your player profile" : "Edit profile") + '</h2><p class="muted small" style="margin:4px 0 0">' + (isNew ? "Fill this in once. After that you only add new numbers." : "Changes save to this player.") + "</p>" +
+          (isNew ? '<div class="btns"><button type="button" class="btn ghost" id="f-coachapp">I\'m a coach: open the Coach app</button></div>' : "") + "</div>" +
         (canSave ? "" : '<div class="warn">This browser isn\'t saving. Entries reset when you close the page.</div>') +
         (FEATURES.softball ? '<div class="field"><span class="label" id="l-sport">Sport</span><div class="toggles" role="group" aria-labelledby="l-sport">' + tog("sport", "baseball", "Baseball", d.sport === "baseball") + tog("sport", "softball", "Softball", d.sport === "softball") + "</div></div>" : "") +
         '<div class="field"><label for="f-name">Player name</label><input type="text" id="f-name" value="' + esc(d.name) + '" placeholder="First Last" required></div>' +
@@ -629,6 +641,7 @@
         renderProfileForm(p);
       });
     });
+    if ($("#f-coachapp")) $("#f-coachapp").addEventListener("click", function () { draft = null; if (!store.current && store.players.length) store.current = store.players[0].id; openCoachApp(); });
     var cancel = $("#f-cancel");
     if (cancel) cancel.addEventListener("click", function () {
       draft = null;
@@ -654,9 +667,10 @@
       if (isNew) {
         var np = { id: uid(), name: d.name.trim(), grad: d.grad, school: d.school.trim(), gpa: d.gpa, positions: d.positions, bats: d.bats, throws: d.throws,
                    height: d.height.trim(), weight: d.weight, goals: d.goals, xhandle: d.xhandle.trim(), email: d.email.trim(),
-                   phone: d.phone.trim(), schedule: d.schedule, pitches: d.pitches.trim(), range: d.range, sport: d.sport, search: d.search, logs: [], tasks: {}, faults: [] };
+                   phone: d.phone.trim(), schedule: d.schedule, scheduleUpdated: String(d.schedule || "").trim() ? todayStr : "", pitches: d.pitches.trim(), range: d.range, sport: d.sport, search: d.search, logs: [], tasks: {}, faults: [] };
         store.players.push(np); store.current = np.id; persist(); draft = null; schoolView = null; schoolFilter.show = null; schoolFilter.state = "range"; schoolFilter.levels = []; schoolFilter.q = ""; searchF.sport = null; go("numbers"); toast("Profile saved. Now add your numbers.");
       } else {
+        if (String(d.schedule || "").trim() !== String(p.schedule || "").trim()) p.scheduleUpdated = todayStr;
         ["name", "grad", "school", "gpa", "positions", "bats", "throws", "height", "weight", "goals", "xhandle", "email", "phone", "schedule", "pitches", "range", "sport", "search"].forEach(function (k) { p[k] = typeof d[k] === "string" ? d[k].trim() : d[k]; });
         persist(); draft = null; go("home"); toast("Profile saved. StandPoint updated.");
       }
@@ -2393,6 +2407,8 @@
         '<div class="btns"><button type="button" class="btn primary" id="copy-cap">Copy caption</button>' +
           '<a class="btn red" id="open-x" href="https://x.com/intent/post?text=' + encodeURIComponent(caption) + '" target="_blank" rel="noopener">Open X with this caption</a></div>' +
         '<span class="hint">In X, attach the same video from your camera roll, then tap Post. You post it yourself; the app never posts for you.</span>' +
+        '<div class="btns"><button type="button" class="btn" id="posted">I posted it</button></div>' +
+        '<span class="hint">' + ((p.posts || []).length ? "Posts logged: " + p.posts.length + ", last " + fmtShortDate(p.posts.map(function (q) { return q.date; }).sort().slice(-1)[0]) + ". " : "") + (clubOf(p) ? "Your coaches see when you post, not what you post." : "Logging your posts keeps your streak going.") + "</span>" +
       "</section>";
     $("#clip").addEventListener("change", function (e) {
       var f = e.target.files && e.target.files[0];
@@ -2413,6 +2429,7 @@
     $("#save-tags").addEventListener("click", function () { store.tags = $("#tags").value; persist(); renderPost(p); toast("Tag list saved."); });
     $("#cap").addEventListener("input", function () { $("#open-x").href = "https://x.com/intent/post?text=" + encodeURIComponent($("#cap").value); });
     $("#copy-cap").addEventListener("click", function () { copyText($("#cap").value, "Caption copied. Paste it in X.", $("#cap")); });
+    $("#posted").addEventListener("click", function () { p.posts = p.posts || []; p.posts.push({ date: todayStr, session: post.session, created: Date.now() }); persist(); renderPost(p); toast("Post logged."); });
   }
 
   // ---------- More: plans, club admin, coaching, college-coach search, install ----------
@@ -2441,13 +2458,13 @@
   function clubRoster() { var c = store.club; if (!c) return []; return store.players.filter(function (x) { return (c.roster || []).indexOf(x.id) >= 0; }); }
   function moreBack() { return '<div class="backbar"><button type="button" class="btn" id="mback">← Back to More</button></div>'; }
   function bindMore() {
-    onAll("[data-mv]", "click", function (b) { moreView = b.getAttribute("data-mv"); tab = "more"; render(); window.scrollTo(0, 0); });
+    onAll("[data-mv]", "click", function (b) { var v = b.getAttribute("data-mv"); if (v === "club" || v === "coachapp") { moreView = "menu"; openCoachApp(); return; } moreView = v; tab = "more"; render(); window.scrollTo(0, 0); });
     var mb = $("#mback"); if (mb) mb.addEventListener("click", function () { moreView = "menu"; clubView.edit = false; tab = "more"; render(); window.scrollTo(0, 0); });
   }
 
   function renderMore(p) {
     if (moreView === "plans") return renderPlans(p);
-    if (moreView === "club") { moreView = "menu"; if (store.club && !clubView.edit) { tab = "club"; clubPlayer = null; clubTab = (store.club.coaches || []).length ? "roster" : "settings"; return renderClubHQ(p); } return renderClubSetup(p); }
+    if (moreView === "club") moreView = "menu";
     if (moreView === "join") return renderJoin(p);
     if (moreView === "coach") return renderCoachInbox(p);
     if (moreView === "search" && FEATURES.collegeSearch) return renderCollegeSearch(p);
@@ -2456,8 +2473,7 @@
     var items = [
       ["plans", "Plans and payments", "Individual plan, club license and the coaching upgrade." + (store.plan ? " Current: " + esc(planName(store.plan.k)) + (store.plan.test ? " (test)" : "") + "." : "")],
       ["join", "Your club", clubOf(p) ? "You're on " + esc(store.club.name) + ". See who your coaches are." : "Join your travel club with the code your coach gave you."],
-      ["club", "Coach view", store.club ? esc(store.club.name) + " · " + clubRoster().length + " player" + (clubRoster().length === 1 ? "" : "s") + ". Recruiting for every player, the lift plan, throwing and team routine." : "For travel club coaches: see every player's recruiting, set the lift plan, throwing program and team routine."],
-      ["coach", "Coach inbox", n ? n + " video review" + (n > 1 ? "s" : "") + " waiting." : "Video reviews players send to their coach land here."],
+      ["coachapp", "Coach app", "Demo: in the real version coaches have their own app and login. Open it to see what your coach sees."],
       FEATURES.collegeSearch ? ["search", "College coach search", "What a college coach sees: only players who turned it on, with a parent's OK."] : null,
       ["install", "Put StandPoint on your phone", "Add it to your home screen like an app. App Store and Google Play come next."]
     ].filter(Boolean);
@@ -2615,25 +2631,8 @@
     var n = function (k) { return rows.filter(function (r) { return r.t.steps[k]; }).length; };
     return { list: rows.length, emailed: n("email"), replies: n("reply"), offers: rows.filter(function (r) { return r.t.steps.offer || r.t.steps.commit; }).length, committed: rows.filter(function (r) { return r.t.steps.commit; })[0], due: rows.filter(function (r) { return r.due; }).length };
   }
-  function renderClubHQ(p) {
-    var c = store.club;
-    if (!c || clubView.edit) return renderClubSetup(p);
-    normClub(c);
-    var me = coachMe(c);
-    var tabs = [["roster", "Roster"], ["lifts", "Lifts"], ["throwing", "Throw"], ["routine", "Routine"], ["settings", "Club"]];
-    var top = '<div class="backbar"><button type="button" class="btn" id="hq-back">← Back to player view</button></div>' +
-      '<section class="card"><div><div class="eyebrow">Coach view · ' + esc(c.type || "Club") + "</div><h2>" + esc(c.name) + "</h2></div>" +
-      (c.coaches.length ? '<div class="field"><label for="hq-as">You are</label><select id="hq-as">' + c.coaches.map(function (x) { return '<option value="' + esc(x.id) + '"' + (me && x.id === me.id ? " selected" : "") + ">" + esc(x.name) + (x.role ? " · " + esc(x.role) : "") + "</option>"; }).join("") + "</select></div>" :
-        '<div class="warn">Add yourself as a coach in the Club tab first.</div>') +
-      '<div class="toggles seg" role="group" aria-label="Coach sections">' + tabs.map(function (t) { return '<button type="button" class="tog" data-ctab="' + t[0] + '" aria-pressed="' + (clubTab === t[0]) + '">' + t[1] + "</button>"; }).join("") + "</div></section>";
-    var body = clubTab === "lifts" ? clubLiftsHTML(c) : clubTab === "throwing" ? clubThrowHTML(c) : clubTab === "routine" ? clubRoutineHTML(c) : clubTab === "settings" ? clubSettingsHTML(c) : clubPlayer ? clubPlayerHTML(c, clubPlayer) : clubRosterHTML(c);
-    $("#view").innerHTML = top + body;
-    $("#hq-back").addEventListener("click", function () { clubPlayer = null; go("home"); });
-    if ($("#hq-as")) $("#hq-as").addEventListener("change", function (e) { c.as = e.target.value; persist(); });
-    onAll("[data-ctab]", "click", function (b) { clubTab = b.getAttribute("data-ctab"); clubPlayer = null; render(); window.scrollTo(0, 0); });
-    bindClubBody(p, c);
-  }
-  function redrawHQ(p) { var y = window.scrollY; renderClubHQ(p); window.scrollTo(0, y); }
+  function renderClubHQ() { openCoachApp(); }
+  function redrawHQ() { var y = window.scrollY; render(); window.scrollTo(0, y); }
 
   function clubRosterHTML(c) {
     var roster = clubRoster();
@@ -2673,7 +2672,9 @@
       '<section class="card"><div><div class="eyebrow">Class of ' + esc(x.grad) + " · " + esc(posLabel(x)) + (x.bats ? " · B/T " + esc(x.bats) + "/" + esc(x.throws) : "") + "</div><h2>" + esc(x.name) + '</h2><div class="small">' + esc(x.school || "School not listed") + (x.gpa ? " · GPA " + esc(x.gpa) : "") + "</div></div>" +
       '<div class="small">' + (x.xhandle ? '<a href="https://x.com/' + encodeURIComponent(x.xhandle.replace(/^@/, "")) + '" target="_blank" rel="noopener">@' + esc(x.xhandle.replace(/^@/, "")) + "</a>" : '<span class="pill notyet">No X account</span>') + (x.email ? ' · <a href="mailto:' + esc(x.email) + '">' + esc(x.email) + "</a>" : "") + "</div>" +
       (metricLines(x, lt).length ? '<ul class="plain small">' + metricLines(x, lt).map(function (l) { return "<li>" + esc(l) + "</li>"; }).join("") + "</ul>" : '<p class="small muted" style="margin:0">No numbers logged yet.</p>') +
-      '<div class="small"><strong>Training:</strong> ' + liftsLast14(T) + " lifts in 2 weeks" + (sq ? " · squat est. max " + Math.round(sq) + " lb" : "") + (lastS ? " · last: " + esc(lastS.name) + ", " + fmtShortDate(lastS.date) : "") + "</div></section>";
+      '<div class="small"><strong>Training:</strong> ' + liftsLast14(T) + " lifts in 2 weeks" + (sq ? " · squat est. max " + Math.round(sq) + " lb" : "") + (lastS ? " · last: " + esc(lastS.name) + ", " + fmtShortDate(lastS.date) : "") + "</div>" +
+      '<div class="small"><strong>Posting:</strong> ' + (postInfo(x).last ? "last post " + fmtShortDate(postInfo(x).last) + ", " + postInfo(x).n30 + " in 30 days" : "no posts logged") + "</div>" +
+      '<div class="small"><strong>Schedule:</strong> ' + esc(scheduleLine(x)) + "</div>" + (scheduleLines(x).length ? '<ul class="plain small">' + scheduleLines(x).map(function (l) { return "<li>" + esc(l) + "</li>"; }).join("") + "</ul>" : "") + "</section>";
     var rec = '<section class="card"><h3>Recruiting</h3><div class="small">' + k.list + " schools · " + k.emailed + " emailed · " + k.replies + " replied · " + k.offers + " offers" + (k.due ? ' · <span class="pill close">' + k.due + " due</span>" : "") + "</div>" +
       (rows.length ? '<div class="hist">' + rows.map(function (r) {
         var done = STEPS.filter(function (st) { return r.t.steps[st[0]]; }).map(function (st) { return st[2] + " " + fmtShortDate(r.t.steps[st[0]]); });
@@ -2681,10 +2682,11 @@
         return '<div class="hitem"><div class="h"><span>' + esc(r.s.name) + '</span><span class="muted">' + esc(r.s.level) + "</span></div>" +
           '<div class="small">' + (done.length ? esc(done.join(" · ")) : "On the list, no contact yet") + (ups.length ? " · " + ups.length + " update" + (ups.length > 1 ? "s" : "") + ", last " + fmtShortDate(ups[ups.length - 1]) : "") + "</div>" +
           (r.due ? '<div class="small"><span class="pill close">Update due</span> last contact ' + fmtShortDate(r.lc) + "</div>" : "") +
-          (r.t.notes && r.t.notes.trim() ? '<div class="small"><strong>What coaches said:</strong> <span style="white-space:pre-line">' + esc(r.t.notes.trim()) + "</span></div>" : "") +
+          (x.shareNotes !== false && r.t.notes && r.t.notes.trim() ? '<div class="small"><strong>What coaches said:</strong> <span style="white-space:pre-line">' + esc(r.t.notes.trim()) + "</span></div>" : "") +
           '<div class="btns"><a class="btn" href="' + esc(coachEmail(c, me, x, r.s)) + '">Email their coach for him</a>' +
           (r.t.steps.coachnote ? "" : '<button type="button" class="btn ghost" data-cvouch="' + esc(x.id) + "|" + esc(r.s.id) + '">I reached out for him</button>') + "</div></div>";
       }).join("") + "</div>" : '<p class="small muted" style="margin:0">No schools on his list yet.</p>') +
+      (x.shareNotes === false ? '<span class="hint">He keeps his school notes private. You still see his list and who he contacted.</span>' : "") +
       '<span class="hint">"Email their coach for him" writes a recommendation from you with his numbers and schedule. "I reached out for him" checks off "My coach reached out" in his tracker.</span></section>';
     var mine = c.nudges.filter(function (n) { return n.pid === x.id; }).slice(-5).reverse();
     var nudge = '<section class="card"><h3>Send ' + esc(x.name.split(" ")[0]) + " a nudge</h3>" +
@@ -2746,9 +2748,7 @@
   }
   function clubSettingsHTML(c) {
     var roster = clubRoster(), lic = store.plan && store.plan.k === "club";
-    var head = '<section class="card"><div class="small"><strong>Join code:</strong> <span class="num">' + esc(c.code) + "</span>. Players enter it under More → Your club.</div>" +
-      '<div class="small"><strong>License:</strong> ' + (lic ? "club license" + (store.plan.test ? " (test)" : "") : "not set up yet") + ' · <button type="button" class="linkbtn" data-mv="plans">Plans</button></div>' +
-      '<div class="btns"><button type="button" class="btn" id="cl-edit">Edit club name and type</button></div></section>';
+    var head = '<section class="card"><div><div class="eyebrow">' + esc(c.type || "Club") + "</div><h3>" + esc(c.name) + '</h3></div><div class="btns"><button type="button" class="btn" id="cl-edit">Edit club name and type</button></div></section>';
     var season = '<section class="card"><h3>Season and note</h3><div class="field"><label for="cp-season">Season</label><select id="cp-season"><option value="off"' + (c.plan.season !== "in" ? " selected" : "") + '>Off-season</option><option value="in"' + (c.plan.season === "in" ? " selected" : "") + ">In-season (2 lift days)</option></select></div>" +
       '<div class="field"><label for="cp-note">Note from the coaches</label><input type="text" id="cp-note" value="' + esc(c.plan.note || "") + '" placeholder="Lift before practice on Mon and Thu"></div>' +
       '<div class="btns"><button type="button" class="btn red" id="cp-apply"' + (roster.length ? "" : " disabled") + ">Save and send to " + roster.length + " player" + (roster.length === 1 ? "" : "s") + "</button></div></section>";
@@ -2758,7 +2758,7 @@
       '<form id="cc-form" style="display:grid;gap:10px" autocomplete="off"><div class="row2"><div class="field"><label for="cc-name">Coach name</label><input type="text" id="cc-name" placeholder="First Last"></div>' +
       '<div class="field"><label for="cc-role">Role</label><input type="text" id="cc-role" placeholder="Hitting coach"></div></div>' +
       '<div class="field"><label for="cc-email">Email</label><input type="email" id="cc-email"></div><div class="btns"><button type="submit" class="btn primary">Add coach</button></div></form></section>';
-    var rosterCard = '<section class="card"><h3>Players on this device</h3><p class="small muted" style="margin:0">Check the ones on your roster. In the full app, players join from their own phones with your code.</p>' +
+    var rosterCard = '<section class="card"><h3>Demo: players on this device</h3><p class="small muted" style="margin:0">In the real app, players join from their own phones with your code. Here you can also check them onto your roster.</p>' +
       (store.players.length ? '<div class="tasks">' + store.players.map(function (x) { var on = c.roster.indexOf(x.id) >= 0; return '<label class="task"><input type="checkbox" data-roster="' + esc(x.id) + '"' + (on ? " checked" : "") + "><span><strong>" + esc(x.name) + '</strong> <span class="muted small">· ' + esc(posLabel(x)) + " · " + esc(x.grad) + "</span></span></label>"; }).join("") + "</div>" : "") +
       '<div class="btns"><button type="button" class="btn" id="cl-addp">+ Add a player</button></div></section>';
     return head + season + coaches + rosterCard;
@@ -2810,8 +2810,8 @@
     // routine
     onAll("[data-rt]", "input", function (el) { c.routine[el.getAttribute("data-rt")] = el.value; persist(); });
     // settings
-    if ($("#cl-edit")) $("#cl-edit").addEventListener("click", function () { clubView.edit = true; renderClubHQ(p); });
-    if ($("#cl-addp")) $("#cl-addp").addEventListener("click", function () { startNewPlayer(); });
+    if ($("#cl-edit")) $("#cl-edit").addEventListener("click", function () { clubView.edit = true; render(); });
+    if ($("#cl-addp")) $("#cl-addp").addEventListener("click", function () { store.app = "player"; persist(); startNewPlayer(); });
     onAll("[data-roster]", "change", function (cb) {
       var id = cb.getAttribute("data-roster"), i = c.roster.indexOf(id), x = store.players.filter(function (q) { return q.id === id; })[0];
       if (cb.checked && i < 0) { c.roster.push(id); if (x) applyClub(x); }
@@ -2833,20 +2833,19 @@
 
   function renderClubSetup(p) {
     var c = store.club, d = c || { name: "", type: "Travel club", email: "" };
-    $("#view").innerHTML = moreBack() + '<form class="card" id="cl-form" autocomplete="off"><div><div class="eyebrow">Coach view</div><h2>' + (c ? "Edit your club" : "Set up your club") + "</h2></div>" +
-      (c ? "" : '<p class="small" style="margin:0">For a travel club, training facility or showcase. Your players join with a code, and your coaches see everyone\'s recruiting, set the lift plan, throwing program and team routine, and nudge players who fall behind.</p>') +
+    $("#view").innerHTML = '<form class="card" id="cl-form" autocomplete="off"><div><div class="eyebrow">Coach app</div><h2>' + (c ? "Edit your club" : "Set up your club") + "</h2></div>" +
+      (c ? "" : '<p class="small" style="margin:0">For a travel club, training facility or showcase. Your players join with a code. Your coaches track every player\'s recruiting, posting and schedule, set the lift plan, throwing program and team routine, and nudge players who fall behind.</p>') +
       '<div class="field"><label for="cl-name">Name</label><input type="text" id="cl-name" value="' + esc(d.name) + '" placeholder="Infinite Hitting" required></div>' +
       '<div class="row2"><div class="field"><label for="cl-type">Type</label><select id="cl-type">' + ["Travel club", "Training facility", "Showcase"].map(function (t) { return "<option" + (t === d.type ? " selected" : "") + ">" + t + "</option>"; }).join("") + "</select></div>" +
       '<div class="field"><label for="cl-email">Admin email</label><input type="email" id="cl-email" value="' + esc(d.email || "") + '"></div></div>' +
       '<div class="btns"><button type="submit" class="btn red">Save club</button>' + (c ? '<button type="button" class="btn" id="cl-cancel">Cancel</button>' : "") + "</div></form>";
-    bindMore();
-    if ($("#cl-cancel")) $("#cl-cancel").addEventListener("click", function () { clubView.edit = false; go("club"); });
+    if ($("#cl-cancel")) $("#cl-cancel").addEventListener("click", function () { clubView.edit = false; render(); });
     $("#cl-form").addEventListener("submit", function (e) {
       e.preventDefault();
       var nm = $("#cl-name").value.trim(); if (!nm) return;
       if (!store.club) store.club = normClub({ code: uid().slice(0, 6).toUpperCase() });
       store.club.name = nm; store.club.type = $("#cl-type").value; store.club.email = $("#cl-email").value.trim();
-      clubView.edit = false; clubTab = store.club.coaches.length ? "roster" : "settings"; moreView = "menu"; persist(); go("club"); toast("Club saved.");
+      clubView.edit = false; store.app = "coach"; coachTab = store.club.coaches.length ? "team" : "club"; persist(); render(); window.scrollTo(0, 0); toast("Club saved.");
     });
   }
   // Player side: join a club with its code
@@ -2856,8 +2855,10 @@
       $("#view").innerHTML = moreBack() + '<section class="card"><div><div class="eyebrow">Your club</div><h2>' + esc(c.name) + "</h2></div>" +
         '<p class="small" style="margin:0">Your coaches set your lift plan, throwing and team routine, and they can see your recruiting so they can help: who you\'ve emailed, who replied and what they said.</p>' +
         (c.coaches.length ? '<ul class="plain">' + c.coaches.map(function (x) { return "<li>" + esc(x.name) + (x.role ? ", " + esc(x.role) : "") + "</li>"; }).join("") + "</ul>" : "") +
+        '<label class="task"><input type="checkbox" id="jn-share"' + (p.shareNotes !== false ? " checked" : "") + '><span><strong>Share my school notes with my coaches</strong><br><span class="muted small">Your coaches always see your school list, who you\'ve contacted and where each school stands. Your notes are your choice. They never see your messages.</span></span></label>' +
         '<div class="btns"><button type="button" class="btn ghost" id="jn-leave">Leave ' + esc(c.name) + "</button></div></section>";
       bindMore();
+      $("#jn-share").addEventListener("change", function (e) { p.shareNotes = e.target.checked; persist(); toast(e.target.checked ? "Your coaches can see your notes." : "Your notes are private."); });
       $("#jn-leave").addEventListener("click", function (b) {
         var btn = $("#jn-leave"); if (btn.getAttribute("data-armed") !== "1") { btn.setAttribute("data-armed", "1"); btn.textContent = "Tap again to leave"; return; }
         c.roster.splice(c.roster.indexOf(p.id), 1); delete trainOf(p).club; persist(); renderJoin(p); toast("You left the club.");
@@ -2887,7 +2888,7 @@
       '<div class="field"><label for="cr-video">Video link</label><input type="text" id="cr-video" placeholder="YouTube (unlisted), Google Drive, Hudl or X"></div>' +
       '<div class="field"><label for="cr-ask">What should they look at?</label><textarea id="cr-ask" rows="3" placeholder="' + (hitter ? "Rolling over on outside pitches; late on velo" : "Losing the zone from the stretch") + '"></textarea></div>' +
       '<div class="btns"><button type="button" class="btn red" id="cr-send">Send for review</button></div>' +
-      '<span class="hint">It goes to the coach\'s inbox (More → Coach inbox), and you can email them the link. In the full app you upload straight from your camera roll, and the coach is paid through the coaching upgrade.</span>';
+      '<span class="hint">Your coach sees it in their Coach app, and you can email them the link. In the full app you upload straight from your camera roll, and the coach is paid through the coaching upgrade.</span>';
     var list = mine.map(function (r) {
       var done = r.status === "done";
       var h = '<div class="h"><span>' + fmtDate(r.date) + " · " + esc(r.coach) + '</span><span class="pill ' + (done ? "good" : "close") + '">' + (done ? "Reviewed " + fmtDate(r.replied) : "Waiting on coach") + "</span></div>" +
@@ -2941,9 +2942,9 @@
       return '<div class="hitem"><div class="h"><span>' + esc(pl.name) + " · " + fmtDate(r.replied) + "</span><span>" + r.drills.length + " drill" + (r.drills.length === 1 ? "" : "s") + '</span></div><div class="small" style="white-space:pre-line">' + esc(r.reply) + "</div>" +
         (pl.email ? '<div class="btns"><a class="btn" href="mailto:' + esc(pl.email) + "?subject=" + encodeURIComponent("Your video breakdown is ready") + "&body=" + encodeURIComponent(pl.name + ",\n\nYour breakdown and drills are in StandPoint under Train → Skills.\n\n" + r.reply) + '">Email ' + esc(pl.name.split(" ")[0]) + "</a></div>" : "") + "</div>";
     }).join("") + "</div></details></section>" : "";
-    $("#view").innerHTML = moreBack() + '<section class="card"><div><div class="eyebrow">Coach inbox</div><h2>Video reviews</h2></div><p class="small" style="margin:0">' +
+    $("#view").innerHTML = (isCoachApp() ? coachTrainSeg() : moreBack()) + '<section class="card"><div><div class="eyebrow">Coach inbox</div><h2>Video reviews</h2></div><p class="small" style="margin:0">' +
       (open.length ? open.length + " waiting. Watch, write what you see, pick drills, send. It shows up in the player's Train → Skills." : "Nothing waiting. Players send video from Train → Skills → Coaching upgrade.") + "</p></section>" + cards + doneList;
-    bindMore();
+    bindMore(); if (isCoachApp()) bindCoachExtras(store.club);
     onAll("[data-csend]", "click", function (b) {
       var id = b.getAttribute("data-csend"), r = store.coaching.filter(function (x) { return x.id === id; })[0]; if (!r) return;
       var txt = $("#ci-" + id).value.trim(); if (!txt) { toast("Write your breakdown first."); return; }
@@ -3022,6 +3023,149 @@
       "<li>The developer wraps this app for both stores once accounts and the database are built, then submits it with screenshots and the age-rating forms.</li></ul></section>";
     bindMore();
     if ($("#inst")) $("#inst").addEventListener("click", function () { var d = deferredInstall; deferredInstall = null; try { d.prompt(); } catch (e) {} renderInstall(p); });
+  }
+
+  // ---------- Coach app ----------
+  // Prototype: one page holds both apps so they share this device's data. The real build is two apps
+  // (Player and Coach) with their own logins, reading the same database.
+  var coachTab = "team", trainSub = "lifts", recF = { who: "all", st: "all" };
+  var COACH_TABS = { team: "Team", recruiting: "Recruit", training: "Training", schedule: "Schedule", club: "Club" };
+  var CICONS = {
+    team: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 19c0-3 3-5 6-5s6 2 6 5M15 14.5c2.5 0 5 1.5 5 4.5"/></svg>',
+    recruiting: ICONS.recruit, training: ICONS.train,
+    schedule: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>',
+    club: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/></svg>'
+  };
+  var ACT_LABEL = { email: "Emailed", dm: "Sent an X DM to", coachnote: "A club coach reached out to", reply: "Heard back from", camp: "Went to a camp at", saw: "Was seen in person by", visit: "Visited", offer: "Got an offer from", commit: "Committed to", follow: "Followed" };
+  function isCoachApp() { return store.app === "coach"; }
+  function openCoachApp() { store.app = "coach"; clubPlayer = null; coachTab = store.club && (store.club.coaches || []).length ? "team" : "club"; persist(); render(); window.scrollTo(0, 0); }
+  function openPlayerApp() { store.app = "player"; tab = "home"; persist(); render(); window.scrollTo(0, 0); }
+  function setBadge() { var bd = document.querySelector(".brand .badge"); if (bd) bd.textContent = isCoachApp() ? "Coach" : "Prototype"; }
+  function postInfo(x) {
+    var ps = (x.posts || []).map(function (q) { return q.date; }).sort();
+    return { last: ps.length ? ps[ps.length - 1] : null, n30: ps.filter(function (d) { return daysSince(d) <= 30; }).length };
+  }
+  function scheduleLine(x) {
+    var s = scheduleLines(x);
+    return s.length ? s.length + " upcoming event" + (s.length > 1 ? "s" : "") + (x.scheduleUpdated ? ", updated " + (daysSince(x.scheduleUpdated) === 0 ? "today" : daysSince(x.scheduleUpdated) + " days ago") : "") : "none listed";
+  }
+  function noPlayersCard(c) {
+    return '<section class="card"><h3>No players yet</h3><p class="small" style="margin:0">Invite your players from the Club tab. They enter code <strong class="num">' + esc(c.code) + "</strong> in their app and show up here.</p></section>";
+  }
+
+  function renderCoachBar() {
+    var bar = $("#player-bar"), c = store.club, me = c ? coachMe(normClub(c)) : null;
+    bar.innerHTML = (c && c.coaches.length ? '<label class="sr" for="coach-select" style="position:absolute;left:-9999px">Coach</label><select id="coach-select">' + c.coaches.map(function (x) { return '<option value="' + esc(x.id) + '"' + (me && x.id === me.id ? " selected" : "") + ">" + esc(x.name) + " · " + esc(c.name) + "</option>"; }).join("") + "</select>" :
+      '<span class="small muted" style="flex:1 1 120px">' + (c ? esc(c.name) : "Coach app") + "</span>") + '<button type="button" class="btn" id="to-player">Player app</button>';
+    if ($("#coach-select")) $("#coach-select").addEventListener("change", function (e) { c.as = e.target.value; persist(); });
+    $("#to-player").addEventListener("click", openPlayerApp);
+  }
+  function renderCoachApp() {
+    var c = store.club;
+    if (!c || clubView.edit) { renderClubSetup(null); return; }
+    normClub(c);
+    if (coachTab === "training" && trainSub === "reviews") { renderCoachInbox(null); return; }
+    var body;
+    if (coachTab === "recruiting") body = coachRecruitingHTML(c);
+    else if (coachTab === "training") body = coachTrainingHTML(c);
+    else if (coachTab === "schedule") body = clubRoutineHTML(c) + coachEventsHTML(c);
+    else if (coachTab === "club") body = coachInviteHTML(c) + clubSettingsHTML(c);
+    else body = clubPlayer ? clubPlayerHTML(c, clubPlayer) : '<section class="card"><div><div class="eyebrow">' + esc(c.type || "Club") + "</div><h2>" + esc(c.name) + "</h2></div></section>" + clubRosterHTML(c) + coachActivityHTML(c);
+    $("#view").innerHTML = (c.coaches.length ? "" : '<div class="warn">Add yourself as a coach in the Club tab.</div>') + body;
+    bindClubBody(null, c);
+    bindCoachExtras(c);
+  }
+
+  function coachRecruitingHTML(c) {
+    var roster = clubRoster(); if (!roster.length) return noPlayersCard(c);
+    var data = roster.map(function (x) { return { x: x, rows: playerRecruiting(x), po: postInfo(x) }; });
+    var all = []; data.forEach(function (d) { all = all.concat(d.rows); }); var K = recruitCounts(all);
+    var match = function (r) {
+      return recF.st === "all" || (recF.st === "due" && r.due) || (recF.st === "replied" && r.t.steps.reply) || (recF.st === "offer" && (r.t.steps.offer || r.t.steps.commit)) || (recF.st === "new" && !lastContact(r.t));
+    };
+    var filt = [["all", "All"], ["due", "Updates due"], ["replied", "Coach replied"], ["offer", "Offers"], ["new", "No contact yet"]];
+    var head = '<section class="card"><div><div class="eyebrow">Recruiting</div><h2>Where every player stands</h2></div>' +
+      '<p class="small" style="margin:0">Every player\'s school list, who they\'ve contacted, and what\'s next. Messages stay private: you see that a player reached out, not what they wrote.</p>' +
+      '<div class="stats">' + [[K.list, "Schools on lists"], [K.emailed, "Emailed"], [K.replies, "Replied"], [K.offers, "Offers"], [K.due, "Updates due"], [data.filter(function (d) { return !d.x.xhandle; }).length, "No X account"]].map(function (s) { return '<div class="stat"><b>' + s[0] + "</b><span>" + s[1] + "</span></div>"; }).join("") + "</div>" +
+      '<div class="field"><label for="rf-who">Player</label><select id="rf-who"><option value="all">Everyone</option>' + roster.map(function (x) { return '<option value="' + esc(x.id) + '"' + (recF.who === x.id ? " selected" : "") + ">" + esc(x.name) + "</option>"; }).join("") + "</select></div>" +
+      '<div class="toggles" role="group" aria-label="Status">' + filt.map(function (f) { return '<button type="button" class="tog" data-rst2="' + f[0] + '" aria-pressed="' + (recF.st === f[0]) + '">' + f[1] + "</button>"; }).join("") + "</div></section>";
+    var cards = data.filter(function (d) { return recF.who === "all" || d.x.id === recF.who; }).map(function (d) {
+      var x = d.x, k = recruitCounts(d.rows), rows = d.rows.filter(match);
+      if (recF.st !== "all" && !rows.length) return "";
+      return '<section class="card"><div class="sh"><div><div class="eyebrow">Class of ' + esc(x.grad) + " · " + esc(posLabel(x)) + "</div><h3>" + esc(x.name) + '</h3></div><button type="button" class="btn" data-cp2="' + esc(x.id) + '">Open</button></div>' +
+        '<div class="small">' + k.list + " schools · " + k.emailed + " emailed · " + k.replies + " replied · " + k.offers + " offer" + (k.offers === 1 ? "" : "s") + (k.due ? ' · <span class="pill close">' + k.due + " due</span>" : "") + "</div>" +
+        '<div class="small"><strong>Posting:</strong> ' + (d.po.last ? "last post " + fmtShortDate(d.po.last) + ", " + d.po.n30 + " in 30 days" : "no posts logged") + " · <strong>X:</strong> " + (x.xhandle ? "@" + esc(x.xhandle.replace(/^@/, "")) : '<span class="pill notyet">no account</span>') + "</div>" +
+        '<div class="small"><strong>Schedule:</strong> ' + esc(scheduleLine(x)) + "</div>" +
+        (rows.length ? '<div class="hist">' + rows.map(function (r) {
+          return '<div class="hitem"><div class="h"><span>' + esc(r.s.short || r.s.name) + ' <span class="muted">· ' + esc(r.s.level) + "</span></span><span>" + (r.due ? '<span class="pill close">Update due</span> ' : "") + '<span class="pill ' + (r.t.steps.offer || r.t.steps.commit ? "good" : r.t.steps.reply ? "good" : "notyet") + '">' + esc(statusOf(r.t)) + "</span></span></div>" +
+            '<div class="small">' + (r.lc ? "Last contact " + fmtShortDate(r.lc) : "No contact yet") + '</div><div class="small"><strong>Next:</strong> ' + esc(r.due ? "Send an update: last contact was " + daysSince(r.lc) + " days ago." : nextFor(r.t, r.s)) + "</div></div>";
+        }).join("") + "</div>" : '<p class="small muted" style="margin:0">' + (d.rows.length ? "No schools match this filter." : "No schools on his list yet.") + "</p>") + "</section>";
+    }).join("");
+    return head + (cards || '<section class="card"><p class="muted" style="margin:0">No schools match.</p></section>');
+  }
+  function teamActivity() {
+    var ev = [];
+    clubRoster().forEach(function (x) {
+      var who = x.name;
+      Object.keys(x.track || {}).forEach(function (id) {
+        var t = peekTrack(x, id), s = findSchool(id); if (!s) return;
+        var nm = s.short || s.name;
+        STEPS.forEach(function (st) { if (t.steps[st[0]]) ev.push({ d: t.steps[st[0]], who: who, t: ACT_LABEL[st[0]] + " " + nm }); });
+        var skip = t.steps.email;
+        (t.updates || []).forEach(function (d) { if (d === skip) { skip = null; return; } ev.push({ d: d, who: who, t: "Sent an update to " + nm }); });
+      });
+      (x.posts || []).forEach(function (q) { ev.push({ d: q.date, who: who, t: "Posted to X" }); });
+      (x.logs || []).forEach(function (l) { ev.push({ d: l.date, who: who, t: "Logged new numbers" + (l.where ? " at " + l.where : "") }); });
+      trainOf(x).sessions.forEach(function (s) { ev.push({ d: s.date, who: who, t: "Finished " + s.name }); });
+    });
+    return ev.sort(function (a, b) { return b.d.localeCompare(a.d); }).slice(0, 20);
+  }
+  function coachActivityHTML(c) {
+    var ev = teamActivity(); if (!ev.length) return "";
+    return '<section class="card"><h3>Recent activity</h3><div class="hist">' + ev.map(function (e) { return '<div class="hitem"><div class="h"><span>' + esc(e.who) + '</span><span class="muted">' + fmtShortDate(e.d) + '</span></div><div class="small">' + esc(e.t) + "</div></div>"; }).join("") + "</div></section>";
+  }
+  function throwDays14(T) { var from = addDays(todayStr, -13); return Object.keys(T.throwLog || {}).filter(function (d) { return d >= from && d <= todayStr && Object.keys(T.throwLog[d]).some(function (k) { return T.throwLog[d][k]; }); }).length; }
+  function coachTrainSeg() {
+    var n = openReq().length, subs = [["lifts", "Lift plan"], ["throwing", "Throwing"], ["who", "Who's training"], ["reviews", "Reviews" + (n ? " (" + n + ")" : "")]];
+    return '<section class="card"><div class="toggles seg" role="group" aria-label="Training">' + subs.map(function (s) { return '<button type="button" class="tog" data-tsub="' + s[0] + '" aria-pressed="' + (trainSub === s[0]) + '">' + s[1] + "</button>"; }).join("") + "</div></section>";
+  }
+  function coachTrainingHTML(c) {
+    var seg = coachTrainSeg();
+    if (trainSub === "throwing") return seg + clubThrowHTML(c);
+    if (trainSub === "who") {
+      var roster = clubRoster(); if (!roster.length) return seg + noPlayersCard(c);
+      return seg + '<section class="card"><h3>Who\'s training</h3><div class="tblwrap"><table class="tbl"><thead><tr><th>Player</th><th>Lifts, 2 wks</th><th>Throwing, 2 wks</th><th>Last session</th><th>Squat est.</th><th>Last tested</th></tr></thead><tbody>' + roster.map(function (x) {
+        var T = trainOf(x), last = sortedByDate(T.sessions).slice(-1)[0], sq = bestSquat(T), lt = latest(x);
+        return "<tr><td><strong>" + esc(x.name) + "</strong></td><td>" + liftsLast14(T) + " of " + (T.liftDays.length * 2) + "</td><td>" + throwDays14(T) + " days</td><td>" + (last ? esc(last.name.split(" · ")[0]) + ", " + fmtShortDate(last.date) : "—") + "</td><td>" + (sq ? Math.round(sq) + " lb" : "—") + "</td><td>" + (lt.last ? fmtShortDate(lt.last.date) : "—") + "</td></tr>";
+      }).join("") + '</tbody></table></div><span class="hint">Lifts count saved workouts. Throwing counts days with at least one item checked off.</span></section>';
+    }
+    return seg + clubLiftsHTML(c);
+  }
+  function coachEventsHTML(c) {
+    var roster = clubRoster(); if (!roster.length) return "";
+    return '<section class="card"><h3>Players\' upcoming events</h3><p class="small muted" style="margin:0">From each player\'s schedule. Their schedule goes in every email they send coaches, so keep them updating it.</p><div class="hist">' + roster.map(function (x) {
+      var s = scheduleLines(x);
+      return '<div class="hitem"><div class="h"><span>' + esc(x.name) + '</span><span class="muted">' + esc(x.scheduleUpdated ? "updated " + fmtShortDate(x.scheduleUpdated) : "") + "</span></div>" + (s.length ? '<ul class="plain small">' + s.map(function (l) { return "<li>" + esc(l) + "</li>"; }).join("") + "</ul>" : '<div class="small"><span class="pill notyet">No events listed</span></div>') + "</div>";
+    }).join("") + "</div></section>";
+  }
+  function inviteText(c) { return "Join " + c.name + " on StandPoint. Open StandPoint, tap More, then Your club, and enter code " + c.code + "."; }
+  function coachInviteHTML(c) {
+    var lic = store.plan && store.plan.k === "club", msg = inviteText(c), link = payUrl("club", null);
+    return '<section class="card"><h3>Invite your players</h3><div class="big num">' + esc(c.code) + '</div><p class="small" style="margin:0">Players enter this code in their app under More → Your club, and they show up on your roster right away.</p>' +
+      '<div class="btns"><a class="btn primary" href="sms:?&body=' + encodeURIComponent(msg) + '">Text it</a><a class="btn" href="mailto:?subject=' + encodeURIComponent("Join " + c.name + " on StandPoint") + "&body=" + encodeURIComponent(msg) + '">Email it</a><button type="button" class="btn" id="inv-copy">Copy</button></div></section>' +
+      '<section class="card"><h3>Club license</h3><p class="small" style="margin:0">' + (lic ? "Club license on" + (store.plan.test ? " (test, no charge)" : "") + "." : "Covers every player on your roster. Price set after the cost model.") + "</p>" +
+      '<div class="btns">' + (link ? '<a class="btn red" href="' + esc(link) + '" target="_blank" rel="noopener">Buy the club license</a>' : "") + '<button type="button" class="btn" id="lic-test">' + (lic ? "End test license" : "Start a test license") + "</button></div></section>";
+  }
+  function bindCoachExtras(c) {
+    onAll("[data-rst2]", "click", function (b) { recF.st = b.getAttribute("data-rst2"); redrawHQ(); });
+    if ($("#rf-who")) $("#rf-who").addEventListener("change", function (e) { recF.who = e.target.value; redrawHQ(); });
+    onAll("[data-cp2]", "click", function (b) { clubPlayer = b.getAttribute("data-cp2"); coachTab = "team"; render(); window.scrollTo(0, 0); });
+    onAll("[data-tsub]", "click", function (b) { trainSub = b.getAttribute("data-tsub"); render(); window.scrollTo(0, 0); });
+    if ($("#inv-copy")) $("#inv-copy").addEventListener("click", function () { copyText(inviteText(c), "Invite copied. Send it to your players."); });
+    if ($("#lic-test")) $("#lic-test").addEventListener("click", function () {
+      if (store.plan && store.plan.k === "club") { store.plan = null; toast("Test license ended."); } else { store.plan = { k: "club", test: true, since: todayStr }; toast("Club license: test on."); }
+      persist(); redrawHQ();
+    });
   }
 
   // ---------- Start ----------

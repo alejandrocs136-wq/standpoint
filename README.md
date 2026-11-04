@@ -9,7 +9,7 @@ A player enters their profile once, logs numbers over time, and the app shows:
 - **Schools:** about 1,550 baseball programs (every NCAA D1, D2 and D3 program, every NAIA program and about 390 junior colleges nationwide, plus Texas and Oklahoma at every level with coaches), filtered to the range the player picks at sign-up. Each school has a fit badge, senior timing, coaches, a 10-step contact tracker and messages addressed to the chosen coach.
 - **Post:** builds an X caption from the player's numbers. The player always taps Post themselves.
 - **More** (demos on one device): plans and payments (individual plan, club license, coaching add-on; Stripe Payment Links slot), coach inbox for video reviews with assigned drills, and install-to-home-screen.
-- **Club demo** (one device): players join their travel club with a code (More → Your club). The **coach view** (More → Coach view) has a roster with each player's recruiting (schools, emails, replies, what coaches said, updates due, no-X flag), a player page where coaches email college coaches for a player, log "I reached out", send nudges and keep private notes, a **lift plan editor** (start from the base plan, change any exercise, block or day, add a no-gym version), a **throwing program** builder (days of the week, with a no-field version) and a **team routine** by weekday. Players see the routine and nudges on Home and the club's plan, throwing and no-gym version in Train. Two features are built but switched off in `FEATURES`: college-coach search (`collegeSearch`, after there's a large base of players) and softball (`softball`, once we know its recruiting process; the app is baseball only for now).
+- **Two apps, one prototype:** a **Player app** (the six tabs above, plus More → Your club to join with a code) and a **Coach app** (More → Coach app, or "I'm a coach" at sign-up) with five tabs: Team (roster and activity feed), Recruit (every player's schools, contacts, status, next step, posting and schedule; messages stay private and school notes are the player's choice), Training (lift plan editor with no-gym versions, throwing program with no-field versions, who's training, video reviews), Schedule (team routine and players' events) and Club (invite code by text or email, license, coaches). On one device they share data; the real build is two apps with their own logins on one database.
 
 Live prototype (owner only until shared): https://claude.ai/artifact/TRD6j1Vq7Enetjz7Tsk6qT
 
@@ -41,7 +41,7 @@ Texas and Oklahoma schools, with coaches, cities and fit notes, are hand-written
 - `PROGRAMS`, `SPEED`, `EXINFO`: lift days, speed days, and the exercise library (how, cue, control, what to log).
 - `SCHOOLS`, `NATIONAL`, `SOFTBALL`, `JUCO_PARTIAL`, `BORDERS`, `REGION_OF`: the school directory and the range logic.
 - `PLANS`, `renderPlans`, `coachingCard`, `renderCoachInbox`, `renderCollegeSearch`, `renderInstall`: the More screens.
-- `renderClubHQ`, `clubLiftsHTML`, `clubThrowHTML`, `clubRoutineHTML`, `clubPlayerHTML`, `renderJoin`, `applyClub`, `clubLiftFor`: the club demo.
+- `renderCoachApp`, `coachRecruitingHTML`, `coachTrainingHTML`, `clubLiftsHTML`, `clubThrowHTML`, `clubRoutineHTML`, `clubPlayerHTML`, `coachInviteHTML`, `renderJoin`, `applyClub`, `clubLiftFor`: the Coach app and club features (`store.app` picks the app).
 - `render*` functions: one per screen.
 
 ## Privacy and legal notes for the real build
