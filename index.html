@@ -655,6 +655,8 @@
     if (del) del.addEventListener("click", function () {
       if (del.getAttribute("data-armed") !== "1") { del.setAttribute("data-armed", "1"); del.textContent = "Tap again to delete " + (p.name || "player"); return; }
       store.players = store.players.filter(function (x) { return x.id !== p.id; });
+      if (store.club) { var dc = store.club; ["roster", "pending", "declined"].forEach(function (k) { if (dc[k]) dc[k] = dc[k].filter(function (q) { return q !== p.id; }); }); ["teamOf", "indiv", "pendTeam", "notes"].forEach(function (k) { if (dc[k]) delete dc[k][p.id]; }); if (dc.nudges) dc.nudges = dc.nudges.filter(function (n) { return n.pid !== p.id; }); }
+      store.coaching = (store.coaching || []).filter(function (r) { return r.pid !== p.id; });
       store.current = store.players.length ? store.players[0].id : null;
       persist(); draft = null; tab = "home"; render(); toast("Player deleted.");
     });
@@ -2476,13 +2478,15 @@
     if (moreView === "coach") return renderCoachInbox(p);
     if (moreView === "search" && FEATURES.collegeSearch) return renderCollegeSearch(p);
     if (moreView === "install") return renderInstall(p);
+    if (moreView === "erase") return renderErase();
     var n = openReq().length;
     var items = [
       ["plans", "Plans and payments", "Individual plan, club license and the coaching upgrade." + (store.plan ? " Current: " + esc(planName(store.plan.k)) + (store.plan.test ? " (test)" : "") + "." : "")],
       ["join", "Your club", clubOf(p) ? "You're on " + esc(store.club.name) + ". See who your coaches are." : clubPending(p) ? "Waiting for " + esc(store.club.name) + " to accept you." : "Join your travel club with the code your coach gave you."],
       ["coachapp", "Coach app", "Demo: in the real version coaches have their own app and login. Open it to see what your coach sees."],
       FEATURES.collegeSearch ? ["search", "College coach search", "What a college coach sees: only players who turned it on, with a parent's OK."] : null,
-      ["install", "Put StandPoint on your phone", "Add it to your home screen like an app. App Store and Google Play come next."]
+      ["install", "Put StandPoint on your phone", "Add it to your home screen like an app. App Store and Google Play come next."],
+      ["erase", "Erase everything on this phone", "For test runs: deletes every player, the club, coaches and plans saved here."]
     ].filter(Boolean);
     $("#view").innerHTML = '<section class="card"><div><div class="eyebrow">More</div><h2>Run StandPoint</h2></div><p class="small muted" style="margin:0">These work as demos on this device. The full app moves them to real accounts.</p></section>' +
       items.map(function (it) { return '<section class="card"><h3>' + it[1] + '</h3><p class="small" style="margin:0">' + it[2] + '</p><div class="btns"><button type="button" class="btn primary" data-mv="' + it[0] + '">Open</button></div></section>'; }).join("");
@@ -2995,7 +2999,7 @@
       '<div class="btns"><button type="button" class="btn primary" id="tm-add">Add</button></div></section>';
   }
   function clubSettingsHTML(c) {
-    var head = '<section class="card"><div><div class="eyebrow">' + esc(c.type || "Club") + "</div><h3>" + esc(c.name) + '</h3></div><div class="btns"><button type="button" class="btn" id="cl-edit">Edit name and type</button></div></section>';
+    var head = '<section class="card"><div><div class="eyebrow">' + esc(c.type || "Club") + "</div><h3>" + esc(c.name) + '</h3></div><div class="btns"><button type="button" class="btn" id="cl-edit">Edit name and type</button><button type="button" class="btn ghost" id="cl-del">Delete this club</button></div></section>';
     var coaches = '<section class="card"><h3>Coaches</h3>' + (c.coaches.length ? '<div class="hist">' + c.coaches.map(function (x) {
       return '<div class="hitem"><div class="h"><span>' + esc(x.name) + (x.role ? ' <span class="muted">· ' + esc(x.role) + "</span>" : "") + '</span><button type="button" class="btn ghost small" data-rmcoach="' + esc(x.id) + '">Remove</button></div>' + (x.email ? '<div class="small">' + esc(x.email) + "</div>" : "") + "</div>";
     }).join("") + "</div>" : '<p class="muted small" style="margin:0">Add your coaches. Each one gets the Coach app, sees their players\' recruiting and training, and can change plans.</p>') +
@@ -3171,6 +3175,11 @@
     onAll("[data-tcoach]", "click", function (b) { var a = ix(b.getAttribute("data-tcoach")), t = teamById(c, a[0]); if (!t) return; t.coachIds = t.coachIds || []; var i = t.coachIds.indexOf(a[1]); if (i >= 0) t.coachIds.splice(i, 1); else t.coachIds.push(a[1]); persist(); redrawHQ(); });
     // club settings
     if ($("#cl-edit")) $("#cl-edit").addEventListener("click", function () { clubView.edit = true; render(); });
+    if ($("#cl-del")) $("#cl-del").addEventListener("click", function () {
+      var b = $("#cl-del"); if (b.getAttribute("data-armed") !== "1") { b.setAttribute("data-armed", "1"); b.textContent = "Tap again: delete " + c.name; return; }
+      store.players.forEach(function (x) { delete trainOf(x).club; }); store.club = null; if (store.plan && store.plan.k === "club") store.plan = null; clubPlayer = null; planScope = { level: "club", id: null }; liftDraft = null;
+      persist(); render(); window.scrollTo(0, 0); toast("Club deleted. Players keep their own profiles.");
+    });
     if ($("#cl-addp")) $("#cl-addp").addEventListener("click", function () { store.app = "player"; persist(); startNewPlayer(); });
     onAll("[data-roster]", "change", function (cb) {
       var id = cb.getAttribute("data-roster"), i = c.roster.indexOf(id), x = store.players.filter(function (q) { return q.id === id; })[0];
@@ -3344,6 +3353,16 @@
     [["sf-grad", "grad"], ["sf-pos", "pos"], ["sf-ev", "ev"], ["sf-fb", "fb"], ["sf-60", "sixty"]].forEach(function (f) { $("#" + f[0]).addEventListener("change", function (e) { searchF[f[1]] = e.target.value; renderCollegeSearch(p); }); });
     $("#sf-ver").addEventListener("change", function (e) { searchF.ver = e.target.checked; renderCollegeSearch(p); });
     if ($("#sf-me")) $("#sf-me").addEventListener("click", function () { tab = "profile"; render(); var el = $("#f-optin"); if (el) el.scrollIntoView({ block: "center" }); });
+  }
+
+  function eraseAll() { try { localStorage.removeItem(KEY); } catch (e) {} store = { players: [], current: null, tags: "", schools: [], extraCoaches: {}, coaching: [], payLinks: { individual: "", club: "", coaching: "" } }; moreView = "menu"; tab = "home"; clubView.edit = false; clubPlayer = null; persist(); render(); window.scrollTo(0, 0); toast("Everything on this phone was erased."); }
+  function renderErase() {
+    var n = store.players.length;
+    $("#view").innerHTML = moreBack() + '<section class="card"><div><div class="eyebrow">Test runs</div><h2>Erase everything on this phone</h2></div>' +
+      '<p class="small" style="margin:0">This deletes ' + n + " player" + (n === 1 ? "" : "s") + (store.club ? ", the club " + esc(store.club.name) + " with its coaches, teams and plans" : "") + ", and every number, workout and school saved on this phone. It can't be undone.</p>" +
+      '<div class="btns"><button type="button" class="btn red" id="er-go">Erase everything</button></div></section>';
+    bindMore();
+    $("#er-go").addEventListener("click", function () { var b = $("#er-go"); if (b.getAttribute("data-armed") !== "1") { b.setAttribute("data-armed", "1"); b.textContent = "Tap again to erase"; return; } eraseAll(); });
   }
 
   // ----- Install on a phone, and what the app stores need -----
