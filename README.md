@@ -8,7 +8,8 @@ A player enters their profile once, logs numbers over time, and the app shows:
 - **Recruit:** NCAA contact dates by class, a yearly checklist, and email, DM and coach-note templates filled in from the profile.
 - **Schools:** about 1,550 baseball programs (every NCAA D1, D2 and D3 program, every NAIA program and about 390 junior colleges nationwide, plus Texas and Oklahoma at every level with coaches), filtered to the range the player picks at sign-up. Each school has a fit badge, senior timing, coaches, a 10-step contact tracker and messages addressed to the chosen coach.
 - **Post:** builds an X caption from the player's numbers. The player always taps Post themselves.
-- **More** (demos on one device): plans and payments (individual plan, club license, coaching add-on; Stripe Payment Links slot), club admin (roster, coaches, club lift plan, roster progress), coach inbox for video reviews with assigned drills, and install-to-home-screen. Two features are built but switched off in `FEATURES`: college-coach search (`collegeSearch`, after there's a large base of players) and softball (`softball`, once we know its recruiting process; the app is baseball only for now).
+- **More** (demos on one device): plans and payments (individual plan, club license, coaching add-on; Stripe Payment Links slot), coach inbox for video reviews with assigned drills, and install-to-home-screen.
+- **Club demo** (one device): players join their travel club with a code (More → Your club). The **coach view** (More → Coach view) has a roster with each player's recruiting (schools, emails, replies, what coaches said, updates due, no-X flag), a player page where coaches email college coaches for a player, log "I reached out", send nudges and keep private notes, a **lift plan editor** (start from the base plan, change any exercise, block or day, add a no-gym version), a **throwing program** builder (days of the week, with a no-field version) and a **team routine** by weekday. Players see the routine and nudges on Home and the club's plan, throwing and no-gym version in Train. Two features are built but switched off in `FEATURES`: college-coach search (`collegeSearch`, after there's a large base of players) and softball (`softball`, once we know its recruiting process; the app is baseball only for now).
 
 Live prototype (owner only until shared): https://claude.ai/artifact/TRD6j1Vq7Enetjz7Tsk6qT
 
@@ -39,7 +40,8 @@ Texas and Oklahoma schools, with coaches, cities and fit notes, are hand-written
 - `TASKS`: recruiting checklist by grade.
 - `PROGRAMS`, `SPEED`, `EXINFO`: lift days, speed days, and the exercise library (how, cue, control, what to log).
 - `SCHOOLS`, `NATIONAL`, `SOFTBALL`, `JUCO_PARTIAL`, `BORDERS`, `REGION_OF`: the school directory and the range logic.
-- `PLANS`, `renderPlans`, `renderClub`, `coachingCard`, `renderCoachInbox`, `renderCollegeSearch`, `renderInstall`: the More screens.
+- `PLANS`, `renderPlans`, `coachingCard`, `renderCoachInbox`, `renderCollegeSearch`, `renderInstall`: the More screens.
+- `renderClubHQ`, `clubLiftsHTML`, `clubThrowHTML`, `clubRoutineHTML`, `clubPlayerHTML`, `renderJoin`, `applyClub`, `clubLiftFor`: the club demo.
 - `render*` functions: one per screen.
 
 ## Privacy and legal notes for the real build
@@ -54,7 +56,7 @@ Texas and Oklahoma schools, with coaches, cities and fit notes, are hand-written
 
 1. Pick a stack for the real app: a web app that installs on phones first, then App Store and Google Play.
 2. Add accounts (player, parent, coach, club admin), a database, and sync. Move the school directory into the database.
-3. Turn the More demos into real features: Stripe subscriptions with webhooks, club rosters joined by code, and video upload for coach reviews.
+3. Turn the demos into real features: Stripe subscriptions with webhooks, club and coach accounts with players joining by code from their own phones, notifications for nudges, and video upload for coach reviews.
 4. Finish the data: the remaining junior colleges and coach staffs nationwide, refreshed every year.
 5. Verified numbers: link showcase and device results, or require proof (video) for coach-facing views.
 6. Down the road: softball, then other sports (softball level ranges and programs nationwide).

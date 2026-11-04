@@ -200,6 +200,8 @@
   .tbl th, .tbl td { text-align: left; padding: 6px 4px; border-top: 1px solid var(--line); vertical-align: top; white-space: nowrap; }
   .tbl th { font-size: 12px; color: var(--muted); font-weight: 600; }
   .plan.on { box-shadow: inset 0 0 0 2px var(--accent); }
+  .edrow { display: grid; grid-template-columns: 1fr auto; gap: 6px; align-items: center; }
+  .seg.toggles .tog { padding: 0 4px; }
   .linkbtn { background: none; border: 0; padding: 0; color: inherit; text-decoration: underline; font: inherit; cursor: pointer; }
   footer a { color: var(--ink); }
 </style>
@@ -552,6 +554,7 @@
     else if (tab === "schools") { if (schoolView && findSchool(schoolView)) renderSchool(p, findSchool(schoolView)); else { schoolView = null; renderSchools(p); } }
     else if (tab === "post") renderPost(p);
     else if (tab === "more") renderMore(p);
+    else if (tab === "club") renderClubHQ(p);
     else renderHome(p);
     renderPlayerBar();
     renderTabs();
@@ -750,9 +753,10 @@
     var grade = gradeFor(Number(p.grad));
     var head = '<div class="eyebrow">' + esc(gradeName(grade)) + " · Class of " + esc(p.grad) + " · " + esc(posLabel(p)) + "</div>";
     if (!lt.logs.length) {
-      $("#view").innerHTML = '<section class="card">' + head + '<h2>Add your first numbers</h2><p class="muted" style="margin:0">Your StandPoint shows up as soon as you log one number.</p>' +
+      $("#view").innerHTML = clubHomeCard(p) + '<section class="card">' + head + '<h2>Add your first numbers</h2><p class="muted" style="margin:0">Your StandPoint shows up as soon as you log one number.</p>' +
         '<div class="btns"><button type="button" class="btn red" id="h-add">Add numbers</button></div></section>';
       $("#h-add").addEventListener("click", function () { go("numbers"); });
+      bindClubHome(p);
       return;
     }
     var last = lt.last, since = daysSince(last.date);
@@ -819,7 +823,8 @@
       return '<li><span class="k">' + (i + 1) + '</span><button type="button" data-go="' + m.tab + '"><span class="t">' + esc(m.t) + '</span><span class="small muted">' + esc(m.s) + "</span></button></li>";
     }).join("") + "</ol></section>";
 
-    $("#view").innerHTML = hero + movesHTML + cards + academics;
+    $("#view").innerHTML = clubHomeCard(p) + hero + movesHTML + cards + academics;
+    bindClubHome(p);
     $("#h-add").addEventListener("click", function () { go("numbers"); });
     Array.prototype.forEach.call(document.querySelectorAll("[data-go]"), function (b) { b.addEventListener("click", function () { go(b.getAttribute("data-go")); }); });
   }
@@ -940,7 +945,7 @@
     if (!T.goals) T.goals = {}; if (!T.draft) T.draft = {};
     return T;
   }
-  function programFor(T) { var n = T.liftDays.length; return n >= 4 ? PROGRAMS[4] : n === 3 ? PROGRAMS[3] : n === 2 ? PROGRAMS[2] : PROGRAMS[2].slice(0, 1); }
+  function programFor(T) { var cl = clubLiftFor(T); if (cl) return cl; var n = T.liftDays.length; return n >= 4 ? PROGRAMS[4] : n === 3 ? PROGRAMS[3] : n === 2 ? PROGRAMS[2] : PROGRAMS[2].slice(0, 1); }
   function weekOf(T) { var w = Math.floor(daysSince(T.start) / 7) + 1; return Math.max(1, w); }
   function phaseOf(w) { return ((Math.min(w, 8) - 1) < 4) ? 1 : 2; }
   function itemText(it, ph) { return Array.isArray(it) ? it[ph - 1] : it; }
@@ -1086,7 +1091,7 @@
   }
   var LOG_LABELS = { w: ["lb", "reps"], mb: ["ball lb", "reps"], box: ["box in", "reps"], t: ["lb (opt.)", "sec"] };
   function plannedSets(text, acc) {
-    var m = /\((\d+) sets?\)/.exec(text) || /(\d+)\s*×\s*\d+\s*sec/.exec(text) || /(\d+) rounds/.exec(text);
+    var m = /\((\d+) sets?\)/.exec(text) || /(\d+)\s*×\s*\d+\s*sec/.exec(text) || /(\d+) rounds/.exec(text) || /(\d+)\s*×\s*\d+/.exec(text);
     if (m) return +m[1];
     var a = /(\d+)\s*×/.exec(acc || ""); return a ? +a[1] : 2;
   }
@@ -1235,7 +1240,7 @@
       }
       var items = bl.items.map(function (it, ii) { return { id: "b" + bi + "i" + ii, txt: itemText(it, ph) }; }).filter(function (x) { return x.txt; });
       html += '<div class="label" style="margin-top:6px">' + BLOCK_NAMES[bl.t] + (bl.t === "pair" ? " · " + acc : "") + '</div><div class="tasks">' + items.map(function (x) {
-        var inf = exInfo(x.txt), lg = inf && inf.log !== "none" ? inf.log : null, open = trainView.open[x.id];
+        var inf = exInfoFor(T, sel, x.txt), lg = inf && inf.log !== "none" ? inf.log : null, open = trainView.open[x.id];
         dr.log = dr.log || {};
         if (lg && !dr.log[x.id]) { dr.log[x.id] = []; var ns = plannedSets(x.txt, bl.t === "pair" ? acc : ""), rp = plannedReps(x.txt, bl.t === "pair" ? acc : "", lg); for (var q = 0; q < ns; q++) dr.log[x.id].push({ w: "", r: rp }); }
         var rowsL = lg ? dr.log[x.id] : [];
@@ -1258,7 +1263,7 @@
       }).join("") + "</div>";
     });
     var session = '<section class="card"><div><div class="eyebrow">' + (sel === todaySel && date === todayStr ? "Today" : "Session") + "</div><h3>" + esc(sessionTitle(T, sel)) + "</h3></div>" +
-      '<div class="field"><label for="sdate">Date</label><input type="date" id="sdate" value="' + esc(date) + '"></div>' + html +
+      '<div class="field"><label for="sdate">Date</label><input type="date" id="sdate" value="' + esc(date) + '"></div>' + noGymHTML(T, sel) + html +
       (sel.charAt(0) === "S" ? '<span class="hint">Sprint fresh, before you lift. Full rest between reps. Stop when you start slowing down. Log your times in the Speed section.</span>' : "") +
       '<ul class="plain small"><li><strong>How heavy:</strong> a weight you could lift 2 more times with good form.</li><li>Learn each lift and isometric with a qualified coach before you load it.</li>' +
         (isPitcher(p) ? "<li>Pitchers: follow your pitching coach on throwing and arm care; skip anything that bothers your shoulder or elbow.</li>" : "") + "</ul>" +
@@ -1440,7 +1445,7 @@
 
   function bindTrain(p, T) {
     var on = function (sel, ev, fn) { Array.prototype.forEach.call(document.querySelectorAll(sel), function (el) { el.addEventListener(ev, function (e) { fn(el, e); }); }); };
-    bindCoaching(p);
+    bindCoaching(p); bindClubTrain(p);
     on("[data-tsec2]", "click", function (b) { trainView.sec = b.getAttribute("data-tsec2"); renderTrain(p); window.scrollTo(0, 0); });
     on("[data-fault]", "change", function (c2) {
       var id = c2.getAttribute("data-fault"); p.faults = p.faults || [];
@@ -1483,7 +1488,7 @@
       blocks.forEach(function (bl, bi) {
         if (bl.t === "main") return;
         bl.items.forEach(function (it, ii) {
-          var id = "b" + bi + "i" + ii, txt = itemText(it, phaseOf(weekOf(T))), inf = exInfo(txt);
+          var id = "b" + bi + "i" + ii, txt = itemText(it, phaseOf(weekOf(T))), inf = exInfoFor(T, sel, txt);
           if (!inf || inf.log === "none" || !dr.log || !dr.log[id]) return;
           dr.log[id].forEach(function (rw) {
             var w = num(rw.w), r = num(rw.r); if (!w && !(inf.log === "t" && r)) return;
@@ -2436,20 +2441,22 @@
   function clubRoster() { var c = store.club; if (!c) return []; return store.players.filter(function (x) { return (c.roster || []).indexOf(x.id) >= 0; }); }
   function moreBack() { return '<div class="backbar"><button type="button" class="btn" id="mback">← Back to More</button></div>'; }
   function bindMore() {
-    onAll("[data-mv]", "click", function (b) { moreView = b.getAttribute("data-mv"); render(); window.scrollTo(0, 0); });
-    var mb = $("#mback"); if (mb) mb.addEventListener("click", function () { moreView = "menu"; render(); window.scrollTo(0, 0); });
+    onAll("[data-mv]", "click", function (b) { moreView = b.getAttribute("data-mv"); tab = "more"; render(); window.scrollTo(0, 0); });
+    var mb = $("#mback"); if (mb) mb.addEventListener("click", function () { moreView = "menu"; clubView.edit = false; tab = "more"; render(); window.scrollTo(0, 0); });
   }
 
   function renderMore(p) {
     if (moreView === "plans") return renderPlans(p);
-    if (moreView === "club") return renderClub(p);
+    if (moreView === "club") { moreView = "menu"; if (store.club && !clubView.edit) { tab = "club"; clubPlayer = null; clubTab = (store.club.coaches || []).length ? "roster" : "settings"; return renderClubHQ(p); } return renderClubSetup(p); }
+    if (moreView === "join") return renderJoin(p);
     if (moreView === "coach") return renderCoachInbox(p);
     if (moreView === "search" && FEATURES.collegeSearch) return renderCollegeSearch(p);
     if (moreView === "install") return renderInstall(p);
     var n = openReq().length;
     var items = [
       ["plans", "Plans and payments", "Individual plan, club license and the coaching upgrade." + (store.plan ? " Current: " + esc(planName(store.plan.k)) + (store.plan.test ? " (test)" : "") + "." : "")],
-      ["club", "Club admin", store.club ? esc(store.club.name) + " · " + clubRoster().length + " player" + (clubRoster().length === 1 ? "" : "s") + " · " + (store.club.coaches || []).length + " coach" + ((store.club.coaches || []).length === 1 ? "" : "es") : "For a travel club, facility or showcase: roster, coaches, a club lift plan and everyone's progress."],
+      ["join", "Your club", clubOf(p) ? "You're on " + esc(store.club.name) + ". See who your coaches are." : "Join your travel club with the code your coach gave you."],
+      ["club", "Coach view", store.club ? esc(store.club.name) + " · " + clubRoster().length + " player" + (clubRoster().length === 1 ? "" : "s") + ". Recruiting for every player, the lift plan, throwing and team routine." : "For travel club coaches: see every player's recruiting, set the lift plan, throwing program and team routine."],
       ["coach", "Coach inbox", n ? n + " video review" + (n > 1 ? "s" : "") + " waiting." : "Video reviews players send to their coach land here."],
       FEATURES.collegeSearch ? ["search", "College coach search", "What a college coach sees: only players who turned it on, with a parent's OK."] : null,
       ["install", "Put StandPoint on your phone", "Add it to your home screen like an app. App Store and Google Play come next."]
@@ -2501,96 +2508,372 @@
     var on = 0, em = 0; Object.keys(pl.track || {}).forEach(function (id) { var t = peekTrack(pl, id); if (touched(t)) on++; if (t.steps && t.steps.email) em++; });
     return { on: on, em: em };
   }
-  function renderClub(p) {
-    var c = store.club;
-    if (!c || clubView.edit) {
-      var d = c || { name: "", type: "Travel club", email: "" };
-      $("#view").innerHTML = moreBack() + '<form class="card" id="cl-form" autocomplete="off"><div><div class="eyebrow">Club admin</div><h2>' + (c ? "Edit your club" : "Set up your club") + "</h2></div>" +
-        (c ? "" : '<p class="small" style="margin:0">For a travel club, training facility or showcase. You add your coaches and players, set a club lift plan, and see everyone\'s progress in one place.</p>') +
-        '<div class="field"><label for="cl-name">Name</label><input type="text" id="cl-name" value="' + esc(d.name) + '" placeholder="Infinite Hitting" required></div>' +
-        '<div class="row2"><div class="field"><label for="cl-type">Type</label><select id="cl-type">' + ["Travel club", "Training facility", "Showcase"].map(function (t) { return "<option" + (t === d.type ? " selected" : "") + ">" + t + "</option>"; }).join("") + "</select></div>" +
-        '<div class="field"><label for="cl-email">Admin email</label><input type="email" id="cl-email" value="' + esc(d.email || "") + '"></div></div>' +
-        '<div class="btns"><button type="submit" class="btn red">Save club</button>' + (c ? '<button type="button" class="btn" id="cl-cancel">Cancel</button>' : "") + "</div></form>";
-      bindMore();
-      if ($("#cl-cancel")) $("#cl-cancel").addEventListener("click", function () { clubView.edit = false; renderClub(p); });
-      $("#cl-form").addEventListener("submit", function (e) {
-        e.preventDefault();
-        var nm = $("#cl-name").value.trim(); if (!nm) return;
-        if (!store.club) store.club = { id: uid(), code: uid().slice(0, 6).toUpperCase(), coaches: [], roster: [], plan: { days: 3, season: "off", note: "", extras: "" } };
-        store.club.name = nm; store.club.type = $("#cl-type").value; store.club.email = $("#cl-email").value.trim();
-        clubView.edit = false; persist(); renderClub(p); toast("Club saved.");
-      });
-      return;
-    }
-    c.coaches = c.coaches || []; c.roster = c.roster || []; c.plan = c.plan || { days: 3, season: "off", note: "", extras: "" };
-    var roster = clubRoster(), lic = store.plan && store.plan.k === "club";
-    var head = '<section class="card"><div><div class="eyebrow">' + esc(c.type || "Club") + "</div><h2>" + esc(c.name) + "</h2></div>" +
-      '<div class="stats">' + [[roster.length, "Players"], [c.coaches.length, "Coaches"], [roster.filter(function (x) { return liftsLast14(trainOf(x)) > 0; }).length, "Lifted, 2 wks"]].map(function (x) { return '<div class="stat"><b>' + x[0] + "</b><span>" + x[1] + "</span></div>"; }).join("") + "</div>" +
-      '<div class="small"><strong>Join code:</strong> <span class="num">' + esc(c.code) + "</span> · players enter it in the full app to join your roster.</div>" +
-      '<div class="small"><strong>License:</strong> ' + (lic ? "club license" + (store.plan.test ? " (test)" : "") : "not set up yet") + ' · <button type="button" class="linkbtn" data-mv="plans">Plans</button></div>' +
-      '<div class="btns"><button type="button" class="btn" id="cl-edit">Edit club</button></div></section>';
-    var coaches = '<section class="card"><h3>Coaches</h3>' + (c.coaches.length ? '<div class="hist">' + c.coaches.map(function (x) {
-      return '<div class="hitem"><div class="h"><span>' + esc(x.name) + (x.role ? ' <span class="muted">· ' + esc(x.role) + "</span>" : "") + '</span><button type="button" class="btn ghost small" data-rmcoach="' + esc(x.id) + '">Remove</button></div>' +
-        (x.email ? '<div class="small"><a href="mailto:' + esc(x.email) + '">' + esc(x.email) + "</a></div>" : "") + "</div>";
-    }).join("") + "</div>" : '<p class="muted small" style="margin:0">No coaches yet. Coaches you add here show up when players send video for review.</p>') +
-      '<form id="cc-form" style="display:grid;gap:10px" autocomplete="off"><div class="row2"><div class="field"><label for="cc-name">Coach name</label><input type="text" id="cc-name" placeholder="First Last"></div>' +
-      '<div class="field"><label for="cc-role">Role</label><input type="text" id="cc-role" placeholder="Hitting coach"></div></div>' +
-      '<div class="field"><label for="cc-email">Email</label><input type="email" id="cc-email"></div><div class="btns"><button type="submit" class="btn primary">Add coach</button></div></form></section>';
-    var rosterCard = '<section class="card"><h3>Roster</h3><p class="small muted" style="margin:0">Players on this device. Check the ones on your roster. In the full app, players join from their own phones with your code.</p>' +
-      (store.players.length ? '<div class="tasks">' + store.players.map(function (x) {
-        var on = c.roster.indexOf(x.id) >= 0;
-        return '<label class="task"><input type="checkbox" data-roster="' + esc(x.id) + '"' + (on ? " checked" : "") + "><span><strong>" + esc(x.name) + '</strong> <span class="muted small">· ' + esc(posLabel(x)) + " · " + esc(x.grad) + (sportOf(x) === "softball" ? " · softball" : "") + "</span></span></label>";
-      }).join("") + "</div>" : "") + '<div class="btns"><button type="button" class="btn" id="cl-addp">+ Add a player</button></div></section>';
-    var pl = c.plan;
-    var planCard = '<section class="card"><h3>Club lift plan</h3><p class="small muted" style="margin:0">Sets lift days and season for everyone on the roster, and adds your own work to every lift day. Players still log their own sets.</p>' +
-      '<div class="row2"><div class="field"><label for="cp-days">Lift days a week</label><select id="cp-days">' + [2, 3, 4].map(function (n) { return '<option value="' + n + '"' + (n === +pl.days ? " selected" : "") + ">" + n + " (" + DAYSETS[n].map(function (k) { return WEEKDAYS[k]; }).join(", ") + ")</option>"; }).join("") + "</select></div>" +
-      '<div class="field"><label for="cp-season">Season</label><select id="cp-season"><option value="off"' + (pl.season === "off" ? " selected" : "") + '>Off-season</option><option value="in"' + (pl.season === "in" ? " selected" : "") + ">In-season (2 days)</option></select></div></div>" +
-      '<div class="field"><label for="cp-extras">Club add-ons for every lift day <span class="hint">(one per line)</span></label><textarea id="cp-extras" rows="3" placeholder="Med-ball rotational throws 3×5 each side&#10;Band arm care, 10 min">' + esc(pl.extras || "") + "</textarea></div>" +
-      '<div class="field"><label for="cp-note">Note from the coaches</label><input type="text" id="cp-note" value="' + esc(pl.note || "") + '" placeholder="Lift before practice on Mon and Thu"></div>' +
-      '<div class="btns"><button type="button" class="btn red" id="cp-apply"' + (roster.length ? "" : " disabled") + ">Save and apply to " + roster.length + " player" + (roster.length === 1 ? "" : "s") + "</button></div>" +
-      (pl.applied ? '<span class="hint">Last applied ' + fmtDate(pl.applied) + ".</span>" : "") + "</section>";
-    var rows = roster.map(function (x) {
-      var lt = latest(x), T = trainOf(x), sq = bestSquat(T), sc = schoolCounts(x), since = lt.last ? daysSince(lt.last.date) : null;
-      var cell = function (k) { return lt.v[k] != null ? fmtVal(k, lt.v[k]) : "—"; };
-      return "<tr><td><strong>" + esc(x.name) + '</strong><br><span class="muted">' + esc(posLabel(x)) + " · " + esc(x.grad) + "</span></td><td>" + cell("ev") + "</td><td>" + cell("fb") + "</td><td>" + cell("sixty") + "</td><td>" + liftsLast14(T) + "</td><td>" + (sq ? Math.round(sq) : "—") + "</td><td>" + (since == null ? "—" : since + "d") + "</td><td>" + sc.on + " / " + sc.em + "</td></tr>";
-    }).join("");
-    var table = '<section class="card"><h3>Roster progress</h3>' + (roster.length ? '<div class="tblwrap"><table class="tbl"><thead><tr><th>Player</th><th>Exit velo</th><th>FB</th><th>60</th><th>Lifts, 2 wks</th><th>Squat est. max</th><th>Last tested</th><th>Schools / emailed</th></tr></thead><tbody>' + rows + "</tbody></table></div>" +
-      '<span class="hint">Latest logged numbers. Squat is the best estimated max from logged sets and tests. "Last tested" is days since their last numbers.</span>' : '<p class="muted small" style="margin:0">Check players on your roster above to see them here.</p>') + "</section>";
-    $("#view").innerHTML = moreBack() + head + table + rosterCard + planCard + coaches;
-    bindMore();
-    $("#cl-edit").addEventListener("click", function () { clubView.edit = true; renderClub(p); });
-    $("#cl-addp").addEventListener("click", function () { startNewPlayer(); });
-    onAll("[data-roster]", "change", function (cb) {
-      var id = cb.getAttribute("data-roster"), i = c.roster.indexOf(id);
-      if (cb.checked && i < 0) c.roster.push(id); if (!cb.checked && i >= 0) c.roster.splice(i, 1);
-      persist(); var y = window.scrollY; renderClub(p); window.scrollTo(0, y);
-    });
-    onAll("[data-rmcoach]", "click", function (b) { c.coaches = c.coaches.filter(function (x) { return x.id !== b.getAttribute("data-rmcoach"); }); persist(); renderClub(p); });
-    $("#cc-form").addEventListener("submit", function (e) {
-      e.preventDefault();
-      var nm = $("#cc-name").value.trim(); if (!nm) { toast("Add the coach's name."); return; }
-      c.coaches.push({ id: uid(), name: nm, role: $("#cc-role").value.trim(), email: $("#cc-email").value.trim() });
-      persist(); var y = window.scrollY; renderClub(p); window.scrollTo(0, y); toast(nm + " added.");
-    });
-    $("#cp-apply").addEventListener("click", function () {
-      pl.days = +$("#cp-days").value; pl.season = $("#cp-season").value; pl.extras = $("#cp-extras").value; pl.note = $("#cp-note").value.trim(); pl.applied = todayStr;
-      var days = pl.season === "in" ? DAYSETS[2] : DAYSETS[pl.days];
-      var extras = pl.extras.split("\n").map(function (s) { return s.trim(); }).filter(Boolean);
-      roster.forEach(function (x) {
-        var T = trainOf(x); T.liftDays = days.slice(); T.season = pl.season;
-        T.speedDays = T.speedDays.filter(function (k) { return days.indexOf(k) < 0; }); if (!T.speedDays.length) T.speedDays = [days[0] === 1 ? 3 : 2];
-        T.club = { name: c.name, note: pl.note, extras: extras, applied: todayStr };
-      });
-      persist(); renderClub(p); toast("Club plan applied to " + roster.length + " player" + (roster.length === 1 ? "" : "s") + ".");
-    });
+  // ----- Club: coach view. Roster and recruiting, lift plan editor, throwing program, team routine, club settings -----
+  var clubTab = "roster", clubPlayer = null, liftDraft = null;
+  var BLOCK_TYPES = ["warm", "plyo", "iso", "main", "pair", "finish"];
+  var WEEKDAYS_FULL = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  var WEEK_ORDER = [1, 2, 3, 4, 5, 6, 0];
+  function normClub(c) {
+    if (!c.id) c.id = uid();
+    c.coaches = c.coaches || []; c.roster = c.roster || []; c.plan = c.plan || { days: 3, season: "off", note: "" };
+    c.throwing = c.throwing || []; c.routine = c.routine || {}; c.nudges = c.nudges || []; c.notes = c.notes || {};
+    return c;
   }
+  function clubOf(p) { var c = store.club; return c && p && (c.roster || []).indexOf(p.id) >= 0 ? normClub(c) : null; }
+  function clubLiftFor(T) {
+    var c = store.club;
+    if (!c || !T.club || (T.club.id && c.id && T.club.id !== c.id) || !c.lift || !c.lift.length) return null;
+    return c.lift;
+  }
+  function clubDays(c) {
+    var pl = c.plan || {}, n = c.lift && c.lift.length ? c.lift.length : (+pl.days || 3);
+    return (pl.season === "in" ? DAYSETS[2] : DAYSETS[Math.max(2, Math.min(4, n))]).slice();
+  }
+  function applyClub(x) {
+    var c = store.club; if (!c) return;
+    normClub(c);
+    var days = clubDays(c), T = trainOf(x);
+    T.liftDays = days; T.season = c.plan.season || "off";
+    T.speedDays = T.speedDays.filter(function (k) { return days.indexOf(k) < 0; }); if (!T.speedDays.length) T.speedDays = [days[0] === 1 ? 3 : 2];
+    T.club = { id: c.id, name: c.name, note: c.plan.note || "", extras: [], applied: todayStr };
+  }
+  function exInfoFor(T, sel, txt) {
+    var inf = exInfo(txt); if (inf) return inf;
+    if (sel && sel.charAt(0) === "L" && clubLiftFor(T)) return { key: "custom", name: String(txt).replace(/\s*[×x]\s*\d.*$/, "").trim() || String(txt), log: "w", how: "Your club's coaches set this one. Ask them how they want it done.", cue: "", ctl: "Use a weight you can move for every planned rep with clean form." };
+    return null;
+  }
+  function autoRoutine(c, k) {
+    var out = [], days = clubDays(c), li = days.indexOf(k);
+    if (li >= 0) { var prog = c.lift && c.lift.length ? c.lift : PROGRAMS[days.length] || PROGRAMS[3]; out.push(prog[Math.min(li, prog.length - 1)].name); }
+    (c.throwing || []).forEach(function (d) { if ((d.wd || []).indexOf(k) >= 0) out.push("Throwing: " + (d.name || "throwing day")); });
+    return out;
+  }
+  function routineLines(c, k) { return String(c.routine[k] || "").split("\n").map(function (s) { return s.trim(); }).filter(Boolean); }
+  function coachMe(c) { var m = c.coaches.filter(function (x) { return x.id === c.as; })[0] || c.coaches[0]; return m || null; }
+
+  // What the player sees from the club: today's routine and throwing (Train), nudges (Home), a no-gym version (lift days).
   function clubCallout(p, T) {
-    var out = "";
-    if (T.club) out += '<div class="callout"><strong>' + esc(T.club.name) + " plan</strong><span class=\"small\">" + esc(T.club.note || "Your club set your lift days and season.") + "</span>" +
-      (T.club.extras && T.club.extras.length ? '<span class="small"><strong>Club add-ons, every lift day:</strong> ' + T.club.extras.map(esc).join(" · ") + "</span>" : "") + "</div>";
+    var out = "", c = clubOf(p), date = trainView.date || todayStr, wd = dayOfWeek(date);
+    if (T.club && c) {
+      var lines = routineLines(c, wd);
+      out += '<div class="callout"><strong>' + esc(c.name) + " · " + WEEKDAYS_FULL[wd] + "</strong>" +
+        (lines.length ? '<span class="small">' + lines.map(esc).join(" · ") + "</span>" : "") +
+        (T.club.note || c.plan.note ? '<span class="small"><strong>From your coaches:</strong> ' + esc(c.plan.note || T.club.note) + "</span>" : "") +
+        (!lines.length && !(c.plan.note || T.club.note) ? '<span class="small">Your club sets your lift days and season.</span>' : "") + "</div>";
+      T.throwLog = T.throwLog || {};
+      (c.throwing || []).forEach(function (d, i) {
+        if ((d.wd || []).indexOf(wd) < 0 || !d.items.length) return;
+        var noField = !!(T.noField && T.noField[date + "|" + i]) && d.alt && d.alt.length, list = noField ? d.alt : d.items, lg = T.throwLog[date] || {};
+        out += '<div class="card-sub"><div class="sh"><strong>Throwing: ' + esc(d.name || "Throwing day") + "</strong>" +
+          (d.alt && d.alt.length ? '<button type="button" class="mini" data-nofield="' + date + "|" + i + '" aria-pressed="' + noField + '">' + (noField ? "Field version" : "No field today") + "</button>" : "") + "</div>" +
+          '<div class="tasks">' + list.map(function (it, k) { var key = i + (noField ? "a" : "") + "-" + k, dn = !!lg[key]; return '<label class="task' + (dn ? " done" : "") + '"><input type="checkbox" data-thr="' + date + "|" + key + '"' + (dn ? " checked" : "") + "><span>" + esc(it) + "</span></label>"; }).join("") + "</div></div>";
+      });
+    } else if (T.club) {
+      out += '<div class="callout"><strong>' + esc(T.club.name) + " plan</strong><span class=\"small\">" + esc(T.club.note || "Your club set your lift days and season.") + "</span></div>";
+    }
     var todo = 0; store.coaching.forEach(function (r) { if (r.pid === p.id && r.status === "done") r.drills.forEach(function (d, i) { if (!(r.done && r.done[i])) todo++; }); });
     if (todo) out += '<div class="callout"><strong>From your coach: ' + todo + " drill" + (todo > 1 ? "s" : "") + ' to do</strong><span class="small">They\'re in Skills, under Coaching upgrade.</span><div class="btns"><button type="button" class="btn" data-tsec2="skills">Open Skills</button></div></div>';
     return out;
+  }
+  function noGymHTML(T, sel) {
+    var L = clubLiftFor(T); if (!L || !sel || sel.charAt(0) !== "L") return "";
+    var day = L[Math.min(+sel.slice(1), L.length - 1)]; if (!day || !day.nogym || !day.nogym.length) return "";
+    return '<details class="card-sub"><summary>No gym today? Your coaches\' version</summary><ul class="plain" style="margin-top:8px">' + day.nogym.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + "</ul></details>";
+  }
+  function bindClubTrain(p) {
+    var T = trainOf(p);
+    onAll("[data-thr]", "change", function (cb) {
+      var pr = cb.getAttribute("data-thr").split("|"); T.throwLog = T.throwLog || {}; T.throwLog[pr[0]] = T.throwLog[pr[0]] || {};
+      T.throwLog[pr[0]][pr[1]] = cb.checked; persist(); cb.closest(".task").classList.toggle("done", cb.checked);
+    });
+    onAll("[data-nofield]", "click", function (b) { var k = b.getAttribute("data-nofield"); T.noField = T.noField || {}; T.noField[k] = !T.noField[k]; persist(); redrawTrain(p); });
+  }
+  function clubHomeCard(p) {
+    var c = clubOf(p); if (!c) return "";
+    var wd = dayOfWeek(todayStr), lines = routineLines(c, wd).concat(autoRoutine(c, wd));
+    var nudges = c.nudges.filter(function (n) { return n.pid === p.id && !n.seen; });
+    return '<section class="card"><div><div class="eyebrow">' + esc(c.name) + "</div><h3>Today: " + WEEKDAYS_FULL[wd] + "</h3></div>" +
+      (lines.length ? '<ul class="plain">' + lines.map(function (l) { return "<li>" + esc(l) + "</li>"; }).join("") + "</ul>" : '<p class="small muted" style="margin:0">Nothing on the team schedule today.</p>') +
+      nudges.map(function (n) { return '<div class="callout"><strong>From ' + esc(n.from) + " · " + fmtShortDate(n.date) + '</strong><span class="small">' + esc(n.text) + '</span><div class="btns"><button type="button" class="btn" data-nudge="' + esc(n.id) + '">Got it</button></div></div>'; }).join("") + "</section>";
+  }
+  function bindClubHome(p) {
+    onAll("[data-nudge]", "click", function (b) { var c = store.club, n = c && c.nudges.filter(function (x) { return x.id === b.getAttribute("data-nudge"); })[0]; if (n) { n.seen = todayStr; persist(); render(); toast("Your coach will see you got it."); } });
+  }
+
+  // ----- Coach view -----
+  function playerRecruiting(pl) {
+    var rows = [];
+    Object.keys(pl.track || {}).forEach(function (id) {
+      var t = peekTrack(pl, id); if (!touched(t)) return;
+      var s = findSchool(id); if (!s) return;
+      var lc = lastContact(t);
+      rows.push({ s: s, t: t, lc: lc, due: !!(t.steps.email && !t.steps.commit && lc && daysSince(lc) >= 35) });
+    });
+    return rows.sort(function (a, b) { return (b.lc || "").localeCompare(a.lc || "") || a.s.name.localeCompare(b.s.name); });
+  }
+  function recruitCounts(rows) {
+    var n = function (k) { return rows.filter(function (r) { return r.t.steps[k]; }).length; };
+    return { list: rows.length, emailed: n("email"), replies: n("reply"), offers: rows.filter(function (r) { return r.t.steps.offer || r.t.steps.commit; }).length, committed: rows.filter(function (r) { return r.t.steps.commit; })[0], due: rows.filter(function (r) { return r.due; }).length };
+  }
+  function renderClubHQ(p) {
+    var c = store.club;
+    if (!c || clubView.edit) return renderClubSetup(p);
+    normClub(c);
+    var me = coachMe(c);
+    var tabs = [["roster", "Roster"], ["lifts", "Lifts"], ["throwing", "Throw"], ["routine", "Routine"], ["settings", "Club"]];
+    var top = '<div class="backbar"><button type="button" class="btn" id="hq-back">← Back to player view</button></div>' +
+      '<section class="card"><div><div class="eyebrow">Coach view · ' + esc(c.type || "Club") + "</div><h2>" + esc(c.name) + "</h2></div>" +
+      (c.coaches.length ? '<div class="field"><label for="hq-as">You are</label><select id="hq-as">' + c.coaches.map(function (x) { return '<option value="' + esc(x.id) + '"' + (me && x.id === me.id ? " selected" : "") + ">" + esc(x.name) + (x.role ? " · " + esc(x.role) : "") + "</option>"; }).join("") + "</select></div>" :
+        '<div class="warn">Add yourself as a coach in the Club tab first.</div>') +
+      '<div class="toggles seg" role="group" aria-label="Coach sections">' + tabs.map(function (t) { return '<button type="button" class="tog" data-ctab="' + t[0] + '" aria-pressed="' + (clubTab === t[0]) + '">' + t[1] + "</button>"; }).join("") + "</div></section>";
+    var body = clubTab === "lifts" ? clubLiftsHTML(c) : clubTab === "throwing" ? clubThrowHTML(c) : clubTab === "routine" ? clubRoutineHTML(c) : clubTab === "settings" ? clubSettingsHTML(c) : clubPlayer ? clubPlayerHTML(c, clubPlayer) : clubRosterHTML(c);
+    $("#view").innerHTML = top + body;
+    $("#hq-back").addEventListener("click", function () { clubPlayer = null; go("home"); });
+    if ($("#hq-as")) $("#hq-as").addEventListener("change", function (e) { c.as = e.target.value; persist(); });
+    onAll("[data-ctab]", "click", function (b) { clubTab = b.getAttribute("data-ctab"); clubPlayer = null; render(); window.scrollTo(0, 0); });
+    bindClubBody(p, c);
+  }
+  function redrawHQ(p) { var y = window.scrollY; renderClubHQ(p); window.scrollTo(0, y); }
+
+  function clubRosterHTML(c) {
+    var roster = clubRoster();
+    if (!roster.length) return '<section class="card"><h3>No players yet</h3><p class="small" style="margin:0">Players join from their own phone with your club code <strong class="num">' + esc(c.code) + "</strong> (More → Your club). You can also add players on this device in the Club tab.</p></section>";
+    var data = roster.map(function (x) { var rows = playerRecruiting(x), k = recruitCounts(rows), lt = latest(x), T = trainOf(x); return { x: x, k: k, lt: lt, T: T, lifts: liftsLast14(T), noX: !x.xhandle }; });
+    data.sort(function (a, b) { var s = function (d) { return (d.k.due ? -4 : 0) + (d.noX ? -2 : 0) + (d.k.list ? 0 : -1); }; return s(a) - s(b) || a.x.name.localeCompare(b.x.name); });
+    var tot = function (f) { return data.reduce(function (a, d) { return a + f(d); }, 0); };
+    var head = '<section class="card"><h3>Recruiting at a glance</h3><div class="stats">' + [[roster.length, "Players"], [tot(function (d) { return d.k.emailed; }), "Schools emailed"], [tot(function (d) { return d.k.replies; }), "Coach replies"],
+      [tot(function (d) { return d.k.offers; }), "Offers"], [tot(function (d) { return d.k.due; }), "Updates due"], [data.filter(function (d) { return d.noX; }).length, "No X account"]].map(function (s) { return '<div class="stat"><b>' + s[0] + "</b><span>" + s[1] + "</span></div>"; }).join("") + "</div>" +
+      '<span class="hint">Players who need a push are listed first.</span></section>';
+    return head + data.map(function (d) {
+      var x = d.x, k = d.k, since = d.lt.last ? daysSince(d.lt.last.date) : null;
+      var pills = (k.committed ? '<span class="pill good">Committed: ' + esc(k.committed.s.short || k.committed.s.name) + "</span>" : "") + (k.due ? '<span class="pill close">' + k.due + " update" + (k.due > 1 ? "s" : "") + " due</span>" : "") +
+        (d.noX ? '<span class="pill notyet">No X account</span>' : "") + (!k.list ? '<span class="pill notyet">No schools yet</span>' : "");
+      return '<section class="card"><div><div class="eyebrow">Class of ' + esc(x.grad) + " · " + esc(posLabel(x)) + "</div><h3>" + esc(x.name) + '</h3><div class="small muted">' + esc(x.school || "") + "</div></div>" +
+        (pills ? '<div class="toggles">' + pills + "</div>" : "") +
+        '<div class="small"><strong>Recruiting:</strong> ' + k.list + " on list · " + k.emailed + " emailed · " + k.replies + " replied · " + k.offers + " offer" + (k.offers === 1 ? "" : "s") + "</div>" +
+        '<div class="small"><strong>Training:</strong> ' + d.lifts + " lift" + (d.lifts === 1 ? "" : "s") + " in 2 weeks · last tested " + (since == null ? "never" : since + " days ago") + "</div>" +
+        '<div class="btns"><button type="button" class="btn primary" data-cp="' + esc(x.id) + '">Open ' + esc(x.name.split(" ")[0]) + "</button></div></section>";
+    }).join("");
+  }
+  function coachEmail(c, me, x, s) {
+    var lt = latest(x), cs = allCoaches(s), mi = mainContact(s), m = mi >= 0 ? cs[mi] : null;
+    var last = m ? m.n.split(" ").slice(-1)[0] : "";
+    var body = "Coach" + (last ? " " + last : "") + ",\n\nI coach " + x.name + " with " + c.name + ". He's a Class of " + x.grad + " " + posLabel(x) + (x.school ? " from " + x.school : "") + ", and I think he can help " + (s.short || s.name) + ".\n\n" +
+      metricLines(x, lt).join("\n") + (x.gpa ? "\nGPA: " + x.gpa : "") + (scheduleLines(x).length ? "\n\nWhere you can see him:\n" + scheduleLines(x).join("\n") : "") +
+      (x.xhandle ? "\n\nVideo: https://x.com/" + x.xhandle.replace(/^@/, "") : "") + (x.email ? "\nHis email: " + x.email : "") +
+      "\n\nHappy to talk about him anytime.\n\n" + (me ? me.name + (me.role ? ", " + me.role : "") + "\n" : "") + c.name + (me && me.email ? "\n" + me.email : "");
+    return "mailto:" + (m && m.e ? encodeURIComponent(m.e) : "") + "?subject=" + encodeURIComponent(c.name + " recommends " + x.name + ", Class of " + x.grad + " " + posLabel(x)) + "&body=" + encodeURIComponent(body);
+  }
+  var NUDGES = ["Send your updates: it's been 35+ days since you heard from some schools.", "Make your X account today and send me the handle.", "Log your numbers from this weekend.", "Add 5 schools to your list in StandPoint.", "Email the coaches at your top 3 schools this week."];
+  function clubPlayerHTML(c, pid) {
+    var x = store.players.filter(function (q) { return q.id === pid; })[0]; if (!x) { clubPlayer = null; return clubRosterHTML(c); }
+    var rows = playerRecruiting(x), k = recruitCounts(rows), lt = latest(x), T = trainOf(x), sq = bestSquat(T), me = coachMe(c);
+    var lastS = sortedByDate(T.sessions).slice(-1)[0];
+    var head = '<div class="btns"><button type="button" class="btn" id="cp-back">← Roster</button></div>' +
+      '<section class="card"><div><div class="eyebrow">Class of ' + esc(x.grad) + " · " + esc(posLabel(x)) + (x.bats ? " · B/T " + esc(x.bats) + "/" + esc(x.throws) : "") + "</div><h2>" + esc(x.name) + '</h2><div class="small">' + esc(x.school || "School not listed") + (x.gpa ? " · GPA " + esc(x.gpa) : "") + "</div></div>" +
+      '<div class="small">' + (x.xhandle ? '<a href="https://x.com/' + encodeURIComponent(x.xhandle.replace(/^@/, "")) + '" target="_blank" rel="noopener">@' + esc(x.xhandle.replace(/^@/, "")) + "</a>" : '<span class="pill notyet">No X account</span>') + (x.email ? ' · <a href="mailto:' + esc(x.email) + '">' + esc(x.email) + "</a>" : "") + "</div>" +
+      (metricLines(x, lt).length ? '<ul class="plain small">' + metricLines(x, lt).map(function (l) { return "<li>" + esc(l) + "</li>"; }).join("") + "</ul>" : '<p class="small muted" style="margin:0">No numbers logged yet.</p>') +
+      '<div class="small"><strong>Training:</strong> ' + liftsLast14(T) + " lifts in 2 weeks" + (sq ? " · squat est. max " + Math.round(sq) + " lb" : "") + (lastS ? " · last: " + esc(lastS.name) + ", " + fmtShortDate(lastS.date) : "") + "</div></section>";
+    var rec = '<section class="card"><h3>Recruiting</h3><div class="small">' + k.list + " schools · " + k.emailed + " emailed · " + k.replies + " replied · " + k.offers + " offers" + (k.due ? ' · <span class="pill close">' + k.due + " due</span>" : "") + "</div>" +
+      (rows.length ? '<div class="hist">' + rows.map(function (r) {
+        var done = STEPS.filter(function (st) { return r.t.steps[st[0]]; }).map(function (st) { return st[2] + " " + fmtShortDate(r.t.steps[st[0]]); });
+        var ups = (r.t.updates || []).slice().sort();
+        return '<div class="hitem"><div class="h"><span>' + esc(r.s.name) + '</span><span class="muted">' + esc(r.s.level) + "</span></div>" +
+          '<div class="small">' + (done.length ? esc(done.join(" · ")) : "On the list, no contact yet") + (ups.length ? " · " + ups.length + " update" + (ups.length > 1 ? "s" : "") + ", last " + fmtShortDate(ups[ups.length - 1]) : "") + "</div>" +
+          (r.due ? '<div class="small"><span class="pill close">Update due</span> last contact ' + fmtShortDate(r.lc) + "</div>" : "") +
+          (r.t.notes && r.t.notes.trim() ? '<div class="small"><strong>What coaches said:</strong> <span style="white-space:pre-line">' + esc(r.t.notes.trim()) + "</span></div>" : "") +
+          '<div class="btns"><a class="btn" href="' + esc(coachEmail(c, me, x, r.s)) + '">Email their coach for him</a>' +
+          (r.t.steps.coachnote ? "" : '<button type="button" class="btn ghost" data-cvouch="' + esc(x.id) + "|" + esc(r.s.id) + '">I reached out for him</button>') + "</div></div>";
+      }).join("") + "</div>" : '<p class="small muted" style="margin:0">No schools on his list yet.</p>') +
+      '<span class="hint">"Email their coach for him" writes a recommendation from you with his numbers and schedule. "I reached out for him" checks off "My coach reached out" in his tracker.</span></section>';
+    var mine = c.nudges.filter(function (n) { return n.pid === x.id; }).slice(-5).reverse();
+    var nudge = '<section class="card"><h3>Send ' + esc(x.name.split(" ")[0]) + " a nudge</h3>" +
+      '<div class="toggles">' + NUDGES.map(function (t, i) { return '<button type="button" class="tog" data-nq="' + i + '" style="font-family:var(--body);font-size:14px;text-align:left">' + esc(t) + "</button>"; }).join("") + "</div>" +
+      '<div class="field"><label for="nd-text">Message</label><textarea id="nd-text" rows="3"></textarea></div><div class="btns"><button type="button" class="btn red" id="nd-send">Send</button></div>' +
+      '<span class="hint">It shows on his Home screen. In the full app it\'s also a phone notification.</span>' +
+      (mine.length ? '<div class="hist">' + mine.map(function (n) { return '<div class="hitem"><div class="h"><span>' + fmtShortDate(n.date) + " · " + esc(n.from) + '</span><span class="pill ' + (n.seen ? "good" : "notyet") + '">' + (n.seen ? "Seen" : "Not seen yet") + '</span></div><div class="small">' + esc(n.text) + "</div></div>"; }).join("") + "</div>" : "") + "</section>";
+    var notes = '<section class="card"><div class="field"><label for="cn-notes">Coaches\' notes on ' + esc(x.name.split(" ")[0]) + ' <span class="hint">(only coaches see these)</span></label><textarea id="cn-notes" rows="4" placeholder="Strengths, what to work on, which schools fit">' + esc(c.notes[x.id] || "") + "</textarea></div></section>";
+    return head + rec + nudge + notes;
+  }
+
+  function liftEditorHTML() {
+    return liftDraft.map(function (day, di) {
+      return '<section class="card"><div class="sh"><div class="field" style="flex:1"><label for="ld-' + di + '">Lift day ' + (di + 1) + '</label><input type="text" id="ld-' + di + '" data-ldn="' + di + '" value="' + esc(day.name) + '"></div>' +
+        (liftDraft.length > 2 ? '<button type="button" class="btn ghost small" data-lrmday="' + di + '">Remove day</button>' : "") + "</div>" +
+        day.blocks.map(function (bl, bi) {
+          var hd = '<div class="sh"><span class="label">' + esc(BLOCK_NAMES[bl.t] || bl.t) + '</span><button type="button" class="mini" data-lrmblk="' + di + "|" + bi + '" aria-label="Remove this block">✕</button></div>';
+          if (bl.t === "main") return '<div class="card-sub">' + hd + '<select data-lmain="' + di + "|" + bi + '" aria-label="Main lift">' + Object.keys(LIFTS).map(function (k) { return '<option value="' + k + '"' + (k === bl.lift ? " selected" : "") + ">" + esc(LIFTS[k].name) + "</option>"; }).join("") + "</select>" +
+            '<span class="hint">Sets and reps follow the 8-week phases. Players log weight, reps and bar speed, and it counts toward their max.</span></div>';
+          return '<div class="card-sub">' + hd + bl.items.map(function (it, ii) {
+            var two = Array.isArray(it);
+            return '<div class="edrow"><input type="text" data-litem="' + di + "|" + bi + "|" + ii + '" value="' + esc(two ? it[0] : it) + '" aria-label="Exercise"><button type="button" class="mini" data-lrmitem="' + di + "|" + bi + "|" + ii + '" aria-label="Remove exercise">✕</button></div>' +
+              (two ? '<span class="hint">Weeks 5–8: ' + esc(it[1]) + ". Editing it makes it the same all 8 weeks.</span>" : "");
+          }).join("") + '<div class="btns"><button type="button" class="btn small" data-laddi="' + di + "|" + bi + '">+ Exercise</button></div></div>';
+        }).join("") +
+        '<div class="edrow"><select data-laddbt="' + di + '" aria-label="Block type">' + BLOCK_TYPES.map(function (t) { return '<option value="' + t + '">' + esc(BLOCK_NAMES[t]) + "</option>"; }).join("") + '</select><button type="button" class="btn small" data-laddb="' + di + '">+ Block</button></div>' +
+        '<div class="field"><label for="ng-' + di + '">No gym? Do this instead <span class="hint">(optional, one per line)</span></label><textarea id="ng-' + di + '" data-lng="' + di + '" rows="3" placeholder="Bodyweight split squats 3 × 10 each leg&#10;Push-ups 3 × 12">' + esc((day.nogym || []).join("\n")) + "</textarea></div></section>";
+    }).join("");
+  }
+  function clubLiftsHTML(c) {
+    var custom = !!(c.lift && c.lift.length), n = clubRoster().length;
+    if (!liftDraft) liftDraft = JSON.parse(JSON.stringify(custom ? c.lift : PROGRAMS[+c.plan.days || 3]));
+    return '<section class="card"><h3>Club lift plan</h3><p class="small" style="margin:0">' + (custom ? "Your players lift your club's plan." : "Your players are on the StandPoint base plan. Change anything: exercises, sets and reps, order and days, then send it.") + "</p>" +
+      (custom ? "" : '<div class="field"><label for="lf-days">Start from the base plan with</label><select id="lf-days">' + [2, 3, 4].map(function (k) { return '<option value="' + k + '"' + (k === liftDraft.length ? " selected" : "") + ">" + k + " lift days a week</option>"; }).join("") + "</select></div>") +
+      '<span class="hint">Write sets and reps in the exercise, like "DB Romanian deadlift 3 × 8". Players can log weight and reps on every exercise.</span></section>' +
+      liftEditorHTML() +
+      '<section class="card"><div class="btns">' + (liftDraft.length < 4 ? '<button type="button" class="btn" id="lf-addday">+ Add a lift day</button>' : "") +
+      '<button type="button" class="btn red" id="lf-save">Save and send to ' + n + " player" + (n === 1 ? "" : "s") + "</button>" +
+      (custom ? '<button type="button" class="btn ghost" id="lf-reset">Go back to the base plan</button>' : "") + "</div>" +
+      '<span class="hint">Season and a note from the coaches are in the Club tab.</span></section>';
+  }
+  function clubThrowHTML(c) {
+    return '<section class="card"><h3>Throwing program</h3><p class="small" style="margin:0">Build your club\'s throwing days and pick the weekdays for each. Players see today\'s throwing in Train and check it off. StandPoint\'s own base program is coming; until then, use yours.</p>' +
+      '<div class="btns"><button type="button" class="btn primary" id="th-add">+ Add a throwing day</button></div></section>' +
+      c.throwing.map(function (d, i) {
+        return '<section class="card"><div class="sh"><div class="field" style="flex:1"><label for="th-n' + i + '">Name</label><input type="text" id="th-n' + i + '" data-thn="' + i + '" value="' + esc(d.name) + '"></div><button type="button" class="btn ghost small" data-thrm="' + i + '">Remove</button></div>' +
+          '<div class="field"><span class="label">Days</span><div class="toggles">' + WEEK_ORDER.map(function (k) { return '<button type="button" class="tog" data-thwd="' + i + "|" + k + '" aria-pressed="' + (d.wd.indexOf(k) >= 0) + '" style="min-width:44px;padding:0 6px">' + WEEKDAYS[k] + "</button>"; }).join("") + "</div></div>" +
+          '<div class="field"><label for="th-i' + i + '">What they do <span class="hint">(one per line, in order)</span></label><textarea id="th-i' + i + '" data-thi="' + i + '" rows="5" placeholder="Arm care band routine&#10;Catch play, 10 min&#10;Long toss&#10;Flat-ground work">' + esc(d.items.join("\n")) + "</textarea></div>" +
+          '<div class="field"><label for="th-a' + i + '">No field? Do this instead <span class="hint">(optional: a wall, net or backyard)</span></label><textarea id="th-a' + i + '" data-tha="' + i + '" rows="3">' + esc((d.alt || []).join("\n")) + "</textarea></div></section>";
+      }).join("");
+  }
+  function clubRoutineHTML(c) {
+    return '<section class="card"><h3>Team routine</h3><p class="small" style="margin:0">What your team does each day: practices, games, recovery. Players see today\'s on Home and in Train. Lift and throwing days from your plans are added on their own.</p>' +
+      WEEK_ORDER.map(function (k) {
+        var auto = autoRoutine(c, k);
+        return '<div class="field"><label for="rt-' + k + '">' + WEEKDAYS_FULL[k] + '</label><textarea id="rt-' + k + '" data-rt="' + k + '" rows="2" placeholder="' + (k === 6 ? "Game at 10 am" : k === 0 ? "Rest" : "Practice 6–8 pm") + '">' + esc(c.routine[k] || "") + "</textarea>" +
+          (auto.length ? '<span class="hint">Added on their own: ' + esc(auto.join(" · ")) + "</span>" : "") + "</div>";
+      }).join("") + "</section>";
+  }
+  function clubSettingsHTML(c) {
+    var roster = clubRoster(), lic = store.plan && store.plan.k === "club";
+    var head = '<section class="card"><div class="small"><strong>Join code:</strong> <span class="num">' + esc(c.code) + "</span>. Players enter it under More → Your club.</div>" +
+      '<div class="small"><strong>License:</strong> ' + (lic ? "club license" + (store.plan.test ? " (test)" : "") : "not set up yet") + ' · <button type="button" class="linkbtn" data-mv="plans">Plans</button></div>' +
+      '<div class="btns"><button type="button" class="btn" id="cl-edit">Edit club name and type</button></div></section>';
+    var season = '<section class="card"><h3>Season and note</h3><div class="field"><label for="cp-season">Season</label><select id="cp-season"><option value="off"' + (c.plan.season !== "in" ? " selected" : "") + '>Off-season</option><option value="in"' + (c.plan.season === "in" ? " selected" : "") + ">In-season (2 lift days)</option></select></div>" +
+      '<div class="field"><label for="cp-note">Note from the coaches</label><input type="text" id="cp-note" value="' + esc(c.plan.note || "") + '" placeholder="Lift before practice on Mon and Thu"></div>' +
+      '<div class="btns"><button type="button" class="btn red" id="cp-apply"' + (roster.length ? "" : " disabled") + ">Save and send to " + roster.length + " player" + (roster.length === 1 ? "" : "s") + "</button></div></section>";
+    var coaches = '<section class="card"><h3>Coaches</h3>' + (c.coaches.length ? '<div class="hist">' + c.coaches.map(function (x) {
+      return '<div class="hitem"><div class="h"><span>' + esc(x.name) + (x.role ? ' <span class="muted">· ' + esc(x.role) + "</span>" : "") + '</span><button type="button" class="btn ghost small" data-rmcoach="' + esc(x.id) + '">Remove</button></div>' + (x.email ? '<div class="small">' + esc(x.email) + "</div>" : "") + "</div>";
+    }).join("") + "</div>" : '<p class="muted small" style="margin:0">Add your coaches. Each one can open the coach view, see every player\'s recruiting and send nudges.</p>') +
+      '<form id="cc-form" style="display:grid;gap:10px" autocomplete="off"><div class="row2"><div class="field"><label for="cc-name">Coach name</label><input type="text" id="cc-name" placeholder="First Last"></div>' +
+      '<div class="field"><label for="cc-role">Role</label><input type="text" id="cc-role" placeholder="Hitting coach"></div></div>' +
+      '<div class="field"><label for="cc-email">Email</label><input type="email" id="cc-email"></div><div class="btns"><button type="submit" class="btn primary">Add coach</button></div></form></section>';
+    var rosterCard = '<section class="card"><h3>Players on this device</h3><p class="small muted" style="margin:0">Check the ones on your roster. In the full app, players join from their own phones with your code.</p>' +
+      (store.players.length ? '<div class="tasks">' + store.players.map(function (x) { var on = c.roster.indexOf(x.id) >= 0; return '<label class="task"><input type="checkbox" data-roster="' + esc(x.id) + '"' + (on ? " checked" : "") + "><span><strong>" + esc(x.name) + '</strong> <span class="muted small">· ' + esc(posLabel(x)) + " · " + esc(x.grad) + "</span></span></label>"; }).join("") + "</div>" : "") +
+      '<div class="btns"><button type="button" class="btn" id="cl-addp">+ Add a player</button></div></section>';
+    return head + season + coaches + rosterCard;
+  }
+
+  function bindClubBody(p, c) {
+    bindMore();
+    // roster and player detail
+    onAll("[data-cp]", "click", function (b) { clubPlayer = b.getAttribute("data-cp"); render(); window.scrollTo(0, 0); });
+    if ($("#cp-back")) $("#cp-back").addEventListener("click", function () { clubPlayer = null; render(); window.scrollTo(0, 0); });
+    onAll("[data-cvouch]", "click", function (b) {
+      var pr = b.getAttribute("data-cvouch").split("|"), x = store.players.filter(function (q) { return q.id === pr[0]; })[0]; if (!x) return;
+      var t = trackOf(x, pr[1]); t.steps.coachnote = todayStr; t.star = true; persist(); redrawHQ(p); toast("Logged in " + x.name.split(" ")[0] + "'s tracker.");
+    });
+    onAll("[data-nq]", "click", function (b) { $("#nd-text").value = NUDGES[+b.getAttribute("data-nq")]; $("#nd-text").focus(); });
+    if ($("#nd-send")) $("#nd-send").addEventListener("click", function () {
+      var txt = $("#nd-text").value.trim(); if (!txt) { toast("Write the message first."); return; }
+      var me = coachMe(c); c.nudges.push({ id: uid(), pid: clubPlayer, from: me ? me.name : "Your coach", text: txt, date: todayStr, seen: false });
+      persist(); redrawHQ(p); toast("Sent. It's on his Home screen.");
+    });
+    if ($("#cn-notes")) $("#cn-notes").addEventListener("input", function (e) { c.notes[clubPlayer] = e.target.value; persist(); });
+    // lift editor
+    var ix = function (s) { return s.split("|").map(Number); };
+    onAll("[data-ldn]", "input", function (el) { liftDraft[+el.getAttribute("data-ldn")].name = el.value; });
+    onAll("[data-litem]", "input", function (el) { var a = ix(el.getAttribute("data-litem")); liftDraft[a[0]].blocks[a[1]].items[a[2]] = el.value; });
+    onAll("[data-lng]", "input", function (el) { liftDraft[+el.getAttribute("data-lng")].nogym = el.value.split("\n").map(function (s) { return s.trim(); }).filter(Boolean); });
+    onAll("[data-lmain]", "change", function (el) { var a = ix(el.getAttribute("data-lmain")); liftDraft[a[0]].blocks[a[1]].lift = el.value; });
+    onAll("[data-lrmitem]", "click", function (b) { var a = ix(b.getAttribute("data-lrmitem")); liftDraft[a[0]].blocks[a[1]].items.splice(a[2], 1); redrawHQ(p); });
+    onAll("[data-laddi]", "click", function (b) { var a = ix(b.getAttribute("data-laddi")); liftDraft[a[0]].blocks[a[1]].items.push(""); redrawHQ(p); var ins = document.querySelectorAll('[data-litem^="' + a[0] + "|" + a[1] + '|"]'); if (ins.length) ins[ins.length - 1].focus(); });
+    onAll("[data-lrmblk]", "click", function (b) { var a = ix(b.getAttribute("data-lrmblk")); liftDraft[a[0]].blocks.splice(a[1], 1); redrawHQ(p); });
+    onAll("[data-laddb]", "click", function (b) { var di = +b.getAttribute("data-laddb"), t = document.querySelector('[data-laddbt="' + di + '"]').value; liftDraft[di].blocks.push(t === "main" ? { t: "main", lift: "squat" } : { t: t, items: [""] }); redrawHQ(p); });
+    onAll("[data-lrmday]", "click", function (b) { liftDraft.splice(+b.getAttribute("data-lrmday"), 1); redrawHQ(p); });
+    if ($("#lf-days")) $("#lf-days").addEventListener("change", function (e) { liftDraft = JSON.parse(JSON.stringify(PROGRAMS[+e.target.value])); c.plan.days = +e.target.value; persist(); redrawHQ(p); });
+    if ($("#lf-addday")) $("#lf-addday").addEventListener("click", function () { liftDraft.push({ name: "Lift " + (liftDraft.length + 1), blocks: [{ t: "warm", items: [""] }, { t: "main", lift: "squat" }, { t: "pair", items: [""] }] }); redrawHQ(p); });
+    if ($("#lf-save")) $("#lf-save").addEventListener("click", function () {
+      liftDraft.forEach(function (d) { d.blocks.forEach(function (bl) { if (bl.items) bl.items = bl.items.filter(function (it) { return Array.isArray(it) || String(it).trim(); }); }); d.blocks = d.blocks.filter(function (bl) { return bl.t === "main" || bl.items.length; }); });
+      c.lift = JSON.parse(JSON.stringify(liftDraft)); c.plan.days = c.lift.length; clubRoster().forEach(applyClub); persist(); redrawHQ(p);
+      toast("Lift plan sent to " + clubRoster().length + " player" + (clubRoster().length === 1 ? "" : "s") + ".");
+    });
+    if ($("#lf-reset")) $("#lf-reset").addEventListener("click", function () { c.lift = null; liftDraft = null; clubRoster().forEach(applyClub); persist(); redrawHQ(p); toast("Back on the base plan."); });
+    // throwing
+    if ($("#th-add")) $("#th-add").addEventListener("click", function () { c.throwing.push({ name: "Throwing day " + String.fromCharCode(65 + c.throwing.length), wd: [], items: [], alt: [] }); persist(); redrawHQ(p); });
+    var lines = function (v) { return v.split("\n").map(function (s) { return s.trim(); }).filter(Boolean); };
+    onAll("[data-thn]", "input", function (el) { c.throwing[+el.getAttribute("data-thn")].name = el.value; persist(); });
+    onAll("[data-thi]", "input", function (el) { c.throwing[+el.getAttribute("data-thi")].items = lines(el.value); persist(); });
+    onAll("[data-tha]", "input", function (el) { c.throwing[+el.getAttribute("data-tha")].alt = lines(el.value); persist(); });
+    onAll("[data-thwd]", "click", function (b) { var a = ix(b.getAttribute("data-thwd")), wd = c.throwing[a[0]].wd, i = wd.indexOf(a[1]); if (i >= 0) wd.splice(i, 1); else wd.push(a[1]); persist(); redrawHQ(p); });
+    onAll("[data-thrm]", "click", function (b) { c.throwing.splice(+b.getAttribute("data-thrm"), 1); persist(); redrawHQ(p); });
+    // routine
+    onAll("[data-rt]", "input", function (el) { c.routine[el.getAttribute("data-rt")] = el.value; persist(); });
+    // settings
+    if ($("#cl-edit")) $("#cl-edit").addEventListener("click", function () { clubView.edit = true; renderClubHQ(p); });
+    if ($("#cl-addp")) $("#cl-addp").addEventListener("click", function () { startNewPlayer(); });
+    onAll("[data-roster]", "change", function (cb) {
+      var id = cb.getAttribute("data-roster"), i = c.roster.indexOf(id), x = store.players.filter(function (q) { return q.id === id; })[0];
+      if (cb.checked && i < 0) { c.roster.push(id); if (x) applyClub(x); }
+      if (!cb.checked && i >= 0) { c.roster.splice(i, 1); if (x) delete trainOf(x).club; }
+      persist(); redrawHQ(p);
+    });
+    onAll("[data-rmcoach]", "click", function (b) { c.coaches = c.coaches.filter(function (x) { return x.id !== b.getAttribute("data-rmcoach"); }); persist(); redrawHQ(p); });
+    if ($("#cc-form")) $("#cc-form").addEventListener("submit", function (e) {
+      e.preventDefault();
+      var nm = $("#cc-name").value.trim(); if (!nm) { toast("Add the coach's name."); return; }
+      var co = { id: uid(), name: nm, role: $("#cc-role").value.trim(), email: $("#cc-email").value.trim() }; c.coaches.push(co); if (!c.as) c.as = co.id;
+      persist(); redrawHQ(p); toast(nm + " added.");
+    });
+    if ($("#cp-apply")) $("#cp-apply").addEventListener("click", function () {
+      c.plan.season = $("#cp-season").value; c.plan.note = $("#cp-note").value.trim(); c.plan.applied = todayStr; clubRoster().forEach(applyClub); persist(); redrawHQ(p);
+      toast("Sent to " + clubRoster().length + " player" + (clubRoster().length === 1 ? "" : "s") + ".");
+    });
+  }
+
+  function renderClubSetup(p) {
+    var c = store.club, d = c || { name: "", type: "Travel club", email: "" };
+    $("#view").innerHTML = moreBack() + '<form class="card" id="cl-form" autocomplete="off"><div><div class="eyebrow">Coach view</div><h2>' + (c ? "Edit your club" : "Set up your club") + "</h2></div>" +
+      (c ? "" : '<p class="small" style="margin:0">For a travel club, training facility or showcase. Your players join with a code, and your coaches see everyone\'s recruiting, set the lift plan, throwing program and team routine, and nudge players who fall behind.</p>') +
+      '<div class="field"><label for="cl-name">Name</label><input type="text" id="cl-name" value="' + esc(d.name) + '" placeholder="Infinite Hitting" required></div>' +
+      '<div class="row2"><div class="field"><label for="cl-type">Type</label><select id="cl-type">' + ["Travel club", "Training facility", "Showcase"].map(function (t) { return "<option" + (t === d.type ? " selected" : "") + ">" + t + "</option>"; }).join("") + "</select></div>" +
+      '<div class="field"><label for="cl-email">Admin email</label><input type="email" id="cl-email" value="' + esc(d.email || "") + '"></div></div>' +
+      '<div class="btns"><button type="submit" class="btn red">Save club</button>' + (c ? '<button type="button" class="btn" id="cl-cancel">Cancel</button>' : "") + "</div></form>";
+    bindMore();
+    if ($("#cl-cancel")) $("#cl-cancel").addEventListener("click", function () { clubView.edit = false; go("club"); });
+    $("#cl-form").addEventListener("submit", function (e) {
+      e.preventDefault();
+      var nm = $("#cl-name").value.trim(); if (!nm) return;
+      if (!store.club) store.club = normClub({ code: uid().slice(0, 6).toUpperCase() });
+      store.club.name = nm; store.club.type = $("#cl-type").value; store.club.email = $("#cl-email").value.trim();
+      clubView.edit = false; clubTab = store.club.coaches.length ? "roster" : "settings"; moreView = "menu"; persist(); go("club"); toast("Club saved.");
+    });
+  }
+  // Player side: join a club with its code
+  function renderJoin(p) {
+    var c = clubOf(p);
+    if (c) {
+      $("#view").innerHTML = moreBack() + '<section class="card"><div><div class="eyebrow">Your club</div><h2>' + esc(c.name) + "</h2></div>" +
+        '<p class="small" style="margin:0">Your coaches set your lift plan, throwing and team routine, and they can see your recruiting so they can help: who you\'ve emailed, who replied and what they said.</p>' +
+        (c.coaches.length ? '<ul class="plain">' + c.coaches.map(function (x) { return "<li>" + esc(x.name) + (x.role ? ", " + esc(x.role) : "") + "</li>"; }).join("") + "</ul>" : "") +
+        '<div class="btns"><button type="button" class="btn ghost" id="jn-leave">Leave ' + esc(c.name) + "</button></div></section>";
+      bindMore();
+      $("#jn-leave").addEventListener("click", function (b) {
+        var btn = $("#jn-leave"); if (btn.getAttribute("data-armed") !== "1") { btn.setAttribute("data-armed", "1"); btn.textContent = "Tap again to leave"; return; }
+        c.roster.splice(c.roster.indexOf(p.id), 1); delete trainOf(p).club; persist(); renderJoin(p); toast("You left the club.");
+      });
+      return;
+    }
+    $("#view").innerHTML = moreBack() + '<section class="card"><div><div class="eyebrow">Your club</div><h2>Join your travel club</h2></div>' +
+      '<p class="small" style="margin:0">Enter the code your club gave you. Your coaches will set your training and see your recruiting so they can help you.</p>' +
+      '<div class="field"><label for="jn-code">Club code</label><input type="text" id="jn-code" autocomplete="off" autocapitalize="characters" placeholder="ABC123"></div>' +
+      '<div class="btns"><button type="button" class="btn red" id="jn-go">Join</button></div><div id="jn-err" class="warn" style="display:none"></div></section>';
+    bindMore();
+    $("#jn-go").addEventListener("click", function () {
+      var code = $("#jn-code").value.trim().toUpperCase(), cl = store.club;
+      if (!cl || !code || String(cl.code).toUpperCase() !== code) { var er = $("#jn-err"); er.style.display = "block"; er.textContent = "That code doesn't match a club. Check it with your coach."; return; }
+      normClub(cl); if (cl.roster.indexOf(p.id) < 0) cl.roster.push(p.id); applyClub(p); persist(); renderJoin(p); toast("You're on " + cl.name + ".");
+    });
   }
 
   // ----- Coaching upgrade: player sends video, coach breaks it down and assigns drills -----
