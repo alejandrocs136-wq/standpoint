@@ -1,13 +1,14 @@
 # StandPoint (CommitPath) — prototype
 
-A phone-first recruiting and training app for high school baseball players.
+A phone-first recruiting and training app for high school baseball players (softball started).
 A player enters their profile once, logs numbers over time, and the app shows:
 
 - **StandPoint:** which college level their numbers fit today (Top D1, mid-major D1, D2, D3, JUCO) and the exact gaps to the next level.
 - **Train:** a weekly lift and speed schedule, an info button on every exercise, weight logged on every exercise, maxes, strength per pound of body weight, bar speed, jump and sprint tests, and pounds moved.
 - **Recruit:** NCAA contact dates by class, a yearly checklist, and email, DM and coach-note templates filled in from the profile.
-- **Schools:** 987 college programs (every NCAA D1, D2 and D3 baseball program in every state, plus Texas and Oklahoma at every level), filtered to the range the player picks at sign-up. Each school has a fit badge, senior timing, coaches, a 10-step contact tracker and messages addressed to the chosen coach.
+- **Schools:** about 1,550 baseball programs (every NCAA D1, D2 and D3 program, every NAIA program and about 390 junior colleges nationwide, plus Texas and Oklahoma at every level with coaches) and 63 softball programs (NCAA, Texas and Oklahoma), filtered to the range the player picks at sign-up. Each school has a fit badge, senior timing, coaches, a 10-step contact tracker and messages addressed to the chosen coach.
 - **Post:** builds an X caption from the player's numbers. The player always taps Post themselves.
+- **More** (demos on one device): plans and payments (individual plan, club license, coaching add-on; Stripe Payment Links slot), club admin (roster, coaches, club lift plan, roster progress), coach inbox for video reviews with assigned drills, a college-coach search that only lists players who opted in with a parent's OK, and install-to-home-screen.
 
 Live prototype (owner only until shared): https://claude.ai/artifact/TRD6j1Vq7Enetjz7Tsk6qT
 
@@ -25,7 +26,10 @@ This is a **single-file front-end prototype** (`index.html`, plain HTML, CSS and
 |---|---|
 | `index.html` | The entire app. Open it in any browser. |
 | `data/ncaa*.txt` | NCAA baseball programs by state: `ST|name|division|conference|athletics site`, from the NCAA member directory (Nov 3, 2026). |
-| `scripts/build_national.py` | Rebuilds the `NATIONAL` list inside `index.html` from `data/`. Run `python3 scripts/build_national.py`. |
+| `data/naia.txt`, `data/juco.txt` | NAIA and junior-college baseball programs: `State|name|NAIA or JUCO|conference||city`, from public college lists (Nov 4, 2026). Junior colleges are incomplete in some states (names P to Z after Maryland). Confirm against official NAIA and NJCAA sources. |
+| `data/softball/*.txt` | NCAA softball programs, Texas and Oklahoma (NCAA member directory, Nov 4, 2026). |
+| `manifest.webmanifest`, `icon-*.png`, `apple-touch-icon.png` | Lets phones add StandPoint to the home screen as an app. |
+| `scripts/build_national.py` | Rebuilds the `NATIONAL` (baseball) and `SOFTBALL` lists inside `index.html` from `data/`. Run `python3 scripts/build_national.py`. |
 
 Texas and Oklahoma schools, with coaches, cities and fit notes, are hand-written in `index.html`. Search for `var SCHOOLS = [`.
 
@@ -34,7 +38,8 @@ Texas and Oklahoma schools, with coaches, cities and fit notes, are hand-written
 - `METRICS`, `RANGES`, `LEVELS`: level benchmarks (GetRecruited, June 2026; JUCO from NCSA).
 - `TASKS`: recruiting checklist by grade.
 - `PROGRAMS`, `SPEED`, `EXINFO`: lift days, speed days, and the exercise library (how, cue, control, what to log).
-- `SCHOOLS`, `NATIONAL`, `BORDERS`, `REGION_OF`: the school directory and the range logic.
+- `SCHOOLS`, `NATIONAL`, `SOFTBALL`, `JUCO_PARTIAL`, `BORDERS`, `REGION_OF`: the school directory and the range logic.
+- `PLANS`, `renderPlans`, `renderClub`, `coachingCard`, `renderCoachInbox`, `renderCollegeSearch`, `renderInstall`: the More screens.
 - `render*` functions: one per screen.
 
 ## Privacy and legal notes for the real build
@@ -48,7 +53,8 @@ Texas and Oklahoma schools, with coaches, cities and fit notes, are hand-written
 ## Next steps for a developer
 
 1. Pick a stack for the real app: a web app that installs on phones first, then App Store and Google Play.
-2. Add accounts (player, parent, coach), a database, and sync. Move the school directory into the database.
-3. Build a data pipeline for NAIA and junior colleges nationwide, plus coach staffs, refreshed every year.
-4. Verified numbers: link showcase and device results, or require proof (video) for coach-facing views.
-5. Later: a coach and club portal (travel clubs, facilities, showcases), and a college-coach search by verified metrics.
+2. Add accounts (player, parent, coach, club admin, college coach), a database, and sync. Move the school directory into the database.
+3. Turn the More demos into real features: Stripe subscriptions with webhooks, club rosters joined by code, video upload for coach reviews, and college-coach accounts verified by staff email.
+4. Finish the data: the remaining junior colleges, coach staffs nationwide, softball nationwide, refreshed every year.
+5. Softball level ranges, so softball players get level fit like baseball.
+6. Verified numbers: link showcase and device results, or require proof (video) for coach-facing views.

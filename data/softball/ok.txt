@@ -1,0 +1,14 @@
+OK|Cameron University|II|Lone Star Conference|cameronaggies.com|Lawton
+OK|University of Central Oklahoma|II|Mid-America Intercollegiate Athletics Association|bronchosports.com|Edmond
+OK|East Central University|II|Great American Conference|ecutigers.com|Ada
+OK|Northeastern State University|II|Mid-America Intercollegiate Athletics Association|goriverhawksgo.com|Tahlequah
+OK|Northwestern Oklahoma State University|II|Great American Conference|riderangersride.com|Alva
+OK|University of Oklahoma|I|Southeastern Conference|soonersports.com|Norman
+OK|Oklahoma Baptist University|II|Great American Conference|obubison.com|Shawnee
+OK|Oklahoma Christian University|II|Lone Star Conference|oceagles.com|Edmond
+OK|Oklahoma State University|I|Big 12 Conference|okstate.com|Stillwater
+OK|Rogers State University|II|Mid-America Intercollegiate Athletics Association|rsuhillcats.com|Claremore
+OK|Southeastern Oklahoma State University|II|Great American Conference|gosoutheastern.com|Durant
+OK|Southern Nazarene University|II|Great American Conference|snuathletics.com|Bethany
+OK|Southwestern Oklahoma State University|II|Great American Conference|swosuathletics.com|Weatherford
+OK|The University of Tulsa|I|American Conference|tulsahurricane.com|Tulsa

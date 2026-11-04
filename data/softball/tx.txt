@@ -1,0 +1,49 @@
+TX|Abilene Christian University|I|United Athletic Conference|acusports.com|Abilene
+TX|Angelo State University|II|Lone Star Conference|angelosports.com|San Angelo
+TX|Austin College|III|Southern Collegiate Athletic Conference|acroos.com|Sherman
+TX|Baylor University|I|Big 12 Conference|baylorbears.com|Waco
+TX|Concordia University Texas|III|Southern Collegiate Athletic Conference|athletics.concordia.edu|Austin
+TX|University of Dallas|III|Southern Collegiate Athletic Conference|udallasathletics.com|Irving
+TX|East Texas A&M University|I|Southland Conference|lionathletics.com|Commerce
+TX|East Texas Baptist University|III|American Southwest Conference|goetbutigers.com|Marshall
+TX|Hardin-Simmons University|III|American Southwest Conference|hsuathletics.com|Abilene
+TX|University of Houston|I|Big 12 Conference|uhcougars.com|Houston
+TX|Houston Christian University|I|Southland Conference|hcuhuskies.com|Houston
+TX|Howard Payne University|III|American Southwest Conference|hpusports.com|Brownwood
+TX|University of the Incarnate Word|I|Southland Conference|uiwcardinals.com|San Antonio
+TX|Lamar University|I|Southland Conference|lamarcardinals.com|Beaumont
+TX|LeTourneau University|III|Southern Collegiate Athletic Conference|letuathletics.com|Longview
+TX|Lubbock Christian University|II|Lone Star Conference|lcuchaps.com|Lubbock
+TX|University of Mary Hardin-Baylor|III|American Southwest Conference|umhb.edu/athletics|Belton
+TX|McMurry University|III|American Southwest Conference|mcmurrysports.com|Abilene
+TX|Midwestern State University|II|Lone Star Conference|msumustangs.com|Wichita Falls
+TX|University of North Texas|I|American Conference|meangreensports.com|Denton
+TX|Prairie View A&M University|I|Southwestern Athletic Conf.|pvpanthers.com|Prairie View
+TX|Sam Houston State University|I|Conference USA|gobearkats.com|Huntsville
+TX|Schreiner University|III|American Southwest Conference|schreinermountaineers.com|Kerrville
+TX|Southwestern University (Texas)|III|Southern Athletic Association|southwesternpirates.com|Georgetown
+TX|St. Edward's University|II|Lone Star Conference|gohilltoppers.com|Austin
+TX|St. Mary's University (Texas)|II|Lone Star Conference|rattlerathletics.com|San Antonio
+TX|University of St. Thomas (Texas)|III|Southern Collegiate Athletic Conference|ustcelts.com|Houston
+TX|Stephen F. Austin State University|I|Southland Conference|sfajacks.com|Nacogdoches
+TX|Sul Ross State University|II|Lone Star Conference|srlobos.com|Alpine
+TX|Tarleton State University|I|United Athletic Conference|tarletonsports.com|Stephenville
+TX|Texas A&M University|I|Southeastern Conference|12thman.com|College Station
+TX|Texas A&M International University|II|Lone Star Conference|godustdevils.com|Laredo
+TX|Texas A&M University-Texarkana|II|Lone Star Conference||Texarkana
+TX|Texas A&M University-Corpus Christi|I|Southland Conference|goislanders.com|Corpus Christi
+TX|Texas A&M University-Kingsville|II|Lone Star Conference|javelinaathletics.com|Kingsville
+TX|University of Texas at Arlington|I|United Athletic Conference|utamavs.com|Arlington
+TX|Texas Lutheran University|III|Southern Collegiate Athletic Conference|tlubulldogs.com|Seguin
+TX|Texas Southern University|I|Southwestern Athletic Conf.|tsusports.com|Houston
+TX|Texas State University|I|Pac-12 Conference|txstatebobcats.com|San Marcos
+TX|Texas Tech University|I|Big 12 Conference|texastech.com|Lubbock
+TX|Texas Woman's University|II|Lone Star Conference|twuathletics.com|Denton
+TX|University of Texas at Austin|I|Southeastern Conference|texaslonghorns.com|Austin
+TX|University of Texas at El Paso|I|Mountain West Conference|utepminers.com|El Paso
+TX|University of Texas at San Antonio|I|American Conference|goutsa.com|San Antonio
+TX|The University of Texas at Tyler|II|Lone Star Conference|uttylerpatriots.com|Tyler
+TX|Trinity University (Texas)|III|Southern Athletic Association|trinitytigers.com|San Antonio
+TX|The University of Texas Permian Basin|II|Lone Star Conference|utpbfalcons.com|Odessa
+TX|University of Texas at Dallas|II|Lone Star Conference|utdcomets.com|Richardson
+TX|West Texas A&M University|II|Lone Star Conference|gobuffsgo.com|Canyon

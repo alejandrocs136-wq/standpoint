@@ -1,0 +1,177 @@
+Georgia|Abraham Baldwin Agricultural College|NAIA|Southern States Athletic Conference||Tifton
+Kentucky|Alice Lloyd College|NAIA|Continental Athletic Conference||Pippa Passes
+Georgia|Andrew College|NAIA|Southern States Athletic Conference||Cuthbert
+Michigan|Aquinas College|NAIA|Wolverine-Hoosier Athletic Conference||Grand Rapids
+Arizona|Arizona Christian University|NAIA|Golden State Athletic Conference||Glendale
+Arkansas|Arkansas Baptist College|NAIA|Continental Athletic Conference||Little Rock
+Florida|Ave Maria University|NAIA|The Sun Conference||Ave Maria
+Missouri|Avila University|NAIA|Kansas Collegiate Athletic Conference||Kansas City
+Kansas|Baker University|NAIA|Heart of America Athletic Conference||Baldwin City
+Nebraska|Bellevue University|NAIA|Frontier Conference||Bellevue
+Kansas|Benedictine College|NAIA|Heart of America Athletic Conference||Atchison
+Kansas|Bethany College|NAIA|Kansas Collegiate Athletic Conference||Lindsborg
+Indiana|Bethel University (Indiana)|NAIA|Crossroads League||Mishawaka
+Tennessee|Bethel University (Tennessee)|NAIA|Mid-South Conference||McKenzie
+North Dakota|Bismarck State College|NAIA|Frontier Conference||Bismarck
+Mississippi|Blue Mountain Christian University|NAIA|Southern States Athletic Conference||Blue Mountain
+Virginia|Bluefield University|NAIA|Appalachian Athletic Conference||Bluefield
+Kentucky|Brescia University|NAIA|River States Conference||Owensboro
+Georgia|Brewton-Parker Christian University|NAIA|Southern States Athletic Conference||Mount Vernon
+Iowa|Briar Cliff University|NAIA|Great Plains Athletic Conference||Sioux City
+Tennessee|Bryan College|NAIA|Appalachian Athletic Conference||Dayton
+Oregon|Bushnell University|NAIA|Cascade Collegiate Conference||Eugene
+Indiana|Calumet College of Saint Joseph|NAIA|Chicagoland Collegiate Athletic Conference||Whiting
+Kentucky|Campbellsville University|NAIA|Mid-South Conference||Campbellsville
+North Carolina|Carolina University|NAIA|Continental Athletic Conference||Winston-Salem
+Arkansas|Central Baptist College|NAIA|American Midwest Conference||Conway
+Kansas|Central Christian College of Kansas|NAIA|Sooner Athletic Conference||McPherson
+Missouri|Central Methodist University|NAIA|Heart of America Athletic Conference||Fayette
+Iowa|Clarke University|NAIA|Heart of America Athletic Conference||Dubuque
+Michigan|Cleary University|NAIA|Wolverine-Hoosier Athletic Conference||Howell
+Missouri|College of the Ozarks|NAIA|Sooner Athletic Conference||Point Lookout
+Missouri|Columbia College (Missouri)|NAIA|American Midwest Conference||Columbia
+South Carolina|Columbia International University|NAIA|Appalachian Athletic Conference||Columbia
+Michigan|Concordia University Ann Arbor|NAIA|Wolverine-Hoosier Athletic Conference||Ann Arbor
+Nebraska|Concordia University Nebraska|NAIA|Great Plains Athletic Conference||Seward
+Oregon|Corban University|NAIA|Cascade Collegiate Conference||Salem
+Michigan|Cornerstone University|NAIA|Wolverine-Hoosier Athletic Conference||Grand Rapids
+Arkansas|Crowley's Ridge College|NAIA|American Midwest Conference||Paragould
+Missouri|Culver-Stockton College|NAIA|Heart of America Athletic Conference||Canton
+Tennessee|Cumberland University|NAIA|Mid-South Conference||Lebanon
+South Dakota|Dakota State University|NAIA|Frontier Conference||Madison
+South Dakota|Dakota Wesleyan University|NAIA|Great Plains Athletic Conference||Mitchell
+Ohio|Defiance College|NAIA|Wolverine-Hoosier Athletic Conference||Defiance
+North Dakota|Dickinson State University|NAIA|Frontier Conference||Dickinson
+Louisiana|Dillard University|NAIA|HBCU Athletic Conference||New Orleans
+Nebraska|Doane University|NAIA|Great Plains Athletic Conference||Crete
+Iowa|Dordt University|NAIA|Great Plains Athletic Conference||Sioux Center
+Oregon|Eastern Oregon University|NAIA|Cascade Collegiate Conference||La Grande
+Arizona|Embry-Riddle Aeronautical University-Prescott|NAIA|Golden State Athletic Conference||Prescott
+Missouri|Evangel University|NAIA|Kansas Collegiate Athletic Conference||Springfield
+Alabama|Faulkner University|NAIA|Southern States Athletic Conference||Montgomery
+Massachusetts|Fisher College|NAIA|Independent||Boston
+Florida|Florida Memorial University|NAIA|The Sun Conference||Miami Gardens
+Florida|Florida National University|NAIA|Independent||Hialeah
+Florida|Florida Polytechnic University|NAIA|The Sun Conference||Lakeland
+Tennessee|Freed-Hardeman University|NAIA|Mid-South Conference||Henderson
+Kansas|Friends University|NAIA|Kansas Collegiate Athletic Conference||Wichita
+Kentucky|Georgetown College|NAIA|Mid-South Conference||Georgetown
+Georgia|Georgia Gwinnett College|NAIA|Continental Athletic Conference||Lawrenceville
+Indiana|Goshen College|NAIA|Crossroads League||Goshen
+Indiana|Grace College|NAIA|Crossroads League||Winona Lake
+Iowa|Graceland University|NAIA|Heart of America Athletic Conference||Lamoni
+Iowa|Grand View University|NAIA|Heart of America Athletic Conference||Des Moines
+Missouri|Hannibal-LaGrange University|NAIA|American Midwest Conference||Hannibal
+Missouri|Harris-Stowe State University|NAIA|American Midwest Conference||St. Louis
+Nebraska|Hastings College|NAIA|Great Plains Athletic Conference||Hastings
+Kansas|Hesston College|NAIA|Continental Athletic Conference||Hesston
+California|Hope International University|NAIA|Golden State Athletic Conference||Fullerton
+Indiana|Huntington University|NAIA|Crossroads League||Huntington
+Indiana|Indiana Institute of Technology|NAIA|Wolverine-Hoosier Athletic Conference||Fort Wayne
+Indiana|Indiana University Kokomo|NAIA|River States Conference||Kokomo
+Indiana|Indiana University South Bend|NAIA|Chicagoland Collegiate Athletic Conference||South Bend
+Indiana|Indiana University Southeast|NAIA|River States Conference||New Albany
+Indiana|Indiana Wesleyan University|NAIA|Crossroads League||Marion
+Tennessee|Johnson University|NAIA|Appalachian Athletic Conference||Knoxville
+Illinois|Judson University|NAIA|Chicagoland Collegiate Athletic Conference||Elgin
+Kansas|Kansas Wesleyan University|NAIA|Kansas Collegiate Athletic Conference||Salina
+Florida|Keiser University|NAIA|The Sun Conference||Fort Lauderdale
+Kentucky|Kentucky Christian University|NAIA|River States Conference||Grayson
+California|La Sierra University|NAIA|Golden State Athletic Conference||Riverside
+Michigan|Lawrence Technological University|NAIA|Wolverine-Hoosier Athletic Conference||Southfield
+Idaho|Lewis-Clark State College|NAIA|Cascade Collegiate Conference||Lewiston
+Kentucky|Lindsey Wilson University|NAIA|Mid-South Conference||Columbia
+Louisiana|Louisiana Christian University|NAIA|Red River Athletic Conference||Pineville
+Louisiana|LSU Alexandria|NAIA|Red River Athletic Conference||Alexandria
+Louisiana|LSU Shreveport|NAIA|Red River Athletic Conference||Shreveport
+Ohio|Lourdes University|NAIA|Wolverine-Hoosier Athletic Conference||Sylvania
+Louisiana|Loyola University New Orleans|NAIA|Southern States Athletic Conference||New Orleans
+Michigan|Madonna University|NAIA|Wolverine-Hoosier Athletic Conference||Livonia
+Indiana|Marian University|NAIA|Crossroads League||Indianapolis
+North Dakota|Mayville State University|NAIA|Frontier Conference||Mayville
+Kansas|McPherson College|NAIA|Kansas Collegiate Athletic Conference||McPherson
+Kansas|MidAmerica Nazarene University|NAIA|Heart of America Athletic Conference||Olathe
+Nebraska|Midland University|NAIA|Great Plains Athletic Conference||Fremont
+Kentucky|Midway University|NAIA|River States Conference||Midway
+Tennessee|Milligan University|NAIA|Appalachian Athletic Conference||Milligan
+Missouri|Mission University|NAIA|American Midwest Conference||Springfield
+Missouri|Missouri Baptist University|NAIA|Heart of America Athletic Conference||St. Louis
+Missouri|Missouri Valley College|NAIA|Heart of America Athletic Conference||Marshall
+North Carolina|Montreat College|NAIA|Appalachian Athletic Conference||Montreat
+Iowa|Morningside University|NAIA|Great Plains Athletic Conference||Sioux City
+South Carolina|Morris College|NAIA|Independent||Sumter
+South Dakota|Mount Marty University|NAIA|Great Plains Athletic Conference||Yankton
+Iowa|Mount Mercy University|NAIA|Heart of America Athletic Conference||Cedar Rapids
+Ohio|Mount Vernon Nazarene University|NAIA|Crossroads League||Mount Vernon
+Florida|New College of Florida|NAIA|The Sun Conference||Sarasota
+Iowa|Northwestern College (Iowa)|NAIA|Great Plains Athletic Conference||Orange City
+Indiana|Oakland City University|NAIA|||Oakland City
+Alabama|Oakwood University|NAIA|HBCU Athletic Conference||Huntsville
+Ohio|Ohio Christian University|NAIA|River States Conference||Circleville
+Illinois|Olivet Nazarene University|NAIA|Chicagoland Collegiate Athletic Conference||Bourbonnais
+Oregon|Oregon Tech|NAIA|Cascade Collegiate Conference||Klamath Falls
+Kansas|Ottawa University|NAIA|Kansas Collegiate Athletic Conference||Ottawa
+Arizona|Ottawa University Arizona|NAIA|Golden State Athletic Conference||Surprise
+Missouri|Park University|NAIA|Heart of America Athletic Conference||Parkville
+Pennsylvania|Penn State Schuylkill|NAIA|Independent||Schuylkill Haven
+Nebraska|Peru State College|NAIA|Heart of America Athletic Conference||Peru
+Arkansas|Philander Smith University|NAIA|HBCU Athletic Conference||Little Rock
+Georgia|Point University|NAIA|Southern States Athletic Conference||West Point
+California|Providence Christian College|NAIA|California Pacific Conference||Pasadena
+Indiana|Purdue Polytechnic Columbus|NAIA|River States Conference||Columbus
+Georgia|Reinhardt University|NAIA|Appalachian Athletic Conference||Waleska
+Michigan|Rochester Christian University|NAIA|Wolverine-Hoosier Athletic Conference||Rochester Hills
+Mississippi|Rust College|NAIA|HBCU Athletic Conference||Holly Springs
+Iowa|St. Ambrose University|NAIA|Heart of America Athletic Conference||Davenport
+Illinois|Saint Xavier University|NAIA|Chicagoland Collegiate Athletic Conference||Chicago
+Ohio|Shawnee State University|NAIA|||Portsmouth
+California|Simpson University|NAIA|California Pacific Conference||Redding
+Florida|Southeastern University|NAIA|The Sun Conference||Lakeland
+Louisiana|Southern University at New Orleans|NAIA|||New Orleans
+Kansas|Southwestern College (Kansas)|NAIA|Kansas Collegiate Athletic Conference||Winfield
+South Carolina|Spartanburg Methodist College|NAIA|Appalachian Athletic Conference||Spartanburg
+Michigan|Spring Arbor University|NAIA|Crossroads League||Spring Arbor
+Florida|St. Thomas University|NAIA|The Sun Conference||Miami Gardens
+Kansas|Sterling College|NAIA|Kansas Collegiate Athletic Conference||Sterling
+Alabama|Stillman College|NAIA|HBCU Athletic Conference||Tuscaloosa
+Kansas|Tabor College|NAIA|Kansas Collegiate Athletic Conference||Hillsboro
+Alabama|Talladega College|NAIA|HBCU Athletic Conference||Talladega
+Indiana|Taylor University|NAIA|Crossroads League||Upland
+Tennessee|Tennessee Wesleyan University|NAIA|Appalachian Athletic Conference||Athens
+Idaho|The College of Idaho|NAIA|Cascade Collegiate Conference||Caldwell
+California|The Master's University|NAIA|Golden State Athletic Conference||Santa Clarita
+Tennessee|University of Tennessee Southern|NAIA|Southern States Athletic Conference||Pulaski
+Georgia|Thomas University|NAIA|Southern States Athletic Conference||Thomasville
+Mississippi|Tougaloo College|NAIA|HBCU Athletic Conference||Tougaloo
+Illinois|Trinity Christian College|NAIA|Chicagoland Collegiate Athletic Conference||Palos Heights
+Georgia|Truett McConnell University|NAIA|Appalachian Athletic Conference||Cleveland
+Kentucky|Union Commonwealth University|NAIA|Appalachian Athletic Conference||Barbourville
+California|University of Antelope Valley|NAIA|California Pacific Conference||Lancaster
+Missouri|University of Health Sciences and Pharmacy in St. Louis|NAIA|American Midwest Conference||St. Louis
+Michigan|University of Michigan-Dearborn|NAIA|Wolverine-Hoosier Athletic Conference||Dearborn
+Alabama|University of Mobile|NAIA|Southern States Athletic Conference||Mobile
+Ohio|University of Northwestern Ohio|NAIA|Wolverine-Hoosier Athletic Conference||Lima
+Kentucky|University of Pikeville|NAIA|Appalachian Athletic Conference||Pikeville
+Ohio|University of Rio Grande|NAIA|River States Conference||Rio Grande
+Indiana|University of Saint Francis|NAIA|Crossroads League||Fort Wayne
+California|University of Saint Katherine|NAIA|California Pacific Conference||San Marcos
+Kansas|University of Saint Mary|NAIA|Kansas Collegiate Athletic Conference||Leavenworth
+Illinois|University of St. Francis|NAIA|Chicagoland Collegiate Athletic Conference||Joliet
+Kentucky|University of the Cumberlands|NAIA|Mid-South Conference||Williamsburg
+New Mexico|University of the Southwest|NAIA|Red River Athletic Conference||Hobbs
+North Dakota|Valley City State University|NAIA|Frontier Conference||Valley City
+Wisconsin|Viterbo University|NAIA|Chicagoland Collegiate Athletic Conference||La Crosse
+South Carolina|Voorhees University|NAIA|HBCU Athletic Conference||Denmark
+Iowa|Waldorf University|NAIA|Great Plains Athletic Conference||Forest City
+Oregon|Warner Pacific University|NAIA|Cascade Collegiate Conference||Portland
+Florida|Warner University|NAIA|The Sun Conference||Lake Wales
+Florida|Webber International University|NAIA|The Sun Conference||Babson Park
+West Virginia|WVU Tech|NAIA|River States Conference||Beckley
+California|Westcliff University|NAIA|California Pacific Conference||Irvine
+Ohio|Wilberforce University|NAIA|HBCU Athletic Conference||Wilberforce
+Mississippi|William Carey University|NAIA|Southern States Athletic Conference||Hattiesburg
+Iowa|William Penn University|NAIA|Heart of America Athletic Conference||Oskaloosa
+Missouri|William Woods University|NAIA|Heart of America Athletic Conference||Fulton
+Arkansas|Williams Baptist University|NAIA|American Midwest Conference||Walnut Ridge
+Louisiana|Xavier University of Louisiana|NAIA|Southern States Athletic Conference||New Orleans
+Nebraska|York University|NAIA|Kansas Collegiate Athletic Conference||York
