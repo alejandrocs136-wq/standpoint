@@ -576,7 +576,7 @@
       '<form class="card" id="pform" autocomplete="off">' +
         "<div><h2>" + (isNew ? "Set up your player profile" : "Edit profile") + '</h2><p class="muted small" style="margin:4px 0 0">' + (isNew ? "Fill this in once. After that you only add new numbers." : "Changes save to this player.") + "</p></div>" +
         (canSave ? "" : '<div class="warn">This browser isn\'t saving. Entries reset when you close the page.</div>') +
-        '<div class="field"><span class="label" id="l-sport">Sport</span><div class="toggles" role="group" aria-labelledby="l-sport">' + tog("sport", "baseball", "Baseball", d.sport === "baseball") + tog("sport", "softball", "Softball", d.sport === "softball") + "</div></div>" +
+        (FEATURES.softball ? '<div class="field"><span class="label" id="l-sport">Sport</span><div class="toggles" role="group" aria-labelledby="l-sport">' + tog("sport", "baseball", "Baseball", d.sport === "baseball") + tog("sport", "softball", "Softball", d.sport === "softball") + "</div></div>" : "") +
         '<div class="field"><label for="f-name">Player name</label><input type="text" id="f-name" value="' + esc(d.name) + '" placeholder="First Last" required></div>' +
         '<div class="row2"><div class="field"><label for="f-grad">Grad year</label><select id="f-grad">' + gradOpts + '</select></div>' +
         '<div class="field"><label for="f-gpa">Core GPA</label><input type="number" id="f-gpa" inputmode="decimal" step="0.01" min="0" max="5" value="' + esc(d.gpa) + '" placeholder="3.40"></div></div>' +
@@ -1876,7 +1876,7 @@
   var SB_SCHOOLS = SOFTBALL.map(function (r) { return natSchool(r, "sb-", { sport: "softball" }); });
   // Junior-college lists in these states are still being filled in (A to O is loaded; some later names may be missing).
   var JUCO_PARTIAL = "MA MI MN MS MO MT NE NV NH NJ NM NY NC ND OH OR PA RI SC SD TN UT VT VA WA WV WI WY".split(" ").map(function (a) { return ABBR[a]; });
-  function sportOf(p) { return p && p.sport === "softball" ? "softball" : "baseball"; }
+  function sportOf(p) { return FEATURES.softball && p && p.sport === "softball" ? "softball" : "baseball"; }
   function homeGuess(p) {
     var m = /,\s*([A-Za-z .]+)$/.exec(p.school || ""); if (!m) return "Texas";
     var t = m[1].trim(); if (ABBR[t.toUpperCase()]) return ABBR[t.toUpperCase()];
@@ -2414,8 +2414,9 @@
   // Working demos on one device. The full app moves each of these to real accounts on a server.
   if (!store.coaching) store.coaching = [];
   if (!store.payLinks) store.payLinks = { individual: "", club: "", coaching: "" };
-  // College-coach search is built but switched off: it comes after there is a large base of players.
-  var FEATURES = { collegeSearch: false };
+  // Built but switched off for now. College-coach search comes after there is a large base of players;
+  // softball waits until we know its recruiting process as well as baseball's.
+  var FEATURES = { collegeSearch: false, softball: false };
   var moreView = "menu", clubView = { edit: false }, searchF = { grad: "all", pos: "all", sport: null, ev: "", fb: "", sixty: "", ver: false };
   function onAll(sel, ev, fn) { Array.prototype.forEach.call(document.querySelectorAll(sel), function (el) { el.addEventListener(ev, function (e) { fn(el, e); }); }); }
   var PLANS = [
@@ -2701,7 +2702,7 @@
     var sel = function (id, cur, opts) { return '<select id="' + id + '">' + opts.map(function (o) { return '<option value="' + o[0] + '"' + (o[0] === cur ? " selected" : "") + ">" + o[1] + "</option>"; }).join("") + "</select>"; };
     $("#view").innerHTML = moreBack() + '<section class="card"><div><div class="eyebrow">College coach search · demo</div><h2>What a college coach sees</h2></div>' +
       '<p class="small" style="margin:0">Only players who turned on search in their profile show up, and players under 18 need a parent\'s approval. Coaches never see a phone number or home address. In the full app, only coaches whose college staff email is verified can search, and our lawyer reviews it before launch.</p>' +
-      '<div class="toggles" role="group" aria-label="Sport"><button type="button" class="tog" data-ssport="baseball" aria-pressed="' + (searchF.sport === "baseball") + '">Baseball</button><button type="button" class="tog" data-ssport="softball" aria-pressed="' + (searchF.sport === "softball") + '">Softball</button></div>' +
+      (FEATURES.softball ? '<div class="toggles" role="group" aria-label="Sport"><button type="button" class="tog" data-ssport="baseball" aria-pressed="' + (searchF.sport === "baseball") + '">Baseball</button><button type="button" class="tog" data-ssport="softball" aria-pressed="' + (searchF.sport === "softball") + '">Softball</button></div>' : "") +
       '<div class="row2"><div class="field"><label for="sf-grad">Class</label>' + sel("sf-grad", searchF.grad, [["all", "All classes"]].concat(years.map(function (y) { return [y, y]; }))) + "</div>" +
       '<div class="field"><label for="sf-pos">Position</label>' + sel("sf-pos", searchF.pos, [["all", "All"]].concat(Object.keys(POS).map(function (k) { return [k, POS[k].label]; }))) + "</div></div>" +
       '<div class="row2"><div class="field"><label for="sf-ev">Min exit velo</label><input type="number" id="sf-ev" inputmode="decimal" value="' + esc(searchF.ev) + '" placeholder="mph"></div>' +
