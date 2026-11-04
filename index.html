@@ -596,12 +596,12 @@
         '<div class="field"><label for="f-phone">Phone for coach emails <span class="hint">(only goes in emails you send)</span></label><input type="text" id="f-phone" inputmode="tel" value="' + esc(d.phone) + '" placeholder="512-555-0100"></div>' +
         ((d.positions.indexOf("RHP") >= 0 || d.positions.indexOf("LHP") >= 0) ? '<div class="field"><label for="f-pitches">Pitches you throw</label><input type="text" id="f-pitches" value="' + esc(d.pitches) + '" placeholder="4-seam, 2-seam, curveball, changeup"></div>' : "") +
         '<fieldset class="rangebox"><legend>Schools you want to see</legend>' + rangeChooserHTML(d.range) + "</fieldset>" +
-        '<fieldset class="rangebox"><legend>College coach search</legend><div class="tasks">' +
+        (FEATURES.collegeSearch ? '<fieldset class="rangebox"><legend>College coach search</legend><div class="tasks">' +
           '<label class="task"><input type="checkbox" id="f-optin"' + (d.search.optIn ? " checked" : "") + '><span><strong>Let college coaches find me</strong><br><span class="muted small">They see your name, class, positions, school, GPA, numbers with how each was measured, schedule, email and X handle. Never your phone or home address. Turn it off anytime.</span></span></label>' +
           '<label class="task"><input type="checkbox" id="f-adult"' + (d.search.adult ? " checked" : "") + '><span>I\'m 18 or older</span></label>' +
           '<label class="task"><input type="checkbox" id="f-parentok"' + (d.search.parentOk ? " checked" : "") + '><span><strong>A parent or guardian approved this</strong> <span class="muted small">(needed if you\'re under 18)</span></span></label></div>' +
           '<div class="row2"><div class="field"><label for="f-pname">Parent name</label><input type="text" id="f-pname" value="' + esc(d.search.parentName) + '"></div>' +
-          '<div class="field"><label for="f-pemail">Parent email <span class="hint">(copied on coach emails)</span></label><input type="email" id="f-pemail" value="' + esc(d.search.parentEmail) + '"></div></div></fieldset>' +
+          '<div class="field"><label for="f-pemail">Parent email <span class="hint">(copied on coach emails)</span></label><input type="email" id="f-pemail" value="' + esc(d.search.parentEmail) + '"></div></div></fieldset>' : "") +
         '<div class="field"><label for="f-schedule">Upcoming schedule <span class="hint">(one event per line; goes in every coach email)</span></label><textarea id="f-schedule" rows="4" placeholder="Jun 12–15 · Five Tool, Mansfield&#10;Jun 26–29 · PBR Texas, Houston">' + esc(d.schedule) + "</textarea></div>" +
         '<div class="btns"><button type="submit" class="btn red">' + (isNew ? "Save and add numbers" : "Save profile") + "</button>" +
           (isNew && store.players.length ? '<button type="button" class="btn" id="f-cancel">Cancel</button>' : "") +
@@ -613,8 +613,8 @@
     bind("f-name", "name"); bind("f-gpa", "gpa"); bind("f-school", "school"); bind("f-height", "height"); bind("f-weight", "weight"); bind("f-x", "xhandle"); bind("f-email", "email");
     bind("f-phone", "phone"); bind("f-schedule", "schedule"); if ($("#f-pitches")) bind("f-pitches", "pitches");
     $("#f-grad").addEventListener("change", function (e) { d.grad = e.target.value; });
-    [["f-optin", "optIn"], ["f-adult", "adult"], ["f-parentok", "parentOk"]].forEach(function (f) { $("#" + f[0]).addEventListener("change", function (e) { d.search[f[1]] = e.target.checked; }); });
-    [["f-pname", "parentName"], ["f-pemail", "parentEmail"]].forEach(function (f) { $("#" + f[0]).addEventListener("input", function (e) { d.search[f[1]] = e.target.value; }); });
+    if (FEATURES.collegeSearch) [["f-optin", "optIn"], ["f-adult", "adult"], ["f-parentok", "parentOk"]].forEach(function (f) { $("#" + f[0]).addEventListener("change", function (e) { d.search[f[1]] = e.target.checked; }); });
+    if (FEATURES.collegeSearch) [["f-pname", "parentName"], ["f-pemail", "parentEmail"]].forEach(function (f) { $("#" + f[0]).addEventListener("input", function (e) { d.search[f[1]] = e.target.value; }); });
     bindRangeChooser(d.range, function () { var y = window.scrollY; renderProfileForm(p); window.scrollTo(0, y); });
     Array.prototype.forEach.call(document.querySelectorAll(".tog[data-group]"), function (b) {
       b.addEventListener("click", function () {
@@ -645,7 +645,7 @@
       if (!d.name.trim()) { err.style.display = "block"; err.textContent = "Add the player's name."; return; }
       if (!d.positions.length) { err.style.display = "block"; err.textContent = "Pick at least one position."; return; }
       if (!hasRange(d.range)) { err.style.display = "block"; err.textContent = "Pick where you're open to playing, so we know which schools to show."; return; }
-      if (d.search.optIn && !d.search.adult && !(d.search.parentOk && d.search.parentEmail.trim())) { err.style.display = "block"; err.textContent = "To join college coach search under 18, check parent approval and add a parent email."; return; }
+      if (FEATURES.collegeSearch && d.search.optIn && !d.search.adult && !(d.search.parentOk && d.search.parentEmail.trim())) { err.style.display = "block"; err.textContent = "To join college coach search under 18, check parent approval and add a parent email."; return; }
       d.search.parentName = d.search.parentName.trim(); d.search.parentEmail = d.search.parentEmail.trim(); if (d.search.optIn && !d.search.since) d.search.since = todayStr;
       d.positions.sort(function (a, b) { return Object.keys(POS).indexOf(a) - Object.keys(POS).indexOf(b); });
       if (isNew) {
@@ -2414,6 +2414,8 @@
   // Working demos on one device. The full app moves each of these to real accounts on a server.
   if (!store.coaching) store.coaching = [];
   if (!store.payLinks) store.payLinks = { individual: "", club: "", coaching: "" };
+  // College-coach search is built but switched off: it comes after there is a large base of players.
+  var FEATURES = { collegeSearch: false };
   var moreView = "menu", clubView = { edit: false }, searchF = { grad: "all", pos: "all", sport: null, ev: "", fb: "", sixty: "", ver: false };
   function onAll(sel, ev, fn) { Array.prototype.forEach.call(document.querySelectorAll(sel), function (el) { el.addEventListener(ev, function (e) { fn(el, e); }); }); }
   var PLANS = [
@@ -2441,16 +2443,16 @@
     if (moreView === "plans") return renderPlans(p);
     if (moreView === "club") return renderClub(p);
     if (moreView === "coach") return renderCoachInbox(p);
-    if (moreView === "search") return renderCollegeSearch(p);
+    if (moreView === "search" && FEATURES.collegeSearch) return renderCollegeSearch(p);
     if (moreView === "install") return renderInstall(p);
     var n = openReq().length;
     var items = [
       ["plans", "Plans and payments", "Individual plan, club license and the coaching upgrade." + (store.plan ? " Current: " + esc(planName(store.plan.k)) + (store.plan.test ? " (test)" : "") + "." : "")],
       ["club", "Club admin", store.club ? esc(store.club.name) + " · " + clubRoster().length + " player" + (clubRoster().length === 1 ? "" : "s") + " · " + (store.club.coaches || []).length + " coach" + ((store.club.coaches || []).length === 1 ? "" : "es") : "For a travel club, facility or showcase: roster, coaches, a club lift plan and everyone's progress."],
       ["coach", "Coach inbox", n ? n + " video review" + (n > 1 ? "s" : "") + " waiting." : "Video reviews players send to their coach land here."],
-      ["search", "College coach search", "What a college coach sees: only players who turned it on, with a parent's OK."],
+      FEATURES.collegeSearch ? ["search", "College coach search", "What a college coach sees: only players who turned it on, with a parent's OK."] : null,
       ["install", "Put StandPoint on your phone", "Add it to your home screen like an app. App Store and Google Play come next."]
-    ];
+    ].filter(Boolean);
     $("#view").innerHTML = '<section class="card"><div><div class="eyebrow">More</div><h2>Run StandPoint</h2></div><p class="small muted" style="margin:0">These work as demos on this device. The full app moves them to real accounts.</p></section>' +
       items.map(function (it) { return '<section class="card"><h3>' + it[1] + '</h3><p class="small" style="margin:0">' + it[2] + '</p><div class="btns"><button type="button" class="btn primary" data-mv="' + it[0] + '">Open</button></div></section>'; }).join("");
     bindMore();

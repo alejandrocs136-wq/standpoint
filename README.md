@@ -8,7 +8,7 @@ A player enters their profile once, logs numbers over time, and the app shows:
 - **Recruit:** NCAA contact dates by class, a yearly checklist, and email, DM and coach-note templates filled in from the profile.
 - **Schools:** about 1,550 baseball programs (every NCAA D1, D2 and D3 program, every NAIA program and about 390 junior colleges nationwide, plus Texas and Oklahoma at every level with coaches) and 63 softball programs (NCAA, Texas and Oklahoma), filtered to the range the player picks at sign-up. Each school has a fit badge, senior timing, coaches, a 10-step contact tracker and messages addressed to the chosen coach.
 - **Post:** builds an X caption from the player's numbers. The player always taps Post themselves.
-- **More** (demos on one device): plans and payments (individual plan, club license, coaching add-on; Stripe Payment Links slot), club admin (roster, coaches, club lift plan, roster progress), coach inbox for video reviews with assigned drills, a college-coach search that only lists players who opted in with a parent's OK, and install-to-home-screen.
+- **More** (demos on one device): plans and payments (individual plan, club license, coaching add-on; Stripe Payment Links slot), club admin (roster, coaches, club lift plan, roster progress), coach inbox for video reviews with assigned drills, and install-to-home-screen. A college-coach search is built but switched off (`FEATURES.collegeSearch = false`); it's a later stage, after there's a large base of players.
 
 Live prototype (owner only until shared): https://claude.ai/artifact/TRD6j1Vq7Enetjz7Tsk6qT
 
@@ -53,8 +53,9 @@ Texas and Oklahoma schools, with coaches, cities and fit notes, are hand-written
 ## Next steps for a developer
 
 1. Pick a stack for the real app: a web app that installs on phones first, then App Store and Google Play.
-2. Add accounts (player, parent, coach, club admin, college coach), a database, and sync. Move the school directory into the database.
-3. Turn the More demos into real features: Stripe subscriptions with webhooks, club rosters joined by code, video upload for coach reviews, and college-coach accounts verified by staff email.
+2. Add accounts (player, parent, coach, club admin), a database, and sync. Move the school directory into the database.
+3. Turn the More demos into real features: Stripe subscriptions with webhooks, club rosters joined by code, and video upload for coach reviews.
 4. Finish the data: the remaining junior colleges, coach staffs nationwide, softball nationwide, refreshed every year.
 5. Softball level ranges, so softball players get level fit like baseball.
 6. Verified numbers: link showcase and device results, or require proof (video) for coach-facing views.
+7. Down the road, once there's a large base of players: college-coach accounts that colleges pay for, to search verified players (with player and parent consent, after a lawyer's review).
