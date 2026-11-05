@@ -328,7 +328,33 @@
     coach: ["Coach-measured", "close", "Measured by my coach (radar gun or stopwatch)"],
     self: ["Self-reported", "notyet", "Self-measured or estimate"]
   };
-  function verifPill(l) { var v = l && VERIF[l.src]; return v ? '<span class="pill ' + v[1] + '">' + v[0] + (l.proof ? " + proof" : "") + "</span>" : '<span class="pill notyet">Source not set</span>'; }
+  VERIF.train = ["Training", "close", "Training, a lesson or team practice"];
+  VERIF.own = ["On my own", "notyet", "On my own"];
+  var WHERE = ["showcase", "camp", "train", "own"];
+  // How each number was taken. A hand-timed 60 and a laser-timed 60 aren't the same number to a college coach.
+  var HOW = {
+    ev: [["device", "HitTrax or Rapsodo"], ["radar", "Radar gun"], ["est", "Estimate"]],
+    sixty: [["laser", "Laser timer"], ["hand", "Hand-timed"], ["est", "Estimate"]],
+    arm: [["radar", "Radar gun"], ["device", "Rapsodo or TrackMan"], ["est", "Estimate"]],
+    pop: [["hand", "Stopwatch"], ["video", "Timed on video"], ["est", "Estimate"]],
+    strike: [["charted", "Charted every pitch"], ["est", "Estimate"]]
+  };
+  var HOW_WORD = { device: "device", radar: "radar gun", laser: "laser-timed", hand: "hand-timed", video: "video-timed", charted: "charted", est: "estimate" };
+  function howList(k) { return HOW[k] || HOW.arm; }
+  function howDefault(k, where) { return k === "sixty" && where !== "showcase" && where !== "camp" ? "hand" : howList(k)[0][0]; }
+  // Trust tier for one number: event and camp first, then device, then a coach's stopwatch, then self-reported.
+  function tierOf(l, k) {
+    if (!l) return null;
+    var h = k && l.how ? l.how[k] : null;
+    if (!h) return l.src === "train" ? "coach" : l.src === "own" ? "self" : l.src;
+    if (h === "est" || l.src === "own") return "self";
+    if (l.src === "showcase" || l.src === "camp") return l.src;
+    return h === "hand" || h === "video" || h === "charted" ? "coach" : "device";
+  }
+  function verifPill(l, k) {
+    var v = l && VERIF[k ? tierOf(l, k) : l.src], h = k && l && l.how ? l.how[k] : null;
+    return v ? '<span class="pill ' + v[1] + '">' + v[0] + (h ? " · " + HOW_WORD[h] : "") + (l.proof ? " + proof" : "") + "</span>" : '<span class="pill notyet">Source not set</span>';
+  }
 
   // ---------- Helpers ----------
   var $ = function (sel, el) { return (el || document).querySelector(sel); };
@@ -366,7 +392,7 @@
   if (!store.schools) store.schools = [];
   if (!store.extraCoaches) store.extraCoaches = {};
   function persist() {
-    if (CLOUD) { cloudQueue(); return; }
+    if (CLOUD) { cloudEdits++; cloudQueue(); return; }
     try { localStorage.setItem(KEY, JSON.stringify(store)); canSave = true; } catch (e) { canSave = false; }
   }
   function cur() {
@@ -590,7 +616,7 @@
 
   function renderProfileForm(p) {
     var isNew = !p;
-    var d = draft || (p ? JSON.parse(JSON.stringify(p)) : { name: CLOUD && me && me.meta ? (me.meta.full_name || "") : "", grad: String(schoolYearEnd + 2), school: "", gpa: "", positions: ["INF"], bats: "R", throws: "R", height: "", weight: "", goals: [], xhandle: "", ig: "", email: "", phone: "", schedule: "", pitches: "" });
+    var d = draft || (p ? JSON.parse(JSON.stringify(p)) : { name: CLOUD && me && me.meta ? (me.meta.full_name || "") : "", grad: String(schoolYearEnd + 2), school: "", gpa: "", positions: ["INF"], bats: "R", throws: "R", height: "", weight: "", goals: [], xhandle: "", ig: "", email: CLOUD && me ? (me.email || "") : "", phone: "", schedule: "", pitches: "" });
     ["phone", "schedule", "pitches", "ig"].forEach(function (k) { if (d[k] == null) d[k] = ""; });
     if (!d.sport) d.sport = "baseball";
     if (!d.search) d.search = { optIn: false, adult: false, parentOk: false, parentName: "", parentEmail: "" };
@@ -622,7 +648,7 @@
         '<div class="field"><span class="label" id="l-goals">Levels you\'re aiming for <span class="hint">(optional, pick any)</span></span><div class="toggles" role="group" aria-labelledby="l-goals">' +
           GOAL_OPTIONS.map(function (o) { return tog("goals", o[0], o[1], d.goals.indexOf(o[0]) >= 0); }).join("") + "</div></div>" +
         '<div class="row2"><div class="field"><label for="f-x">X handle</label><input type="text" id="f-x" value="' + esc(d.xhandle) + '" placeholder="@yourname"></div>' +
-        '<div class="field"><label for="f-email">Player email</label><input type="email" id="f-email" value="' + esc(d.email) + '" placeholder="name@gmail.com"></div></div>' +
+        '<div class="field"><label for="f-email">Player email <span class="hint">(college coaches see this one)</span></label><input type="email" id="f-email" value="' + esc(d.email) + '" placeholder="name@gmail.com"></div></div>' +
         '<div class="field"><label for="f-ig">Instagram <span class="hint">(optional)</span></label><input type="text" id="f-ig" value="' + esc(d.ig) + '" placeholder="@yourname"></div>' +
         '<div class="field"><label for="f-phone">Phone for coach emails <span class="hint">(only goes in emails you send)</span></label><input type="text" id="f-phone" inputmode="tel" value="' + esc(d.phone) + '" placeholder="512-555-0100"></div>' +
         ((d.positions.indexOf("RHP") >= 0 || d.positions.indexOf("LHP") >= 0) ? '<div class="field"><label for="f-pitches">Pitches you throw</label><input type="text" id="f-pitches" value="' + esc(d.pitches) + '" placeholder="4-seam, 2-seam, curveball, changeup"></div>' : "") +
@@ -707,10 +733,11 @@
     var inputs = mlist.map(function (k) {
       var m = METRICS[k], last = lt.v[k];
       return '<div class="field"><label for="n-' + k + '">' + m.label + ' <span class="hint">(' + m.unit + (last != null ? ", last: " + fmtVal(k, last) : "") + ")</span></label>" +
-        '<input type="number" id="n-' + k + '" inputmode="decimal" step="' + m.step + '" placeholder="' + (last != null ? fmtVal(k, last) : "") + '"></div>';
+        '<input type="number" id="n-' + k + '" inputmode="decimal" step="' + m.step + '" placeholder="' + (last != null ? fmtVal(k, last) : "") + '">' +
+        '<div class="row2" style="grid-template-columns:auto 1fr;align-items:center;margin-top:6px"><span class="hint">Measured with</span><select id="nh-' + k + '" data-how="' + k + '" aria-label="How your ' + esc(m.label.toLowerCase()) + ' was measured">' + howList(k).map(function (o) { return '<option value="' + o[0] + '"' + (o[0] === howDefault(k, "showcase") ? " selected" : "") + ">" + o[1] + "</option>"; }).join("") + "</select></div></div>";
     }).join("");
     var hist = lt.logs.slice().reverse().map(function (l) {
-      var vals = METRIC_ORDER.filter(function (k) { return num(l.vals[k]) != null; }).map(function (k) { return METRICS[k].short + " " + fmtVal(k, num(l.vals[k])); }).join(" · ");
+      var vals = METRIC_ORDER.filter(function (k) { return num(l.vals[k]) != null; }).map(function (k) { return METRICS[k].short + " " + fmtVal(k, num(l.vals[k])) + (l.how && l.how[k] ? " (" + HOW_WORD[l.how[k]] + ")" : ""); }).join(" · ");
       return '<div class="hitem"><div class="h"><span>' + fmtDate(l.date) + '</span><button type="button" class="btn ghost small" data-del="' + esc(l.id) + '">Remove</button></div>' +
         '<div class="muted">' + esc(l.where || "Where not noted") + " " + verifPill(l) + (l.proof ? ' · <a href="' + esc(l.proof) + '" target="_blank" rel="noopener">proof</a>' : "") + '</div><div class="num" style="font-size:16px">' + esc(vals) + "</div></div>";
     }).join("");
@@ -726,8 +753,8 @@
         "<div><h2>Add new numbers</h2><p class=\"muted small\" style=\"margin:4px 0 0\">Log numbers after a showcase, camp or test day. Leave a box empty if you didn't test it; your last number stays.</p></div>" +
         '<div class="row2"><div class="field"><label for="n-date">Date tested</label><input type="date" id="n-date" value="' + todayStr + '" max="' + todayStr + '"></div>' +
         '<div class="field"><label for="n-where">Where</label><input type="text" id="n-where" placeholder="St. Edward Showcase"></div></div>' +
-        '<div class="field"><label for="n-src">How it was measured</label><select id="n-src">' + Object.keys(VERIF).map(function (k) { return '<option value="' + k + '">' + VERIF[k][2] + "</option>"; }).join("") + "</select>" +
-          '<span class="hint">Coaches trust event and college-camp numbers most, then device numbers. Be honest: a self-reported number labeled as one keeps your word good with coaches.</span></div>' +
+        '<div class="field"><label for="n-src">Where it was measured</label><select id="n-src">' + WHERE.map(function (k) { return '<option value="' + k + '">' + VERIF[k][2] + "</option>"; }).join("") + "</select>" +
+          '<span class="hint">Under each number, pick how it was measured. Coaches trust event and college-camp numbers most, then device and laser numbers. A hand-timed 60 labeled hand-timed keeps your word good with coaches.</span></div>' +
         '<div class="field"><label for="n-proof">Proof link <span class="hint">(optional: video, PBR or Perfect Game profile, scoresheet)</span></label><input type="text" id="n-proof" placeholder="https://"></div>' +
         inputs +
         '<div class="btns"><button type="submit" class="btn red">Save numbers</button></div>' +
@@ -743,8 +770,13 @@
       if (!any) { var er = $("#n-err"); er.style.display = "block"; er.textContent = "Enter at least one number."; return; }
       var date = $("#n-date").value || todayStr;
       var proof = $("#n-proof").value.trim(); if (proof && !/^https?:\/\//i.test(proof)) proof = "https://" + proof;
-      p.logs.push({ id: uid(), date: date, where: $("#n-where").value.trim(), src: $("#n-src").value, proof: proof, vals: vals, created: Date.now() });
+      var how = {}; Object.keys(vals).forEach(function (k) { how[k] = $("#nh-" + k).value; });
+      p.logs.push({ id: uid(), date: date, where: $("#n-where").value.trim(), src: $("#n-src").value, how: how, proof: proof, vals: vals, created: Date.now() });
       persist(); go("home"); toast("Numbers saved. StandPoint updated.");
+    });
+    Array.prototype.forEach.call(document.querySelectorAll("[data-how]"), function (sel) { sel.addEventListener("change", function () { sel.setAttribute("data-picked", "1"); }); });
+    $("#n-src").addEventListener("change", function (e) {
+      Array.prototype.forEach.call(document.querySelectorAll("[data-how]"), function (sel) { if (!sel.getAttribute("data-picked")) sel.value = howDefault(sel.getAttribute("data-how"), e.target.value); });
     });
     Array.prototype.forEach.call(document.querySelectorAll("[data-del]"), function (b) {
       b.addEventListener("click", function () {
@@ -1590,7 +1622,8 @@
   function metricLines(p, lt) {
     return metricsFor(p).filter(function (k) { return lt.v[k] != null; }).map(function (k) {
       var l = lt.src[k];
-      var vlab = l.src === "showcase" ? "verified at event, " : l.src === "camp" ? "verified at college camp, " : l.src === "device" ? "device-measured, " : "";
+      var tr = tierOf(l, k), hw = l.how && l.how[k];
+      var vlab = tr === "showcase" ? "verified at event, " : tr === "camp" ? "verified at college camp, " : tr === "device" ? (hw === "laser" ? "laser-timed, " : "device-measured, ") : hw === "hand" && k === "sixty" ? "hand-timed, " : "";
       return METRICS[k].label + ": " + fmtVal(k, lt.v[k]) + sp(k) + " (" + (l.where ? l.where + ", " : "") + vlab + fmtShortDate(l.date) + ")" + (l.proof ? " " + l.proof : "");
     });
   }
@@ -2013,7 +2046,7 @@
   };
   var STEPS = [
     ["follow", "Followed the team and coaches on X", "Following"],
-    ["email", "Sent my first email (video + schedule)", "Emailed"],
+    ["email", "Emailed: sent my first email (video + schedule)", "Emailed"],
     ["dm", "Sent an X or Instagram DM", "DM sent"],
     ["coachnote", "My coach reached out for me", "Coach vouched"],
     ["reply", "A coach replied or reached out", "Coach replied"],
@@ -2195,7 +2228,8 @@
         '<button type="button" class="star" data-star="' + esc(s.id) + '" aria-pressed="' + (t.star ? "true" : "false") + '">' + (t.star ? "★ On my list" : "☆ Add") + "</button></div>" +
         '<div class="toggles"><span class="pill ' + f.cls + '">' + f.label + "</span>" + (tm ? '<span class="pill ' + tm.cls + '">' + tm.label + "</span>" : "") + '<span class="pill notyet">' + esc(statusOf(t)) + "</span></div>" +
         contact + (touched(t) ? '<div class="small"><strong>Next:</strong> ' + esc(nextFor(t, s)) + "</div>" : "") +
-        '<div class="btns"><button type="button" class="btn primary" data-open="' + esc(s.id) + '">Open: coaches, messages, tracker</button></div></section>';
+        '<div class="btns"><button type="button" class="btn primary" data-open="' + esc(s.id) + '">Open: coaches, messages, tracker</button>' +
+          (t.star ? (t.steps.email ? '<span class="pill good">Emailed ' + esc(fmtShortDate(t.steps.email)) + "</span>" : '<button type="button" class="btn" data-qemail="' + esc(s.id) + '">Mark emailed</button>') : "") + "</div></section>";
     }).join("");
     $("#view").innerHTML =
       '<section class="card"><div><div class="eyebrow">' + esc(gradeName(grade)) + " · Class of " + esc(p.grad) + '</div><h2>Schools</h2></div>' +
@@ -2232,6 +2266,9 @@
     Array.prototype.forEach.call(document.querySelectorAll("[data-open]"), function (b) { b.addEventListener("click", function () { openSchool(b.getAttribute("data-open")); }); });
     Array.prototype.forEach.call(document.querySelectorAll("[data-star]"), function (b) {
       b.addEventListener("click", function () { var t = trackOf(p, b.getAttribute("data-star")); t.star = !t.star; persist(); var y = window.scrollY; renderSchools(p); window.scrollTo(0, y); toast(t.star ? "Added to your list." : "Removed from your list."); });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll("[data-qemail]"), function (b) {
+      b.addEventListener("click", function () { var id = b.getAttribute("data-qemail"), t = trackOf(p, id), sc = allSchools().filter(function (x) { return x.id === id; })[0]; t.star = true; t.steps.email = todayStr; persist(); var y = window.scrollY; renderSchools(p); window.scrollTo(0, y); toast("Marked emailed" + (sc ? ": " + (sc.short || sc.name) : "") + "."); });
     });
     Array.prototype.forEach.call(document.querySelectorAll("[data-show]"), function (b) { b.addEventListener("click", function () { schoolFilter.show = b.getAttribute("data-show"); schoolFilter.limit = 40; renderSchools(p); }); });
     Array.prototype.forEach.call(document.querySelectorAll("[data-lvl]"), function (b) { b.addEventListener("click", function () { var lv = b.getAttribute("data-lvl"), arr = schoolFilter.levels = schoolFilter.levels || []; if (lv === "all") arr.length = 0; else { var i = arr.indexOf(lv); if (i >= 0) arr.splice(i, 1); else arr.push(lv); } schoolFilter.limit = 40; renderSchools(p); }); });
@@ -2320,25 +2357,27 @@
           '<div class="row2"><div class="field"><label for="c-name">Name</label><input type="text" id="c-name" required></div><div class="field"><label for="c-role">Role</label><input type="text" id="c-role" placeholder="Recruiting coordinator"></div></div>' +
           '<div class="row2"><div class="field"><label for="c-email">Email</label><input type="email" id="c-email"></div><div class="field"><label for="c-x">X handle</label><input type="text" id="c-x" placeholder="@coach"></div></div>' +
           '<div class="btns"><button type="submit" class="btn primary">Save coach</button></div></form></details></section>' +
-      '<section class="card"><h3>Your progress</h3><span class="hint">Check each step when it happens. The date is saved; tap it to change.</span><div class="tasks">' + stepHTML + "</div>" +
+      '<section class="card"><h3>Your progress</h3><span class="hint">Check each step when it happens, like Emailed after your first email. The date is saved; tap it to change.</span><div class="tasks">' + stepHTML + "</div>" +
         '<div class="small"><strong>Updates sent:</strong> ' + esc(updatesTxt) + (lc ? " · <strong>Last contact:</strong> " + fmtDate(lc) + " (" + daysSince(lc) + " days ago)" : "") + "</div>" +
         '<div class="btns"><button type="button" class="btn" id="log-update">Log an update sent today</button>' + (t.updates.length ? '<button type="button" class="btn ghost" id="undo-update">Undo last update</button>' : "") + "</div>" +
       "</section>" +
       '<section class="card"><h3>Messages for ' + esc(s.short || s.name) + "</h3>" + coachSelect +
         '<div class="label">First email</div><textarea id="m-email" rows="14">' + esc(msg.email) + '</textarea>' +
         '<div class="btns"><button type="button" class="btn primary" id="mc-email">Copy</button>' + (emH ? '<a class="btn" id="mo-email" href="' + esc(emH) + '">Open in email</a>' : "") +
-          '<button type="button" class="btn" data-mark="email">I sent it</button></div>' +
+          '<button type="button" class="btn" data-mark="email">' + (t.steps.email ? "Log another email" : "Mark emailed") + "</button></div>" +
         '<div class="label">X DM <span class="hint">(after you follow them)</span></div><textarea id="m-dm" rows="4">' + esc(msg.dm) + '</textarea>' +
         '<div class="btns"><button type="button" class="btn primary" id="mc-dm">Copy</button>' + (pickX ? '<a class="btn" href="' + pickX + '" target="_blank" rel="noopener">' + (pick.x ? "Open @" + esc(pick.x) : "Find " + esc(lastName(pick.n)) + " on X") + "</a>" : "") +
-          '<button type="button" class="btn" data-mark="dm">I sent it</button></div>' +
+          '<button type="button" class="btn" data-mark="dm">Mark DM sent</button></div>' +
         '<div class="label">Update every 4–6 weeks</div><textarea id="m-follow" rows="9">' + esc(msg.follow) + '</textarea>' +
         '<div class="btns"><button type="button" class="btn primary" id="mc-follow">Copy</button>' + (fuH ? '<a class="btn" id="mo-follow" href="' + esc(fuH) + '">Open in email</a>' : "") +
-          '<button type="button" class="btn" data-mark="update">I sent it</button></div>' +
+          '<button type="button" class="btn" data-mark="update">Mark update sent</button></div>' +
         '<div class="label">Note for your coach to send</div><textarea id="m-coach" rows="10">' + esc(msg.coachNote) + '</textarea>' +
         '<div class="btns"><button type="button" class="btn primary" id="mc-coach">Copy</button><button type="button" class="btn" data-mark="coachnote">My coach sent it</button></div>' +
       "</section>" +
       '<section class="card"><h3>Notes</h3><span class="hint">What a coach said, what they want to see, camp dates, who you met.</span>' +
-        '<textarea id="notes" rows="5" placeholder="e.g. Coach said send video after fall season. Camp Jan 10.">' + esc(t.notes) + "</textarea></section>" +
+        '<textarea id="notes" rows="5" placeholder="e.g. Coach said send video after fall season. Camp Jan 10.">' + esc(t.notes) + "</textarea>" +
+        (clubOf(p) ? '<div class="small">' + (p.shareNotes !== false ? "Your coaches at " + esc(store.club.name) + " can see your school notes." : "Only you can see your school notes.") +
+          ' <button type="button" class="btn small" id="share-notes">' + (p.shareNotes !== false ? "Keep my notes private" : "Share with my coaches") + "</button></div>" : "") + "</section>" +
       '<section class="card"><h3>What it takes at ' + esc(s.level) + '</h3><ul class="plain"><li><strong>Academics:</strong> ' + esc(info.acad) + "</li><li><strong>Money:</strong> " + esc(money) + "</li>" +
         "<li><strong>Cost:</strong> run the college's net price calculator; the sticker price is rarely what families pay.</li></ul>" +
         (s.custom ? '<div class="btns"><button type="button" class="btn ghost" id="del-school">Remove this school</button></div>' : "") + "</section>" +
@@ -2379,6 +2418,7 @@
       $("#m-" + x[0]).addEventListener("input", function () { a.href = mailHref($("#m-" + x[0]).value); });
     });
     $("#notes").addEventListener("input", function () { t.notes = $("#notes").value; t.star = t.star || !!t.notes.trim(); persist(); });
+    if ($("#share-notes")) $("#share-notes").addEventListener("click", function () { p.shareNotes = p.shareNotes === false; persist(); rerender(); toast(p.shareNotes ? "Your coaches can see your school notes." : "Your school notes are private. Coaches still see your list and who you contacted."); });
     $("#cform").addEventListener("submit", function (e) {
       e.preventDefault();
       var n = $("#c-name").value.trim(); if (!n) return;
@@ -2513,7 +2553,7 @@
       p.intake ? ["analysis", "Your plan and analysis", "Built from your answers on " + fmtShortDate(p.intake.date) + ". Change them anytime."] : ["intake", "Build my plan", "Answer 8 questions and get a written analysis and your week laid out."],
       CLOUD ? null : ["ask", "Ask StandPoint", "AI answers your training and recruiting questions using your numbers and plan."],
       ["plans", "Plans and payments", "Individual plan, club license, video reviews and online coaching." + (store.plan ? " Current: " + esc(planName(store.plan.k)) + (store.plan.test ? " (test)" : "") + "." : "")],
-      ["join", "Your club", clubOf(p) ? "You're on " + esc(store.club.name) + ". See who your coaches are." : clubPending(p) ? "Waiting for " + esc(store.club.name) + " to accept you." : "Join your travel club with the code your coach gave you."],
+      ["join", "Your club", clubOf(p) ? "You're on " + esc(store.club.name) + ". See your coaches and choose whether they see your school notes." : clubPending(p) ? "Waiting for " + esc(store.club.name) + " to accept you." : "Join your travel club with the code your coach gave you."],
       CLOUD ? null : ["coachapp", "Coach app", "Demo: in the real version coaches have their own app and login. Open it to see what your coach sees."],
       FEATURES.collegeSearch ? ["search", "College coach search", "What a college coach sees: only players who turned it on, with a parent's OK."] : null,
       ["install", "Put StandPoint on your phone", "Add it to your home screen like an app. App Store and Google Play come next."],
@@ -3537,7 +3577,7 @@
     if ($("#cl-edit")) $("#cl-edit").addEventListener("click", function () { clubView.edit = true; render(); });
     if ($("#cl-del")) $("#cl-del").addEventListener("click", function () {
       var b = $("#cl-del"); if (b.getAttribute("data-armed") !== "1") { b.setAttribute("data-armed", "1"); b.textContent = "Tap again: delete " + c.name; return; }
-      store.players.forEach(function (x) { delete trainOf(x).club; }); store.club = null; if (store.plan && store.plan.k === "club") store.plan = null; clubPlayer = null; planScope = { level: "club", id: null }; liftDraft = null;
+      clubGone = c.id; store.players.forEach(function (x) { delete trainOf(x).club; }); store.club = null; if (store.plan && store.plan.k === "club") store.plan = null; clubPlayer = null; planScope = { level: "club", id: null }; liftDraft = null;
       persist(); render(); window.scrollTo(0, 0); toast("Club deleted. Players keep their own profiles.");
     });
     if ($("#cl-addp")) $("#cl-addp").addEventListener("click", function () { store.app = "player"; persist(); startNewPlayer(); });
@@ -3676,24 +3716,24 @@
     if (!searchF.sport) searchF.sport = sportOf(p);
     var pool = store.players.filter(function (x) { return sportOf(x) === searchF.sport; });
     var listed = pool.filter(searchable), hidden = pool.length - listed.length;
-    var good = function (l) { return l && (l.src === "showcase" || l.src === "camp" || l.src === "device"); };
+    var good = function (l, k) { var t = tierOf(l, k); return t === "showcase" || t === "camp" || t === "device"; };
     var res = listed.filter(function (x) {
       if (searchF.grad !== "all" && String(x.grad) !== searchF.grad) return false;
       if (searchF.pos !== "all" && (x.positions || []).indexOf(searchF.pos) < 0) return false;
-      var lt = latest(x), ok = function (k) { return !searchF.ver || good(lt.src[k]); };
+      var lt = latest(x), ok = function (k) { return !searchF.ver || good(lt.src[k], k); };
       if (num(searchF.ev) != null && !(lt.v.ev >= num(searchF.ev) && ok("ev"))) return false;
       if (num(searchF.fb) != null && !(lt.v.fb >= num(searchF.fb) && ok("fb"))) return false;
       if (num(searchF.sixty) != null && !(lt.v.sixty != null && lt.v.sixty <= num(searchF.sixty) && ok("sixty"))) return false;
-      if (searchF.ver && !Object.keys(lt.src).some(function (k) { return good(lt.src[k]); })) return false;
+      if (searchF.ver && !Object.keys(lt.src).some(function (k) { return good(lt.src[k], k); })) return false;
       return true;
     });
     var years = []; pool.forEach(function (x) { if (years.indexOf(String(x.grad)) < 0) years.push(String(x.grad)); }); years.sort();
     var cards = res.map(function (x) {
-      var lt = latest(x), mets = metricsFor(x).filter(function (k) { return lt.v[k] != null && (!searchF.ver || good(lt.src[k])); });
+      var lt = latest(x), mets = metricsFor(x).filter(function (k) { return lt.v[k] != null && (!searchF.ver || good(lt.src[k], k)); });
       var s = x.search || {}, subj = encodeURIComponent((x.grad ? "Class of " + x.grad + " · " : "") + x.name);
       return '<section class="card"><div><div class="eyebrow">Class of ' + esc(x.grad) + " · " + esc(posLabel(x)) + (x.bats ? " · B/T " + esc(x.bats) + "/" + esc(x.throws) : "") + "</div><h3>" + esc(x.name) + "</h3>" +
         '<div class="small">' + esc(x.school || "School not listed") + (x.gpa ? " · GPA " + esc(x.gpa) : "") + (x.height ? " · " + esc(x.height) : "") + (x.weight ? " · " + esc(x.weight) + " lb" : "") + "</div></div>" +
-        (mets.length ? '<div class="hist">' + mets.map(function (k) { var l = lt.src[k]; return '<div class="hitem"><div class="h"><span>' + METRICS[k].label + '</span><span class="num">' + fmtVal(k, lt.v[k]) + sp(k) + "</span></div><div>" + verifPill(l) + " · " + fmtDate(l.date) + (l.where ? " · " + esc(l.where) : "") + (l.proof ? ' · <a href="' + esc(l.proof) + '" target="_blank" rel="noopener">proof</a>' : "") + "</div></div>"; }).join("") + "</div>" : '<p class="muted small" style="margin:0">No numbers logged yet.</p>') +
+        (mets.length ? '<div class="hist">' + mets.map(function (k) { var l = lt.src[k]; return '<div class="hitem"><div class="h"><span>' + METRICS[k].label + '</span><span class="num">' + fmtVal(k, lt.v[k]) + sp(k) + "</span></div><div>" + verifPill(l, k) + " · " + fmtDate(l.date) + (l.where ? " · " + esc(l.where) : "") + (l.proof ? ' · <a href="' + esc(l.proof) + '" target="_blank" rel="noopener">proof</a>' : "") + "</div></div>"; }).join("") + "</div>" : '<p class="muted small" style="margin:0">No numbers logged yet.</p>') +
         (x.schedule ? '<div class="small"><strong>Upcoming:</strong> ' + scheduleLines(x).slice(0, 3).map(esc).join(" · ") + "</div>" : "") +
         '<div class="btns">' + (x.email ? '<a class="btn primary" href="mailto:' + esc(x.email) + (s.parentEmail ? "?cc=" + encodeURIComponent(s.parentEmail) + "&" : "?") + "subject=" + subj + '">Email ' + esc(x.name.split(" ")[0]) + (s.parentEmail ? " and parent" : "") + "</a>" : "") +
         (x.xhandle ? '<a class="btn" href="https://x.com/' + encodeURIComponent(x.xhandle.replace(/^@/, "")) + '" target="_blank" rel="noopener">X profile</a>' : "") + "</div></section>";
@@ -3755,6 +3795,8 @@
   var sb = null, me = null, prof = null, cloudRole = null, cloudOrg = null, cloudPendClub = null, cloudPicked = false;
   var cloudErr = "", cloudInfo = "", cloudView = "signin", cloudSnap = {}, cloudMemSnap = [], cloudJoin = null;
   var saveTimer = null, saving = false, saveAgain = false;
+  // Refresh on its own: when a tab is opened and every 30 seconds while the app is on screen.
+  var cloudEdits = 0, typedAt = 0, typedEl = null, lastPull = 0, pulling = false, flushLater = false, clubGone = null;
   var CLUB_LOCAL = ["id", "name", "type", "code", "autoAccept", "roster", "pending", "declined", "teamOf", "pendTeam", "indiv", "nudges", "lessons", "notes", "log", "pcoach", "coachReq", "as", "pendingCoaches", "email"];
   function cq(pr) { return Promise.resolve(pr).then(function (r) { if (r && r.error) throw r.error; return r ? r.data : null; }); }
   function msgOf(e) { return (e && (e.message || e.error_description || e.msg)) || String(e || "Something went wrong"); }
@@ -3772,13 +3814,35 @@
     } catch (e) { cloudErr = msgOf(e); }
     render();
     document.addEventListener("visibilitychange", function () { if (document.visibilityState === "visible") cloudRefresh(true); });
+    document.addEventListener("input", function (e) { typedAt = Date.now(); typedEl = e.target; }, true);
+    document.addEventListener("click", function (e) { if (e.target && e.target.closest && e.target.closest("#tabs button")) setTimeout(function () { cloudRefresh(true, "tab"); }, 60); }, true);
+    setInterval(function () { if (document.visibilityState === "visible") cloudRefresh(true, "poll"); }, 30000);
     window.addEventListener("pagehide", function () { if (saveTimer) { clearTimeout(saveTimer); cloudFlush(); } });
   }
-  async function cloudRefresh(quiet) {
-    if (!me || saving || saveTimer) return;
+  async function cloudRefresh(quiet, auto) {
+    if (!me || saving || saveTimer || pulling) return;
     var a = document.activeElement; if (quiet && a && /INPUT|TEXTAREA|SELECT/.test(a.tagName)) return;
-    try { await cloudLoad(); var y = window.scrollY; render(); window.scrollTo(0, y); if (!quiet) toast("Up to date."); }
-    catch (e) { if (!quiet) toast("Couldn't refresh: " + msgOf(e)); }
+    if (auto === "poll" && typedEl && document.contains(typedEl) && Date.now() - typedAt < 120000) return; // a form he's still filling in
+    if (auto === "tab" && Date.now() - lastPull < 5000) return;
+    pulling = true;
+    var keep = { store: store, prof: prof, role: cloudRole, org: cloudOrg, pend: cloudPendClub, snap: cloudSnap, mems: cloudMemSnap };
+    var before = JSON.stringify(store), edits = cloudEdits;
+    try {
+      await cloudLoad(); lastPull = Date.now();
+      var edited = cloudEdits !== edits;
+      if (edited || (auto && JSON.stringify(store) === before)) {
+        // He changed something while it loaded, or nothing new came in: keep the screen he's using.
+        store = keep.store; prof = keep.prof; cloudRole = keep.role; cloudOrg = keep.org; cloudPendClub = keep.pend; cloudSnap = keep.snap; cloudMemSnap = keep.mems;
+        if (edited) flushLater = true;
+        return;
+      }
+      var y = window.scrollY, open = [].map.call(document.querySelectorAll("#view details[open] > summary"), function (x) { return x.textContent; });
+      render();
+      [].forEach.call(document.querySelectorAll("#view details > summary"), function (x) { if (open.indexOf(x.textContent) >= 0) x.parentNode.open = true; });
+      window.scrollTo(0, y);
+      if (!quiet) toast("Up to date.");
+    } catch (e) { if (!quiet) toast("Couldn't refresh: " + msgOf(e)); }
+    finally { pulling = false; if (flushLater) { flushLater = false; cloudQueue(); } }
   }
 
   // ----- Load: build the same store the screens already use -----
@@ -3932,7 +3996,7 @@
   async function saveCoach() {
     var pc = coachPieces(), s = cloudSnap || {}, now = new Date().toISOString(), oid = cloudOrg, J = JSON.stringify;
     if (!oid) return;
-    if (!pc) { await cq(sb.from("orgs").delete().eq("id", oid)); cloudOrg = null; cloudSnap = {}; cloudMemSnap = []; return; }
+    if (!pc) { if (clubGone !== oid) return; await cq(sb.from("orgs").delete().eq("id", oid)); clubGone = null; cloudOrg = null; cloudSnap = {}; cloudMemSnap = []; return; }
     if (J(pc.org) !== s.org) await cq(sb.from("orgs").update(pc.org).eq("id", oid));
     if (J(pc.shared) !== s.shared) await cq(sb.from("org_state").update({ data: pc.shared, updated_at: now, updated_by: me.id }).eq("org_id", oid));
     if (J(pc.priv) !== s.priv) await cq(sb.from("org_private").update({ data: pc.priv, updated_at: now }).eq("org_id", oid));
@@ -3964,6 +4028,7 @@
   function cloudQueue() { if (!me || !sb) return; clearTimeout(saveTimer); saveTimer = setTimeout(cloudFlush, 700); }
   async function cloudFlush() {
     saveTimer = null;
+    if (pulling) { flushLater = true; return; }
     if (saving) { saveAgain = true; return; }
     saving = true;
     try { if (cloudRole === "coach") await saveCoach(); else await savePlayer(); }
