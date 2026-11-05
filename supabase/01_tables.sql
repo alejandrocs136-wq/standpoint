@@ -17,7 +17,7 @@ create table orgs (
   type text not null default 'Training facility',
   join_code text unique not null,
   auto_accept boolean not null default false,
-  created_by uuid not null default auth.uid() references auth.users(id),
+  created_by uuid default auth.uid() references auth.users(id) on delete set null,
   created_at timestamptz not null default now()
 );
 
@@ -37,7 +37,7 @@ create table org_state (
   org_id uuid primary key references orgs(id) on delete cascade,
   data jsonb not null default '{}',
   updated_at timestamptz not null default now(),
-  updated_by uuid references auth.users(id)
+  updated_by uuid references auth.users(id) on delete set null
 );
 
 -- What only coaches see: coach notes, the change log
@@ -53,7 +53,7 @@ create table player_plans (
   player_id uuid not null references auth.users(id) on delete cascade,
   data jsonb not null default '{}',
   updated_at timestamptz not null default now(),
-  updated_by uuid references auth.users(id),
+  updated_by uuid references auth.users(id) on delete set null,
   primary key (org_id, player_id)
 );
 
