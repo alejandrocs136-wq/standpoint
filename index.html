@@ -777,10 +777,10 @@
     var grade = gradeFor(Number(p.grad));
     var head = '<div class="eyebrow">' + esc(gradeName(grade)) + " · Class of " + esc(p.grad) + " · " + esc(posLabel(p)) + "</div>";
     if (!lt.logs.length) {
-      $("#view").innerHTML = clubHomeCard(p) + '<section class="card">' + head + '<h2>Add your first numbers</h2><p class="muted" style="margin:0">Your StandPoint shows up as soon as you log one number.</p>' +
+      $("#view").innerHTML = clubHomeCard(p) + intakeCard(p) + '<section class="card">' + head + '<h2>Add your first numbers</h2><p class="muted" style="margin:0">Your StandPoint shows up as soon as you log one number.</p>' +
         '<div class="btns"><button type="button" class="btn red" id="h-add">Add numbers</button></div></section>';
       $("#h-add").addEventListener("click", function () { go("numbers"); });
-      bindClubHome(p);
+      bindClubHome(p); bindMvGo();
       return;
     }
     var last = lt.last, since = daysSince(last.date);
@@ -849,8 +849,8 @@
       return '<li><span class="k">' + (i + 1) + '</span><button type="button" data-go="' + m.tab + '"><span class="t">' + esc(m.t) + '</span><span class="small muted">' + esc(m.s) + "</span></button></li>";
     }).join("") + "</ol></section>";
 
-    $("#view").innerHTML = clubHomeCard(p) + hero + movesHTML + cards + academics;
-    bindClubHome(p);
+    $("#view").innerHTML = clubHomeCard(p) + intakeCard(p) + hero + movesHTML + cards + academics;
+    bindClubHome(p); bindMvGo();
     $("#h-add").addEventListener("click", function () { go("numbers"); });
     Array.prototype.forEach.call(document.querySelectorAll("[data-go]"), function (b) { b.addEventListener("click", function () { go(b.getAttribute("data-go")); }); });
   }
@@ -2465,8 +2465,10 @@
       gets: ["The whole app for one player", "Recruiting plan, school list, coach emails and tracker", "Lift, speed and fuel plans with progress", "Parent access"] },
     { k: "club", name: "Club or facility license", who: "Travel clubs, training facilities and showcases", price: "Per player, per season · price set after the cost model",
       gets: ["Every player on the roster gets the full app", "Club admin: roster, coaches and a club lift plan", "Roster progress at a glance", "Players on the license don't pay on their own"] },
-    { k: "coaching", name: "Coaching upgrade (add-on)", who: "Players who want a real coach's eyes on their video", price: "Per review or monthly · the coach is paid, StandPoint keeps a share",
-      gets: ["Send a swing or bullpen video", "A coach breaks it down and assigns drills", "The drills show up in Train"] }
+    { k: "coaching", name: "Coach video reviews (add-on)", who: "Players who want a real coach's eyes on their video", price: "Per review or monthly · the coach is paid, StandPoint keeps a share",
+      gets: ["Send a swing or bullpen video", "A coach breaks it down and assigns drills", "The drills show up in Train"] },
+    { k: "online", name: "Weekly online coaching", who: "Players without a club coach, or who want more", price: "Monthly · costs more than video reviews · price set after the cost model",
+      gets: ["A weekly online session with a coach", "A program built for you that changes week to week", "Video breakdowns between sessions", "A fueling check-in with a dietitian, with a parent"] }
   ];
   function planName(k) { for (var i = 0; i < PLANS.length; i++) if (PLANS[i].k === k) return PLANS[i].name; return k; }
   function payUrl(k, p) {
@@ -2489,9 +2491,14 @@
     if (moreView === "search" && FEATURES.collegeSearch) return renderCollegeSearch(p);
     if (moreView === "install") return renderInstall(p);
     if (moreView === "erase") return renderErase();
+    if (moreView === "intake") return renderIntake(p);
+    if (moreView === "analysis") return renderAnalysis(p);
+    if (moreView === "ask") return renderAsk(p);
     var n = openReq().length;
     var items = [
-      ["plans", "Plans and payments", "Individual plan, club license and the coaching upgrade." + (store.plan ? " Current: " + esc(planName(store.plan.k)) + (store.plan.test ? " (test)" : "") + "." : "")],
+      p.intake ? ["analysis", "Your plan and analysis", "Built from your answers on " + fmtShortDate(p.intake.date) + ". Change them anytime."] : ["intake", "Build my plan", "Answer 8 questions and get a written analysis and your week laid out."],
+      ["ask", "Ask StandPoint", "AI answers your training and recruiting questions using your numbers and plan."],
+      ["plans", "Plans and payments", "Individual plan, club license, video reviews and online coaching." + (store.plan ? " Current: " + esc(planName(store.plan.k)) + (store.plan.test ? " (test)" : "") + "." : "")],
       ["join", "Your club", clubOf(p) ? "You're on " + esc(store.club.name) + ". See who your coaches are." : clubPending(p) ? "Waiting for " + esc(store.club.name) + " to accept you." : "Join your travel club with the code your coach gave you."],
       ["coachapp", "Coach app", "Demo: in the real version coaches have their own app and login. Open it to see what your coach sees."],
       FEATURES.collegeSearch ? ["search", "College coach search", "What a college coach sees: only players who turned it on, with a parent's OK."] : null,
@@ -2503,6 +2510,193 @@
     bindMore();
   }
 
+  // ----- Build my plan: questions, analysis, Ask StandPoint -----
+  var INTAKE_GOALS = [["hit", "Hit harder"], ["speed", "Get faster"], ["arm", "Throw harder"], ["pitch", "Pitch better"], ["strength", "Get stronger"], ["gain", "Put on muscle"], ["lean", "Get leaner"], ["recruit", "Get recruited"]];
+  var INTAKE_HARD = [["who", "I don't know who to contact"], ["video", "I don't have good video"], ["social", "No X or Instagram yet"], ["reply", "Coaches don't reply"], ["level", "I don't know my level"]];
+  var INTAKE_ONE = {
+    days: [["2", "2"], ["3", "3"], ["4", "4"], ["5", "5"], ["6", "6"]],
+    mins: [["30", "30 min"], ["45", "45 min"], ["60", "60 min"], ["90", "90 min"]],
+    gym: [["full", "Full gym"], ["home", "Some weights at home"], ["none", "No gym"]],
+    field: [["both", "Field and cage"], ["field", "Just a field"], ["cage", "Just a cage"], ["none", "Neither"]],
+    exp: [["new", "New to lifting"], ["some", "Under a year"], ["yrs", "A year or more"]],
+    pain: [["no", "No"], ["yes", "Yes"]]
+  };
+  var intakeDraft = null;
+  function optName(list, k) { for (var i = 0; i < list.length; i++) if (list[i][0] === k) return list[i][1]; return k; }
+  function intakeCard(p) {
+    if (!p.intake) return '<section class="card"><div class="eyebrow">Your plan</div><h3>Answer 8 questions, get your plan</h3><p class="small" style="margin:0">What you want to work on, when you can train and what you have to train with. You get a written analysis and your week laid out.</p><div class="btns"><button type="button" class="btn red" data-mvgo="intake">Build my plan</button><button type="button" class="btn" data-mvgo="ask">Ask StandPoint</button></div></section>';
+    return '<section class="card"><div class="sh"><span><strong>Your plan</strong><br><span class="small muted">' + esc(p.intake.goals.map(function (g) { return optName(INTAKE_GOALS, g); }).join(", ") || "Built from your answers") + " · " + fmtShortDate(p.intake.date) + '</span></span></div><div class="btns"><button type="button" class="btn" data-mvgo="analysis">Your analysis</button><button type="button" class="btn" data-mvgo="ask">Ask StandPoint</button></div></section>';
+  }
+  function bindMvGo() { onAll("[data-mvgo]", "click", function (b) { moreView = b.getAttribute("data-mvgo"); if (moreView === "intake") intakeDraft = null; tab = "more"; render(); window.scrollTo(0, 0); }); }
+  function applyIntake(p) {
+    var T = trainOf(p), n = +p.intake.days, sp = p.intake.goals.indexOf("speed") >= 0;
+    var map = { 2: [[1, 4], []], 3: sp ? [[1, 4], [3]] : [[1, 3, 5], []], 4: sp ? [[1, 4], [2, 5]] : [[1, 3, 5], [2]], 5: [[1, 3, 5], [2, 4]], 6: [[1, 3, 5], [2, 4, 6]] };
+    var m = map[n] || map[4]; T.liftDays = m[0].slice(); T.speedDays = m[1].slice();
+  }
+  function renderIntake(p) {
+    var d = intakeDraft = intakeDraft || JSON.parse(JSON.stringify(p.intake || { goals: [], days: "4", mins: "60", gym: "full", field: "both", exp: "some", pain: "no", painWhere: "", hard: [] }));
+    var multi = function (key, list, max) { return '<div class="toggles">' + list.map(function (o) { return '<button type="button" class="tog" data-im="' + key + "|" + o[0] + '" aria-pressed="' + (d[key].indexOf(o[0]) >= 0) + '" style="font-family:var(--body);font-size:15px">' + esc(o[1]) + "</button>"; }).join("") + "</div>"; };
+    var one = function (key) { return '<div class="toggles">' + INTAKE_ONE[key].map(function (o) { return '<button type="button" class="tog" data-io="' + key + "|" + o[0] + '" aria-pressed="' + (String(d[key]) === o[0]) + '" style="font-family:var(--body);font-size:15px">' + esc(o[1]) + "</button>"; }).join("") + "</div>"; };
+    var q = function (n, label, body, hint) { return '<section class="card"><div class="eyebrow">Question ' + n + ' of 8</div><h3>' + label + "</h3>" + body + (hint ? '<span class="hint">' + hint + "</span>" : "") + "</section>"; };
+    $("#view").innerHTML = moreBack() + '<section class="card"><div><div class="eyebrow">Build my plan</div><h2>8 questions</h2></div><p class="small muted" style="margin:0">Takes about a minute. Your answers shape your week and your analysis. Change them anytime.</p></section>' +
+      q(1, "What do you want to work on?", multi("goals", INTAKE_GOALS), "Pick up to 3.") +
+      q(2, "How many days a week can you train?", one("days")) +
+      q(3, "How long is a session?", one("mins")) +
+      q(4, "What do you have for lifting?", one("gym")) +
+      q(5, "Where can you throw and hit?", one("field")) +
+      q(6, "How long have you been lifting?", one("exp")) +
+      q(7, "Does anything hurt right now?", one("pain") + (d.pain === "yes" ? '<div class="field"><label for="in-pain">Where?</label><input type="text" id="in-pain" value="' + esc(d.painWhere || "") + '" placeholder="Elbow, shoulder, back…"></div>' : "")) +
+      q(8, "What's hardest about recruiting?", multi("hard", INTAKE_HARD), "Pick any.") +
+      '<section class="card"><div class="btns"><button type="button" class="btn red" id="in-save">See my plan</button></div><span class="hint" id="in-err"></span></section>';
+    bindMore();
+    onAll("[data-im]", "click", function (b) { var a = b.getAttribute("data-im").split("|"), arr = d[a[0]], i = arr.indexOf(a[1]); if (i >= 0) arr.splice(i, 1); else { if (a[0] === "goals" && arr.length >= 3) { toast("Pick up to 3. Tap one to drop it first."); return; } arr.push(a[1]); } var y = window.scrollY; renderIntake(p); window.scrollTo(0, y); });
+    onAll("[data-io]", "click", function (b) { var a = b.getAttribute("data-io").split("|"); d[a[0]] = a[1]; var y = window.scrollY; renderIntake(p); window.scrollTo(0, y); });
+    if ($("#in-pain")) $("#in-pain").addEventListener("input", function (e) { d.painWhere = e.target.value; });
+    $("#in-save").addEventListener("click", function () {
+      if (!d.goals.length) { $("#in-err").textContent = "Pick at least one thing to work on."; return; }
+      p.intake = JSON.parse(JSON.stringify(d)); p.intake.date = todayStr; intakeDraft = null;
+      applyIntake(p); persist(); moreView = "analysis"; render(); window.scrollTo(0, 0); toast("Your plan is ready.");
+    });
+  }
+  function armKeys(p) { var g = groupsFor(p), out = []; if (g.indexOf("C") >= 0) out.push("carm", "pop"); if (g.indexOf("IF") >= 0) out.push("ifarm"); if (g.indexOf("OF") >= 0) out.push("ofarm"); return out.length ? out : ["ifarm"]; }
+  function metricLine(p, k, gaps, lt) {
+    var m = METRICS[k], gp = gaps.filter(function (g) { return g.k === k; })[0], v = lt.v[k];
+    if (v == null || v === "") return "<li>" + esc(m.label) + ": not logged yet. Test it so you can see progress.</li>";
+    return "<li>" + esc(m.label) + ": " + esc(String(v)) + " " + esc(m.unit) + (gp ? " · " + gapText(k, gp.gap) + " to " + esc(gp.level) : " · in range for your top level") + "</li>";
+  }
+  function drillList(p, k, cl) { var cs = skillFor(cl, p.id, k); return '<ul class="plain">' + (cs ? splitLines(cs.v).map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") : METRICS[k].drills.map(function (x) { return "<li>" + x + "</li>"; }).join("")) + "</ul>" + (cs ? '<span class="hint">Drills from ' + esc(srcLabel(cl, cs, true)) + ".</span>" : ""); }
+  function goalBlock(p, g, ev, gaps, cl) {
+    var lt = ev.lt, I = p.intake, T = trainOf(p), keys = { hit: ["ev"], speed: ["sixty"], arm: armKeys(p), pitch: ["fb", "strike"] }[g];
+    var title = optName(INTAKE_GOALS, g), body = "";
+    if (keys) {
+      body = '<ul class="plain small">' + keys.map(function (k) { return metricLine(p, k, gaps, lt); }).join("") + "</ul>" +
+        '<span class="small">' + esc(METRICS[keys[0]].plan) + "</span>" + drillList(p, keys[0], cl);
+      if (g === "hit" && (I.field === "none" || I.field === "field")) body += '<span class="hint">No cage: do tee work into a net or a fence, and dry swings with full intent.</span>';
+      if ((g === "arm" || g === "pitch") && (I.field === "none" || I.field === "cage")) body += '<span class="hint">No field: wall ball, band work and plyo-ball throws into a wall or net.</span>';
+    } else if (g === "strength") {
+      body = '<span class="small">Lift ' + T.liftDays.length + " days a week" + (cl ? ", on your coaches' plan" : "") + ". Log your weights in Train so you see them climb in Progress.</span>" +
+        (I.exp === "new" ? '<span class="small">New to lifting: learn each movement first. Light weight, clean reps, and ask a coach to check your form before you add weight.</span>' : "") +
+        (I.gym === "none" ? '<span class="small">No gym: push-ups, split squats, lunges, single-leg hip bridges and planks, 3 rounds. Add reps each week.</span>' : I.gym === "home" ? '<span class="small">Weights at home: use them for the main lift and do bodyweight work for the rest.</span>' : "");
+    } else if (g === "gain") {
+      body = '<span class="small">Eat enough to grow: three real meals and two snacks a day, with protein at each one, and water all day. Don\'t skip breakfast. Sleep 8 to 10 hours. Lift ' + T.liftDays.length + ' days a week so the weight comes on as muscle.</span><span class="small">Weigh in once a month, same time of day. Talk with your parents about it, and with a doctor or registered dietitian if you want a real plan. Train → Fuel has more.</span>';
+    } else if (g === "lean") {
+      body = '<span class="small">StandPoint doesn\'t set weight-loss targets for players under 18. What helps: train hard, sleep 8 to 10 hours, eat real meals instead of skipping them, and swap soda and energy drinks for water.</span><span class="small">If you and your parents want to change your weight, talk with your doctor or a registered dietitian first.</span>';
+    } else if (g === "recruit") {
+      var H = I.hard || [], steps = [];
+      if (H.indexOf("level") >= 0) steps.push("Your level is at the top of Home. Re-test every 4 to 6 weeks so it stays current.");
+      if (H.indexOf("who") >= 0) steps.push("Schools tab: add 10 schools, starting with the ones marked Realistic for you. Each school shows its coaches and how to reach them.");
+      if (H.indexOf("social") >= 0) steps.push("Make an X account this week, and Instagram if you want. Add the handle in Edit profile, then follow the programs on your list.");
+      if (H.indexOf("video") >= 0) steps.push("Film 10 swings from the side and from behind, in good light. Post tab writes the caption with your numbers.");
+      if (H.indexOf("reply") >= 0) steps.push("No reply is normal. Send an update every 4 to 6 weeks with new numbers, new video and your schedule. Schools tab tells you when one is due.");
+      if (!steps.length) steps.push("Recruit tab has your steps for this year. Do the next one this week.");
+      body = '<ul class="plain small">' + steps.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + "</ul>";
+    }
+    return '<div class="card-sub"><strong>' + esc(title) + "</strong>" + body + "</div>";
+  }
+  function weekGridHTML(p) {
+    var T = trainOf(p), c = clubOf(p), lineFor = function (wd) {
+      var a = [];
+      if (T.liftDays.indexOf(wd) >= 0) a.push("Lift");
+      if (T.speedDays.indexOf(wd) >= 0) a.push("Speed");
+      if (c) ["throwing", "hitting"].forEach(function (kind) { var r = resolve(c, p.id, kind); if (r && r.v.some(function (d) { return !d.flex && (d.wd || []).indexOf(wd) >= 0; })) a.push(kind === "throwing" ? "Throw" : "Hit"); });
+      return a.length ? a.join(" + ") : "Rest";
+    };
+    var flex = [];
+    if (c) ["throwing", "hitting"].forEach(function (kind) { var r = resolve(c, p.id, kind); if (r) r.v.forEach(function (d) { if (d.flex) flex.push(KIND[kind].name + " " + d.flex + "× (any days)"); }); });
+    return '<div class="week">' + WEEK_ORDER.map(function (wd) { var t = lineFor(wd); return '<div class="day"' + (t === "Rest" ? ' style="color:var(--muted)"' : "") + "><b>" + WEEKDAYS[wd] + "</b><span>" + esc(t) + "</span></div>"; }).join("") + "</div>" + (flex.length ? '<div class="small muted">Plus ' + esc(flex.join(", ")) + ".</div>" : "");
+  }
+  function renderAnalysis(p) {
+    if (!p.intake) { moreView = "intake"; return renderIntake(p); }
+    var I = p.intake, ev = evaluateAll(p), gaps = allGaps(ev), cl = clubOf(p), T = trainOf(p);
+    var lvl = ev.best ? ev.best.four[ev.best.bestIdx].L.name + " range today" : ev.lt.logs.length ? "Building toward a four-year range" : "No numbers yet";
+    var mins = +I.mins, split = mins <= 30 ? "warm-up 5, main work 20, cool-down 5" : mins <= 45 ? "warm-up 10, main work 30, arm care 5" : mins <= 60 ? "warm-up 10, main work 40, arm care or cool-down 10" : "warm-up 15, main work 60, skill work or arm care 15";
+    var pain = I.pain === "yes" ? '<div class="warn">You said ' + (I.painWhere ? "your " + esc(I.painWhere) + " hurts" : "something hurts") + ". Get it checked by a doctor or athletic trainer before you push hard. Until then, skip anything that makes it hurt.</div>" : "";
+    var gear = [I.gym === "none" ? "no gym" : I.gym === "home" ? "weights at home" : "a full gym", I.field === "both" ? "a field and a cage" : I.field === "field" ? "a field, no cage" : I.field === "cage" ? "a cage, no field" : "no field or cage"];
+    var more = cl ? '<section class="card"><h3>Want a coach on it?</h3><p class="small" style="margin:0">You\'re on ' + esc(cl.name) + ". Your club's coaches run your coaching, and your plan in Train comes from them first.</p><div class=\"btns\"><button type=\"button\" class=\"btn\" data-mvgo=\"plans\">Coaching options</button><button type=\"button\" class=\"btn\" data-mvgo=\"ask\">Ask StandPoint</button></div></section>" :
+      '<section class="card"><h3>Want more?</h3><p class="small" style="margin:0">Send a video for a coach\'s breakdown, or get weekly online coaching: a coach, a program built for you that changes week to week, and a fueling check-in with a parent.</p><div class="btns"><button type="button" class="btn red" data-mvgo="plans">See coaching options</button><button type="button" class="btn" data-mvgo="ask">Ask StandPoint</button></div></section>';
+    $("#view").innerHTML = moreBack() + '<section class="card hero"><div class="eyebrow">Your StandPoint analysis · ' + fmtDate(I.date) + "</div><h2>" + esc(p.name) + '</h2><div class="small muted">Class of ' + esc(p.grad) + " · " + esc(posLabel(p)) + (p.height ? " · " + esc(p.height) : "") + (p.weight ? " · " + esc(String(p.weight)) + " lb" : "") + "</div>" +
+      '<div class="big" style="font-size:24px">' + esc(lvl) + "</div>" +
+      '<div class="small">You train ' + esc(I.days) + " days a week, about " + esc(I.mins) + " minutes, with " + esc(gear.join(" and ")) + ". Working on: " + esc(I.goals.map(function (g) { return optName(INTAKE_GOALS, g).toLowerCase(); }).join(", ")) + ".</div>" + pain +
+      '<div class="btns"><button type="button" class="btn" data-mvgo="intake">Change my answers</button></div></section>' +
+      '<section class="card"><h3>Your goals and what to do</h3>' + I.goals.map(function (g) { return goalBlock(p, g, ev, gaps, cl); }).join("") + '<span class="hint">Level ranges are typical numbers, not cutoffs, and nothing here guarantees an offer. Re-test every 4 to 6 weeks.</span></section>' +
+      '<section class="card"><h3>Your week</h3>' + weekGridHTML(p) + '<div class="small">Each session: ' + esc(split) + ".</div>" + (cl ? '<span class="hint">Your coaches set your lifts, throwing and hitting. This fits around their plan.</span>' : '<span class="hint">Your lift and speed days are set from your answers. Change them in Train → Change your schedule.</span>') + "</section>" + more;
+    bindMore(); bindMvGo();
+  }
+  // Ask StandPoint: AI answers, with guardrails for a teenage athlete
+  function askPrompt(p, q) {
+    var ev = evaluateAll(p), lt = ev.lt, gaps = allGaps(ev), cl = clubOf(p), I = p.intake;
+    var nums = Object.keys(METRICS).filter(function (k) { return lt.v[k] != null && lt.v[k] !== ""; }).map(function (k) { return METRICS[k].label + " " + lt.v[k] + " " + METRICS[k].unit; });
+    var plan = [];
+    if (cl) {
+      var tm = teamOfP(cl, p.id); plan.push("On " + cl.name + (tm ? ", " + tm.name : "") + ". His coaches set his plan.");
+      ["throwing", "hitting"].forEach(function (kind) { var r = resolve(cl, p.id, kind); if (r) plan.push(KIND[kind].name + ": " + r.v.map(function (d) { return (d.name || KIND[kind].one) + " (" + daysText(d) + "): " + d.items.join(", "); }).join("; ")); });
+      var nt = resolve(cl, p.id, "note"); if (nt) plan.push("Coach's note: " + nt.v);
+    } else plan.push("Not on a club. Uses StandPoint's base plan.");
+    var T = trainOf(p); plan.push("Lift days: " + T.liftDays.map(function (k) { return WEEKDAYS[k]; }).join(", ") + ". Speed days: " + (T.speedDays.map(function (k) { return WEEKDAYS[k]; }).join(", ") || "none") + ".");
+    var data = [
+      "Name: " + p.name + ". Class of " + p.grad + ". Positions: " + posLabel(p) + ". Bats/throws: " + (p.bats || "?") + "/" + (p.throws || "?") + "." + (p.height ? " Height: " + p.height + "." : "") + (p.weight ? " Weight: " + p.weight + " lb." : ""),
+      "Latest numbers: " + (nums.join("; ") || "none logged") + ".",
+      "Level: " + (ev.best ? ev.best.four[ev.best.bestIdx].L.name + " range" : "building toward a four-year range") + ". Gaps: " + (gaps.map(function (g) { return METRICS[g.k].label + " " + gapText(g.k, g.gap) + " to " + g.level; }).join("; ") || "none") + ".",
+      I ? "His answers: working on " + I.goals.map(function (g) { return optName(INTAKE_GOALS, g); }).join(", ") + "; trains " + I.days + " days a week, " + I.mins + " min; " + optName(INTAKE_ONE.gym, I.gym) + "; " + optName(INTAKE_ONE.field, I.field) + "; lifting: " + optName(INTAKE_ONE.exp, I.exp) + "; pain now: " + (I.pain === "yes" ? "yes" + (I.painWhere ? " (" + I.painWhere + ")" : "") : "no") + "." : "He hasn't answered the plan questions yet.",
+      plan.join(" ")
+    ].join("\n");
+    var coachWay = cl ? "his coaches at " + cl.name + " (Train → Skills → send a video)" : "Train → Skills → send a video for a coach's review, or online coaching in More → Plans";
+    var hist = (p.ask || []).filter(function (x) { return x.a; }).slice(-4).map(function (x) { return "Player: " + x.q + "\nYou: " + x.a; }).join("\n\n");
+    return "You are \"Ask StandPoint\", the training assistant inside StandPoint, an app for high school baseball players. You're answering a player, who is probably a teenager.\n\n" +
+      "How to answer:\n- 2 to 5 short sentences, or a short list. Plain words. No headings, no markdown symbols.\n- Stick to baseball training, drills, practice, lifting basics, speed, arm care, fueling basics, recruiting steps, and how to use StandPoint (tabs: Home, Numbers, Train, Recruit, Schools, Post, More).\n- Use his data below. If his coaches set his plan, tell him to follow it first and don't contradict it.\n- Never give weight-loss targets, calorie numbers or diets. For weight or body questions, give basics only (regular meals, protein, water, sleep) and say to talk with his parents and a doctor or registered dietitian.\n- For pain, injury, illness or anything medical: tell him to stop what hurts and see a doctor or athletic trainer. Don't diagnose.\n- If he sounds upset, stressed or unsafe, tell him to talk with a parent, coach or another adult he trusts. If he's in danger, call or text 988, or call 911.\n- Don't promise offers, scholarships or roster spots. Level ranges are typical numbers, not cutoffs.\n- If it needs a coach's eyes (his swing on video, changing his plan), say so and point him to " + coachWay + ".\n- If it isn't about baseball or StandPoint, say in one sentence that you only help with baseball training and recruiting.\n\n" +
+      "His data:\n" + data + "\n\n" + (hist ? "Earlier in this chat:\n" + hist + "\n\n" : "") + "His question: " + q;
+  }
+  function getSample() { try { return window.claude && window.claude.use ? window.claude.use("sample") : Promise.resolve(null); } catch (e) { return Promise.resolve(null); } }
+  var askBusy = false;
+  function qaHTML(x, i) { return '<div class="card-sub" data-qa="' + i + '"><div class="small"><strong>You:</strong> ' + esc(x.q) + '</div><div class="small"><strong>StandPoint:</strong> <span class="ans">' + (x.a ? esc(x.a).replace(/\n/g, "<br>") : '<span class="muted">Thinking…</span>') + "</span></div></div>"; }
+  function renderAsk(p) {
+    var log = p.ask || [], cl = clubOf(p);
+    $("#view").innerHTML = moreBack() + '<section class="card"><div><div class="eyebrow">Ask StandPoint</div><h2>Questions about your training</h2></div><p class="small muted" style="margin:0">AI answers using your numbers and your plan. It helps with drills, lifting, your week and recruiting steps. For pain, injuries, weight or anything medical, it sends you to a person.</p></section>' +
+      '<section class="card" id="ask-log">' + (log.length ? log.map(qaHTML).join("") : '<p class="small muted" style="margin:0">Try: "What do I do on days I can\'t get to a cage?" or "What do I send a coach who never replied?"</p>') + "</section>" +
+      '<section class="card"><div class="field"><label for="ask-q">Your question</label><textarea id="ask-q" rows="3" maxlength="600"></textarea></div><div class="btns"><button type="button" class="btn red" id="ask-go">Ask</button>' + (log.length ? '<button type="button" class="btn" id="ask-clear">Clear the chat</button>' : "") + '</div><span class="hint" id="ask-hint">Not a coach, doctor or dietitian. When a question needs one, it says so.</span></section>' +
+      '<section class="card"><h3>Need a real coach?</h3><p class="small" style="margin:0">' + (cl ? "Send your video to your coaches at " + esc(cl.name) + " in Train → Skills." : "Send a video for a coach's breakdown in Train → Skills, or see online coaching in Plans.") + '</p><div class="btns"><button type="button" class="btn" data-mvgo="plans">Coaching options</button></div></section>';
+    bindMore(); bindMvGo();
+    if ($("#ask-clear")) $("#ask-clear").addEventListener("click", function () { p.ask = []; persist(); renderAsk(p); });
+    $("#ask-go").addEventListener("click", function () {
+      var q = $("#ask-q").value.trim(); if (!q || askBusy) return;
+      askBusy = true; $("#ask-go").disabled = true; $("#ask-hint").textContent = "Getting an answer…";
+      getSample().then(function (sample) {
+        if (!sample) { askBusy = false; $("#ask-go").disabled = false; $("#ask-hint").textContent = "Ask StandPoint isn't available in this view. It works in the published app."; return; }
+        var prompt = askPrompt(p, q);
+        p.ask = p.ask || []; p.ask.push({ q: q, a: "", at: Date.now() }); var idx = p.ask.length - 1;
+        $("#ask-log").innerHTML = p.ask.map(qaHTML).join(""); $("#ask-q").value = "";
+        var el = document.querySelector('[data-qa="' + idx + '"] .ans');
+        return sample(prompt, { modelTier: "quick", cache: false, onText: function (u) { if (el) el.textContent = u.text; } }).then(function (res) {
+          p.ask[idx].a = (res && res.text || "").trim() || "No answer came back. Try asking another way.";
+          if (p.ask.length > 20) p.ask = p.ask.slice(-20);
+          persist(); askBusy = false; renderAsk(p);
+        });
+      }).catch(function (e) {
+        askBusy = false; if (p.ask && p.ask.length && !p.ask[p.ask.length - 1].a) p.ask.pop(); persist();
+        var code = e && e.code; renderAsk(p);
+        $("#ask-hint").textContent = code === "not_granted" ? "Ask StandPoint needs your OK to use AI. Tap Ask again and allow it." : code === "rate_limited" ? "Too many questions right now. Try again in a minute." : "Couldn't get an answer. Try again.";
+      });
+    });
+  }
+  // Coaching requests: club players ask their club; players on their own join StandPoint's waitlist
+  function coachingNote(pl, p) {
+    if (pl.k !== "coaching" && pl.k !== "online") return "";
+    var c = clubOf(p);
+    if (c) {
+      var rq = (c.coachReq || []).filter(function (r) { return r.pid === p.id && r.kind === pl.k && r.status !== "declined"; })[0];
+      return '<div class="callout small">You\'re on ' + esc(c.name) + ". Your club's coaches run your coaching, and the club sets the price." + (rq ? " <strong>" + (rq.status === "accepted" ? esc(rq.by || "A coach") + " accepted. They'll set it up with you." : "Request sent " + fmtShortDate(rq.d) + ".") + "</strong>" : "") + "</div>" +
+        (rq ? "" : '<div class="btns"><button type="button" class="btn red" data-creq="' + pl.k + '">Ask ' + esc(c.name) + " for this</button></div>");
+    }
+    if (pl.k === "online") return p.onlineWait ? '<div><span class="pill close">On the waitlist since ' + fmtShortDate(p.onlineWait) + "</span></div>" : '<div class="btns"><button type="button" class="btn red" data-owait="1">Join the waitlist</button></div><span class="hint">StandPoint online coaching opens after the trial.</span>';
+    return "";
+  }
+  function coachReqHTML(c) {
+    var open = (c.coachReq || []).filter(function (r) { return r.status === "open" && store.players.some(function (q) { return q.id === r.pid; }); });
+    if (!open.length) return "";
+    return '<section class="card"><h3>Coaching requests (' + open.length + ')</h3><p class="small muted" style="margin:0">Players asking your club for more coaching. Accept to take him on; you\'re added to his coaches.</p><div class="hist">' +
+      open.map(function (r) { var x = store.players.filter(function (q) { return q.id === r.pid; })[0]; return '<div class="hitem"><div class="h"><span>' + esc(x.name) + '</span><span class="muted">' + fmtShortDate(r.d) + '</span></div><div class="small">' + esc(r.kind === "online" ? "Weekly online coaching" : "Coach video reviews") + (x.intake ? " · working on " + esc(x.intake.goals.map(function (g) { return optName(INTAKE_GOALS, g).toLowerCase(); }).join(", ")) : "") + '</div><div class="btns"><button type="button" class="btn primary" data-cra="' + esc(r.id) + '">Accept</button><button type="button" class="btn" data-crd="' + esc(r.id) + '">Not now</button></div></div>'; }).join("") + "</div></section>";
+  }
+
   // ----- Plans and payments -----
   function renderPlans(p) {
     var cp = store.plan;
@@ -2510,8 +2704,9 @@
       var on = cp && cp.k === pl.k, link = payUrl(pl.k, p);
       return '<section class="card plan' + (on ? " on" : "") + '"><div><div class="eyebrow">' + esc(pl.who) + "</div><h3>" + esc(pl.name) + '</h3><div class="small muted">' + esc(pl.price) + "</div></div>" +
         '<ul class="plain">' + pl.gets.map(function (g) { return "<li>" + esc(g) + "</li>"; }).join("") + "</ul>" +
+        coachingNote(pl, p) +
         (on ? '<div><span class="pill good">Your plan' + (cp.test ? " · test, no charge" : "") + " · since " + fmtDate(cp.since) + "</span></div>" : "") +
-        '<div class="btns">' + (link ? '<a class="btn red" href="' + esc(link) + '" target="_blank" rel="noopener">' + (pl.k === "club" ? "Buy the club license" : pl.k === "coaching" ? "Add coaching" : "Subscribe") + "</a>" : "") +
+        '<div class="btns">' + (link ? '<a class="btn red" href="' + esc(link) + '" target="_blank" rel="noopener">' + (pl.k === "club" ? "Buy the club license" : pl.k === "coaching" ? "Add video reviews" : pl.k === "online" ? "Start online coaching" : "Subscribe") + "</a>" : "") +
         '<button type="button" class="btn' + (link ? "" : " primary") + '" data-testplan="' + pl.k + '">' + (on ? "End test plan" : "Start a test plan") + "</button></div>" +
         (link ? '<span class="hint">Checkout opens on Stripe. Card details never touch StandPoint.</span>' : '<span class="hint">Checkout turns on once the LLC\'s Stripe account is set up and its payment link is added below. A test plan charges nothing.</span>') + "</section>";
     }).join("");
@@ -2525,6 +2720,8 @@
       '<section class="card"><h3>What you\'re paying for</h3><p class="small" style="margin:0">StandPoint gives you the tools: level ranges, school lists, steps for reaching out to coaches, and training plans. It doesn\'t guarantee an offer, a roster spot or a scholarship. The player still does the work, and coaches decide.</p>' +
       '<p class="small" style="margin:0">Level ranges are typical numbers for players at each level, not fixed cutoffs. Being in a range doesn\'t guarantee an offer or a roster spot, and missing one doesn\'t rule you out. Coaches also weigh film, grades, position and fit.</p></section>' + cards + setup;
     bindMore();
+    onAll("[data-creq]", "click", function (b) { var c = clubOf(p); if (!c) return; c.coachReq = c.coachReq || []; c.coachReq.push({ id: "cr" + Date.now().toString(36), pid: p.id, kind: b.getAttribute("data-creq"), d: todayStr, status: "open" }); persist(); renderPlans(p); toast("Sent to " + c.name + ". A coach will pick it up in the Coach app."); });
+    onAll("[data-owait]", "click", function () { p.onlineWait = todayStr; persist(); renderPlans(p); toast("You're on the waitlist."); });
     onAll("[data-testplan]", "click", function (b) {
       var k = b.getAttribute("data-testplan");
       if (store.plan && store.plan.k === k) { store.plan = null; toast("Test plan ended."); }
@@ -2559,7 +2756,7 @@
     if (!c.id) c.id = uid();
     c.coaches = c.coaches || []; c.roster = c.roster || []; c.throwing = c.throwing || []; c.routine = c.routine || {};
     c.nudges = c.nudges || []; c.notes = c.notes || {}; c.pending = c.pending || []; c.declined = c.declined || [];
-    c.teams = c.teams || []; c.teamOf = c.teamOf || {}; c.lessons = c.lessons || {}; c.indiv = c.indiv || {}; c.pendTeam = c.pendTeam || {}; c.pcoach = c.pcoach || {}; c.log = c.log || [];
+    c.teams = c.teams || []; c.teamOf = c.teamOf || {}; c.lessons = c.lessons || {}; c.coachReq = c.coachReq || []; c.indiv = c.indiv || {}; c.pendTeam = c.pendTeam || {}; c.pcoach = c.pcoach || {}; c.log = c.log || [];
     if (c.plan) { if (c.season == null) c.season = c.plan.season || "off"; if (c.note == null) c.note = c.plan.note || ""; if (c.days == null) c.days = c.plan.days || 3; }
     if (c.season == null) c.season = "off"; if (c.days == null) c.days = 3;
     return c;
@@ -2888,7 +3085,7 @@
     else if (coachTab === "training") body = coachTrainingHTML(c);
     else if (coachTab === "schedule") body = scopeCard(c, false) + clubRoutineHTML(c) + coachEventsHTML(c);
     else if (coachTab === "club") body = requestsHTML(c) + coachInviteHTML(c) + teamsHTML(c) + clubSettingsHTML(c);
-    else body = clubPlayer ? clubPlayerHTML(c, clubPlayer) : '<section class="card"><div><div class="eyebrow">' + esc(c.type || "Club") + "</div><h2>" + esc(c.name) + "</h2></div>" + teamFilterSelect(c, "rt-team", rosterTeam) + "</section>" + requestsHTML(c) + clubRosterHTML(c) + coachActivityHTML(c);
+    else body = clubPlayer ? clubPlayerHTML(c, clubPlayer) : '<section class="card"><div><div class="eyebrow">' + esc(c.type || "Club") + "</div><h2>" + esc(c.name) + "</h2></div>" + teamFilterSelect(c, "rt-team", rosterTeam) + "</section>" + requestsHTML(c) + coachReqHTML(c) + clubRosterHTML(c) + coachActivityHTML(c);
     $("#view").innerHTML = (c.coaches.length ? "" : '<div class="warn">Add yourself as a coach in the Club tab.</div>') + body;
     bindClubBody(c);
     bindCoachExtras(c);
@@ -2956,6 +3153,7 @@
       '<div class="small"><strong>Schedule:</strong> ' + esc(scheduleLine(x)) + "</div>" + (scheduleLines(x).length ? '<ul class="plain small">' + scheduleLines(x).map(function (l) { return "<li>" + esc(l) + "</li>"; }).join("") + "</ul>" : "") + "</section>";
     var pco = c.pcoach[x.id] || [], tco = team ? (team.coachIds || []) : [];
     var plans = '<section class="card"><h3>His plans</h3><div class="small">Lifts: ' + esc(src("lift")) + " · Throwing: " + esc(src("throwing")) + " · Hitting: " + esc(src("hitting")) + " · Skills: " + esc(skillKeys().filter(function (k) { return skillFor(c, x.id, k); }).length ? "coach drills" : "StandPoint starter drills") + " · Fuel: " + esc(src("fuel")) + "</div>" +
+      (x.intake ? '<div class="small"><strong>His goals:</strong> ' + esc(x.intake.goals.map(function (g) { return optName(INTAKE_GOALS, g); }).join(", ")) + " · trains " + esc(x.intake.days) + " days, " + esc(x.intake.mins) + " min · " + esc(optName(INTAKE_ONE.gym, x.intake.gym).toLowerCase()) + " · " + esc(optName(INTAKE_ONE.field, x.intake.field).toLowerCase()) + (x.intake.pain === "yes" ? ' · <span class="pill close">Said something hurts' + (x.intake.painWhere ? ": " + esc(x.intake.painWhere) : "") + "</span>" : "") + "</div>" : "") +
       '<div class="row2"><div class="field"><label for="cp-lesson">Next lesson</label><input type="date" id="cp-lesson" value="' + esc(((c.lessons || {})[x.id] || {}).date || "") + '"></div><div class="field"><label for="cp-lnote">Time and coach <span class="hint">(optional)</span></label><input type="text" id="cp-lnote" value="' + esc(((c.lessons || {})[x.id] || {}).note || "") + '" placeholder="4:30 pm with Alejandro"></div></div>' +
       (c.coaches.length ? '<div class="field"><span class="label">Coaches working with him</span><div class="toggles">' + c.coaches.map(function (q) { var viaTeam = tco.indexOf(q.id) >= 0, on = viaTeam || pco.indexOf(q.id) >= 0; return '<button type="button" class="tog" data-pco="' + esc(x.id) + "|" + esc(q.id) + '" aria-pressed="' + on + '"' + (viaTeam ? ' disabled title="Coaches his team"' : "") + ' style="font-family:var(--body);font-size:14px">' + esc(q.name) + (viaTeam ? " (team)" : "") + "</button>"; }).join("") + '</div><span class="hint">Add any coach who works with him. They see him under "My players." Any coach in the club can change his plans.</span></div>' : "") +
       (c.indiv[x.id] && hasV(c.indiv[x.id].note) ? '<div class="small"><strong>His focus:</strong> ' + esc(c.indiv[x.id].note) + (c.indiv[x.id].updated ? " (updated " + fmtShortDate(c.indiv[x.id].updated) + ")" : "") + "</div>" : "") +
@@ -3344,6 +3542,8 @@
     if ($("#inv-auto")) $("#inv-auto").addEventListener("change", function (e) { c.autoAccept = e.target.checked; persist(); toast(e.target.checked ? "New players join right away." : "You'll approve each new player."); });
     onAll("[data-acc]", "click", function (b) { var id = b.getAttribute("data-acc"), sel = document.querySelector('[data-rqteam="' + id + '"]'), x = store.players.filter(function (q) { return q.id === id; })[0]; acceptPlayer(id, true, sel ? sel.value : c.pendTeam[id]); redrawHQ(); toast((x ? x.name : "Player") + " is on your roster."); });
     onAll("[data-dec]", "click", function (b) { acceptPlayer(b.getAttribute("data-dec"), false); redrawHQ(); toast("Request declined."); });
+    onAll("[data-cra]", "click", function (b) { var r = (c.coachReq || []).filter(function (q) { return q.id === b.getAttribute("data-cra"); })[0], me = coachMe(c); if (!r) return; r.status = "accepted"; r.by = me ? me.name : "A coach"; if (me) { c.pcoach[r.pid] = c.pcoach[r.pid] || []; if (playerCoachIds(c, r.pid).indexOf(me.id) < 0) c.pcoach[r.pid].push(me.id); } persist(); redrawHQ(); toast("Accepted. He sees it in Plans, and you're on his coaches."); });
+    onAll("[data-crd]", "click", function (b) { var r = (c.coachReq || []).filter(function (q) { return q.id === b.getAttribute("data-crd"); })[0]; if (!r) return; r.status = "declined"; persist(); redrawHQ(); toast("Marked not now."); });
     if ($("#lic-test")) $("#lic-test").addEventListener("click", function () {
       if (store.plan && store.plan.k === "club") { store.plan = null; toast("Test license ended."); } else { store.plan = { k: "club", test: true, since: todayStr }; toast("License: test on."); }
       persist(); redrawHQ();
