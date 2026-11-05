@@ -1,0 +1,6 @@
+{
+  // Cloudflare serves everything in public/ as the StandPoint web app.
+  "name": "standpoint",
+  "compatibility_date": "2026-10-01",
+  "assets": { "directory": "./public" }
+}

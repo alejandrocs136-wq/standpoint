@@ -3,7 +3,7 @@ import glob, json, re, os
 # and injects compact NATIONAL and SOFTBALL arrays into the app. ST may be a postal code or a full state name.
 # div is I, II, III, NAIA or JUCO.
 ROOT = os.environ.get('SP_ROOT', os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-APP = os.environ.get('SP_APP', os.path.join(ROOT, 'index.html'))
+APP = os.environ.get('SP_APP', os.path.join(ROOT, 'public', 'index.html'))
 STATES = {'Alabama': 'AL', 'Alaska': 'AK', 'Arizona': 'AZ', 'Arkansas': 'AR', 'California': 'CA', 'Colorado': 'CO', 'Connecticut': 'CT',
           'Delaware': 'DE', 'District of Columbia': 'DC', 'Florida': 'FL', 'Georgia': 'GA', 'Hawaii': 'HI', 'Idaho': 'ID', 'Illinois': 'IL',
           'Indiana': 'IN', 'Iowa': 'IA', 'Kansas': 'KS', 'Kentucky': 'KY', 'Louisiana': 'LA', 'Maine': 'ME', 'Maryland': 'MD',

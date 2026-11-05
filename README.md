@@ -66,3 +66,22 @@ Texas and Oklahoma schools, with coaches, cities and fit notes, are hand-written
 5. Verified numbers: link showcase and device results, or require proof (video) for coach-facing views.
 6. Down the road: softball, then other sports (softball level ranges and programs nationwide).
 7. Down the road, once there's a large base of players: college-coach accounts that colleges pay for, to search verified players (with player and parent consent, after a lawyer's review).
+
+## Version 1: real accounts (Nov 5, 2026)
+
+The app now has two modes, picked by `public/config.js`:
+
+- **Real app (this repo):** `config.js` points at the Supabase project. Everyone signs in on their own phone; players and coaches see each other's data across phones, limited by the security rules.
+- **Prototype (the Claude artifact):** no config, so it runs on one device with no sign-in, like before.
+
+**Layout**
+
+- `public/` is the whole website: `index.html`, `config.js`, `vendor/supabase.js` (supabase-js 2.119.0, pinned), the manifest and icons.
+- `supabase/01_tables.sql`, `02_security.sql`, `03_app_functions.sql` build the database. Run them in order in the Supabase SQL Editor.
+- `wrangler.jsonc` tells Cloudflare to serve `public/`. Every push to `main` redeploys.
+
+**How the app maps to the tables:** a player's profile, numbers, training and schools are in `player_state` (his coaches can read it); private school notes and Ask StandPoint chats are in `player_private`; club and team plans are in `org_state`; coach notes, the change log and "coaches working with him" are in `org_private`; a player's own plan, nudges, next lesson, coaching-request answers, video-review replies and coach vouches are in `player_plans`. Players only write their own rows; coaches only write club rows. Membership changes (accept, decline, move team, remove) are written as edits to `memberships`.
+
+**Tested:** a local Postgres with the same rules plus a stand-in for Supabase's sign-in ran a two-phone script with 39 checks (sign-up, 13+ gate, coach starts a club, player joins and is accepted, plans and logs flow both ways, private notes and coach notes stay private, a third player sees nothing of the first, a second coach joins and can't promote players, sign out and back in, delete account, delete club).
+
+**Not yet:** Ask StandPoint is hidden in the real app until it runs on our own server. Live updates are manual (the ↻ button, or reopening the app). Two coaches editing the same club plan at the same moment: the last save wins.

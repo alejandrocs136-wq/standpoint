@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>StandPoint</title>
 <link rel="manifest" href="manifest.webmanifest">
+<script src="config.js"></script>
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="theme-color" content="#13202B">
@@ -74,7 +75,7 @@
   .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   label, .label { font-size: 14px; font-weight: 600; }
   .hint { font-size: 13px; color: var(--muted); font-weight: 400; }
-  input[type="text"], input[type="number"], input[type="date"], input[type="email"], select, textarea {
+  input[type="text"], input[type="number"], input[type="date"], input[type="email"], input[type="password"], select, textarea {
     width: 100%; font: inherit; font-size: 17px; color: var(--ink); background: var(--bg);
     border: 1.5px solid var(--line); border-radius: 10px; padding: 10px 12px; min-height: 46px;
   }
@@ -216,7 +217,7 @@
   <main id="view"></main>
   <footer>
     <div>Level ranges: <a href="https://getrecruited.cc/baseball-recruiting-standards">GetRecruited baseball standards</a> (updated June 4, 2026); JUCO from <a href="https://ncsasports.org/baseball/recruiting-guidelines">NCSA</a>, which gives no JUCO exit velo or catcher arm. Ranges are typical numbers and first-screen filters, not cutoffs. StandPoint doesn't guarantee offers, roster spots or scholarships. "Close" = within 3 mph, 0.15 sec on the 60, or 0.05 sec on pop time.</div>
-    <div>Prototype: player info is saved in this browser on this device only.</div>
+    <div id="store-note">Prototype: player info is saved in this browser on this device only.</div>
   </footer>
 </div>
 <nav class="tabs" aria-label="Sections"><div class="in" id="tabs"></div></nav>
@@ -353,7 +354,9 @@
   // ---------- Storage ----------
   var KEY = "standpoint-v2";
   var canSave = true;
+  var CLOUD = !!(window.SP_CONFIG && window.SP_CONFIG.url && window.SP_CONFIG.key);
   var store = (function () {
+    if (CLOUD) return { players: [], current: null, tags: "" };
     try { var raw = localStorage.getItem(KEY); if (raw) return JSON.parse(raw); }
     catch (e) { canSave = false; }
     return { players: [], current: null, tags: "" };
@@ -363,6 +366,7 @@
   if (!store.schools) store.schools = [];
   if (!store.extraCoaches) store.extraCoaches = {};
   function persist() {
+    if (CLOUD) { cloudQueue(); return; }
     try { localStorage.setItem(KEY, JSON.stringify(store)); canSave = true; } catch (e) { canSave = false; }
   }
   function cur() {
@@ -541,6 +545,13 @@
   function renderPlayerBar() {
     var p = cur(), bar = $("#player-bar");
     if (!p || p._setup) { bar.innerHTML = ""; return; }
+    if (CLOUD) {
+      bar.innerHTML = '<span class="small" style="flex:1 1 120px"><strong>' + esc(p.name) + "</strong>" + (p.grad ? " \u00b7 " + esc(p.grad) : "") + '</span><button type="button" class="btn" id="cl-refresh" aria-label="Refresh" title="Refresh">\u21bb</button><button type="button" class="btn" id="edit-profile">Edit profile</button><button type="button" class="btn" id="more-btn"' + (tab === "more" ? ' aria-current="page"' : "") + ">More</button>";
+      $("#cl-refresh").addEventListener("click", function () { cloudRefresh(false); });
+      $("#edit-profile").addEventListener("click", function () { tab = "profile"; render(); });
+      $("#more-btn").addEventListener("click", function () { moreView = "menu"; go("more"); });
+      return;
+    }
     var opts = store.players.map(function (x) {
       return '<option value="' + esc(x.id) + '"' + (x.id === store.current ? " selected" : "") + ">" + esc(x.name) + " · " + esc(x.grad) + "</option>";
     }).join("") + '<option value="__new">+ Add a player</option>';
@@ -554,6 +565,7 @@
   }
 
   function render() {
+    if (CLOUD && !cloudGate()) return;
     if (tab === "club") { tab = "home"; store.app = "coach"; }
     if (isCoachApp()) { renderCoachApp(); renderCoachBar(); renderTabs(); setBadge(); return; }
     setBadge();
@@ -578,7 +590,7 @@
 
   function renderProfileForm(p) {
     var isNew = !p;
-    var d = draft || (p ? JSON.parse(JSON.stringify(p)) : { name: "", grad: String(schoolYearEnd + 2), school: "", gpa: "", positions: ["INF"], bats: "R", throws: "R", height: "", weight: "", goals: [], xhandle: "", ig: "", email: "", phone: "", schedule: "", pitches: "" });
+    var d = draft || (p ? JSON.parse(JSON.stringify(p)) : { name: CLOUD && me && me.meta ? (me.meta.full_name || "") : "", grad: String(schoolYearEnd + 2), school: "", gpa: "", positions: ["INF"], bats: "R", throws: "R", height: "", weight: "", goals: [], xhandle: "", ig: "", email: "", phone: "", schedule: "", pitches: "" });
     ["phone", "schedule", "pitches", "ig"].forEach(function (k) { if (d[k] == null) d[k] = ""; });
     if (!d.sport) d.sport = "baseball";
     if (!d.search) d.search = { optIn: false, adult: false, parentOk: false, parentName: "", parentEmail: "" };
@@ -624,7 +636,7 @@
         '<div class="field"><label for="f-schedule">Upcoming schedule <span class="hint">(one event per line; goes in every coach email)</span></label><textarea id="f-schedule" rows="4" placeholder="Jun 12–15 · Five Tool, Mansfield&#10;Jun 26–29 · PBR Texas, Houston">' + esc(d.schedule) + "</textarea></div>" +
         '<div class="btns"><button type="submit" class="btn red">' + (isNew ? "Save and add numbers" : "Save profile") + "</button>" +
           (isNew && store.players.length ? '<button type="button" class="btn" id="f-cancel">Cancel</button>' : "") +
-          (!isNew ? '<button type="button" class="btn" id="f-cancel">Cancel</button><button type="button" class="btn ghost" id="f-delete">Delete this player</button>' : "") +
+          (!isNew ? '<button type="button" class="btn" id="f-cancel">Cancel</button><button type="button" class="btn ghost" id="f-delete">' + (CLOUD ? "Delete my account" : "Delete this player") + '</button>' : "") +
         '</div><div id="f-err" class="warn" style="display:none"></div>' +
       "</form>";
 
@@ -654,7 +666,8 @@
     });
     var del = $("#f-delete");
     if (del) del.addEventListener("click", function () {
-      if (del.getAttribute("data-armed") !== "1") { del.setAttribute("data-armed", "1"); del.textContent = "Tap again to delete " + (p.name || "player"); return; }
+      if (del.getAttribute("data-armed") !== "1") { del.setAttribute("data-armed", "1"); del.textContent = CLOUD ? "Tap again: delete my account and all my data" : "Tap again to delete " + (p.name || "player"); return; }
+      if (CLOUD) { cloudDeleteMe(); return; }
       store.players = store.players.filter(function (x) { return x.id !== p.id; });
       if (store.club) { var dc = store.club; ["roster", "pending", "declined"].forEach(function (k) { if (dc[k]) dc[k] = dc[k].filter(function (q) { return q !== p.id; }); }); ["teamOf", "indiv", "pendTeam", "notes"].forEach(function (k) { if (dc[k]) delete dc[k][p.id]; }); if (dc.nudges) dc.nudges = dc.nudges.filter(function (n) { return n.pid !== p.id; }); }
       store.coaching = (store.coaching || []).filter(function (r) { return r.pid !== p.id; });
@@ -671,13 +684,14 @@
       d.search.parentName = d.search.parentName.trim(); d.search.parentEmail = d.search.parentEmail.trim(); if (d.search.optIn && !d.search.since) d.search.since = todayStr;
       d.positions.sort(function (a, b) { return Object.keys(POS).indexOf(a) - Object.keys(POS).indexOf(b); });
       var code = isNew ? String(d.clubCode || "").trim() : "";
-      if (code && (!store.club || String(store.club.code).toUpperCase() !== code.toUpperCase())) { err.style.display = "block"; err.textContent = "That club code doesn't match a club. Check it with your coach, or leave it blank."; return; }
+      if (!CLOUD && code && (!store.club || String(store.club.code).toUpperCase() !== code.toUpperCase())) { err.style.display = "block"; err.textContent = "That club code doesn't match a club. Check it with your coach, or leave it blank."; return; }
       if (isNew) {
-        var np = { id: uid(), name: d.name.trim(), grad: d.grad, school: d.school.trim(), gpa: d.gpa, positions: d.positions, bats: d.bats, throws: d.throws,
+        var np = { id: CLOUD ? me.id : uid(), name: d.name.trim(), grad: d.grad, school: d.school.trim(), gpa: d.gpa, positions: d.positions, bats: d.bats, throws: d.throws,
                    height: d.height.trim(), weight: d.weight, goals: d.goals, xhandle: d.xhandle.trim(), ig: d.ig.trim(), email: d.email.trim(),
                    phone: d.phone.trim(), schedule: d.schedule, scheduleUpdated: String(d.schedule || "").trim() ? todayStr : "", pitches: d.pitches.trim(), range: d.range, sport: d.sport, search: d.search, logs: [], tasks: {}, faults: [] };
         store.players.push(np); store.current = np.id; persist(); draft = null; schoolView = null; schoolFilter.show = null; schoolFilter.state = "range"; schoolFilter.levels = []; schoolFilter.q = ""; searchF.sport = null;
-        var jr = code ? requestJoin(np, code) : null;
+        var jr = code && !CLOUD ? requestJoin(np, code) : null;
+        if (CLOUD && code) { go("numbers"); toast("Profile saved. Sending your join request\u2026"); cloudJoinFinish(np, code, null); return; }
         go("numbers"); toast(jr === "joined" ? "Profile saved and you're on " + store.club.name + ". Now add your numbers." : jr === "pending" ? "Profile saved. Your coach will accept you. Now add your numbers." : "Profile saved. Now add your numbers.");
       } else {
         if (String(d.schedule || "").trim() !== String(p.schedule || "").trim()) p.scheduleUpdated = todayStr;
@@ -2479,7 +2493,7 @@
   function clubRoster() { var c = store.club; if (!c) return []; return store.players.filter(function (x) { return (c.roster || []).indexOf(x.id) >= 0; }); }
   function moreBack() { return '<div class="backbar"><button type="button" class="btn" id="mback">← Back to More</button></div>'; }
   function bindMore() {
-    onAll("[data-mv]", "click", function (b) { var v = b.getAttribute("data-mv"); if (v === "club" || v === "coachapp") { moreView = "menu"; openCoachApp(); return; } moreView = v; tab = "more"; render(); window.scrollTo(0, 0); });
+    onAll("[data-mv]", "click", function (b) { var v = b.getAttribute("data-mv"); if (v === "signout") { cloudSignOut(); return; } if (v === "club" || v === "coachapp") { moreView = "menu"; openCoachApp(); return; } moreView = v; tab = "more"; render(); window.scrollTo(0, 0); });
     var mb = $("#mback"); if (mb) mb.addEventListener("click", function () { moreView = "menu"; clubView.edit = false; tab = "more"; render(); window.scrollTo(0, 0); });
   }
 
@@ -2497,15 +2511,15 @@
     var n = openReq().length;
     var items = [
       p.intake ? ["analysis", "Your plan and analysis", "Built from your answers on " + fmtShortDate(p.intake.date) + ". Change them anytime."] : ["intake", "Build my plan", "Answer 8 questions and get a written analysis and your week laid out."],
-      ["ask", "Ask StandPoint", "AI answers your training and recruiting questions using your numbers and plan."],
+      CLOUD ? null : ["ask", "Ask StandPoint", "AI answers your training and recruiting questions using your numbers and plan."],
       ["plans", "Plans and payments", "Individual plan, club license, video reviews and online coaching." + (store.plan ? " Current: " + esc(planName(store.plan.k)) + (store.plan.test ? " (test)" : "") + "." : "")],
       ["join", "Your club", clubOf(p) ? "You're on " + esc(store.club.name) + ". See who your coaches are." : clubPending(p) ? "Waiting for " + esc(store.club.name) + " to accept you." : "Join your travel club with the code your coach gave you."],
-      ["coachapp", "Coach app", "Demo: in the real version coaches have their own app and login. Open it to see what your coach sees."],
+      CLOUD ? null : ["coachapp", "Coach app", "Demo: in the real version coaches have their own app and login. Open it to see what your coach sees."],
       FEATURES.collegeSearch ? ["search", "College coach search", "What a college coach sees: only players who turned it on, with a parent's OK."] : null,
       ["install", "Put StandPoint on your phone", "Add it to your home screen like an app. App Store and Google Play come next."],
-      ["erase", "Erase everything on this phone", "For test runs: deletes every player, the club, coaches and plans saved here."]
+      CLOUD ? ["signout", "Sign out", "Signed in as " + esc(me.email) + ". To delete your account, go to Edit profile."] : ["erase", "Erase everything on this phone", "For test runs: deletes every player, the club, coaches and plans saved here."]
     ].filter(Boolean);
-    $("#view").innerHTML = '<section class="card"><div><div class="eyebrow">More</div><h2>Run StandPoint</h2></div><p class="small muted" style="margin:0">These work as demos on this device. The full app moves them to real accounts.</p></section>' +
+    $("#view").innerHTML = '<section class="card"><div><div class="eyebrow">More</div><h2>Run StandPoint</h2></div><p class="small muted" style="margin:0">' + (CLOUD ? "Signed in as " + esc(me.email) + "." : "These work as demos on this device. The full app moves them to real accounts.") + "</p></section>" +
       items.map(function (it) { return '<section class="card"><h3>' + it[1] + '</h3><p class="small" style="margin:0">' + it[2] + '</p><div class="btns"><button type="button" class="btn primary" data-mv="' + it[0] + '">Open</button></div></section>'; }).join("");
     bindMore();
   }
@@ -2650,6 +2664,7 @@
   var askBusy = false;
   function qaHTML(x, i) { return '<div class="card-sub" data-qa="' + i + '"><div class="small"><strong>You:</strong> ' + esc(x.q) + '</div><div class="small"><strong>StandPoint:</strong> <span class="ans">' + (x.a ? esc(x.a).replace(/\n/g, "<br>") : '<span class="muted">Thinking…</span>') + "</span></div></div>"; }
   function renderAsk(p) {
+    if (CLOUD) { $("#view").innerHTML = moreBack() + '<section class="card"><div><div class="eyebrow">Ask StandPoint</div><h2>Coming soon</h2></div><p class="small" style="margin:0">Ask StandPoint is being set up to run on StandPoint\'s own server. Until then, send your coach a video in Train \u2192 Skills.</p></section>'; bindMore(); return; }
     var log = p.ask || [], cl = clubOf(p);
     $("#view").innerHTML = moreBack() + '<section class="card"><div><div class="eyebrow">Ask StandPoint</div><h2>Questions about your training</h2></div><p class="small muted" style="margin:0">AI answers using your numbers and your plan. It helps with drills, lifting, your week and recruiting steps. For pain, injuries, weight or anything medical, it sends you to a person.</p></section>' +
       '<section class="card" id="ask-log">' + (log.length ? log.map(qaHTML).join("") : '<p class="small muted" style="margin:0">Try: "What do I do on days I can\'t get to a cage?" or "What do I send a coach who never replied?"</p>') + "</section>" +
@@ -3005,6 +3020,7 @@
       return;
     }
     var cl = store.club;
+    if (CLOUD && cloudJoin) { renderCloudJoinPick(p); return; }
     if (joinCode && cl && String(cl.code).toUpperCase() === joinCode) {
       normClub(cl);
       $("#view").innerHTML = moreBack() + '<section class="card"><div><div class="eyebrow">' + esc(cl.name) + "</div><h2>Which team or coach are you with?</h2></div>" +
@@ -3024,6 +3040,7 @@
     bindMore();
     $("#jn-go").addEventListener("click", function () {
       var code = $("#jn-code").value.trim().toUpperCase();
+      if (CLOUD) { if (code) cloudJoinStart(p, code); return; }
       if (!cl || !code || String(cl.code).toUpperCase() !== code) { var er = $("#jn-err"); er.style.display = "block"; er.textContent = "That code doesn't match a club. Check it with your coach."; return; }
       normClub(cl);
       if (cl.teams.length) { joinCode = code; renderJoin(p); return; }
@@ -3048,7 +3065,7 @@
   function openPlayerApp() { store.app = "player"; tab = "home"; persist(); render(); window.scrollTo(0, 0); }
   function renderClubHQ() { openCoachApp(); }
   function redrawHQ() { var y = window.scrollY; render(); window.scrollTo(0, y); }
-  function setBadge() { var bd = document.querySelector(".brand .badge"); if (bd) bd.textContent = isCoachApp() ? "Coach" : "Prototype"; }
+  function setBadge() { var bd = document.querySelector(".brand .badge"); if (bd) bd.textContent = isCoachApp() ? "Coach" : CLOUD ? "Beta" : "Prototype"; }
   function postInfo(x) {
     var ps = (x.posts || []).map(function (q) { return q.date; }).sort();
     return { last: ps.length ? ps[ps.length - 1] : null, n30: ps.filter(function (d) { return daysSince(d) <= 30; }).length };
@@ -3069,6 +3086,13 @@
   }
 
   function renderCoachBar() {
+    if (CLOUD) {
+      var cb = $("#player-bar"), cc = store.club;
+      cb.innerHTML = '<span class="small" style="flex:1 1 120px"><strong>' + esc((prof && prof.display_name) || "Coach") + "</strong>" + (cc ? " \u00b7 " + esc(cc.name) : "") + '</span><button type="button" class="btn" id="cl-refresh" aria-label="Refresh" title="Refresh">\u21bb</button><button type="button" class="btn" id="co-out">Sign out</button>';
+      $("#cl-refresh").addEventListener("click", function () { cloudRefresh(false); });
+      $("#co-out").addEventListener("click", cloudSignOut);
+      return;
+    }
     var bar = $("#player-bar"), c = store.club, me = c ? coachMe(normClub(c)) : null;
     bar.innerHTML = (c && c.coaches.length ? '<label class="sr" for="coach-select" style="position:absolute;left:-9999px">Coach</label><select id="coach-select">' + c.coaches.map(function (x) { return '<option value="' + esc(x.id) + '"' + (me && x.id === me.id ? " selected" : "") + ">" + esc(x.name) + " · " + esc(c.name) + "</option>"; }).join("") + "</select>" :
       '<span class="small muted" style="flex:1 1 120px">' + (c ? esc(c.name) : "Coach app") + "</span>") + '<button type="button" class="btn" id="to-player">Player app</button>';
@@ -3330,7 +3354,7 @@
     var rosterCard = '<section class="card"><h3>Demo: players on this device</h3><p class="small muted" style="margin:0">In the real app, players join from their own phones with your code. Here you can also check them onto your roster.</p>' +
       (store.players.length ? '<div class="tasks">' + store.players.map(function (x) { var on = c.roster.indexOf(x.id) >= 0; return '<label class="task"><input type="checkbox" data-roster="' + esc(x.id) + '"' + (on ? " checked" : "") + "><span><strong>" + esc(x.name) + '</strong> <span class="muted small">· ' + esc(posLabel(x)) + " · " + esc(x.grad) + "</span></span></label>"; }).join("") + "</div>" : "") +
       '<div class="btns"><button type="button" class="btn" id="cl-addp">+ Add a player</button></div></section>';
-    return head + coaches + rosterCard;
+    return head + (CLOUD ? cloudCoachesHTML(c) : coaches + rosterCard);
   }
   function requestsHTML(c) {
     var ids = (c.pending || []).filter(function (id) { return store.players.some(function (q) { return q.id === id; }); });
@@ -3524,6 +3548,7 @@
       persist(); redrawHQ();
     });
     onAll("[data-rmcoach]", "click", function (b) { var id = b.getAttribute("data-rmcoach"); c.coaches = c.coaches.filter(function (x) { return x.id !== id; }); c.teams.forEach(function (t) { t.coachIds = (t.coachIds || []).filter(function (q) { return q !== id; }); }); persist(); redrawHQ(); });
+    if (CLOUD) bindCloudCoaches(c);
     if ($("#cc-form")) $("#cc-form").addEventListener("submit", function (e) {
       e.preventDefault();
       var nm = $("#cc-name").value.trim(); if (!nm) { toast("Add the coach's name."); return; }
@@ -3725,9 +3750,398 @@
     if ($("#inst")) $("#inst").addEventListener("click", function () { var d = deferredInstall; deferredInstall = null; try { d.prompt(); } catch (e) {} renderInstall(p); });
   }
 
+  // ===================== Version 1: real accounts (Supabase) =====================
+  // On only when config.js sets window.SP_CONFIG = { url, key }. Without it this page stays the prototype.
+  var sb = null, me = null, prof = null, cloudRole = null, cloudOrg = null, cloudPendClub = null, cloudPicked = false;
+  var cloudErr = "", cloudInfo = "", cloudView = "signin", cloudSnap = {}, cloudMemSnap = [], cloudJoin = null;
+  var saveTimer = null, saving = false, saveAgain = false;
+  var CLUB_LOCAL = ["id", "name", "type", "code", "autoAccept", "roster", "pending", "declined", "teamOf", "pendTeam", "indiv", "nudges", "lessons", "notes", "log", "pcoach", "coachReq", "as", "pendingCoaches", "email"];
+  function cq(pr) { return Promise.resolve(pr).then(function (r) { if (r && r.error) throw r.error; return r ? r.data : null; }); }
+  function msgOf(e) { return (e && (e.message || e.error_description || e.msg)) || String(e || "Something went wrong"); }
+  function jcopy(x) { return x == null ? x : JSON.parse(JSON.stringify(x)); }
+  function emptyStore(app) { return { players: [], current: null, tags: "", schools: [], extraCoaches: {}, coaching: [], plan: null, payLinks: { individual: "", club: "", coaching: "" }, app: app }; }
+  function loadScript(src) { return new Promise(function (res, rej) { var s = document.createElement("script"); s.src = src; s.onload = res; s.onerror = function () { rej(new Error("Couldn't load " + src)); }; document.head.appendChild(s); }); }
+
+  async function cloudStart() {
+    try {
+      if (!window.supabase || !window.supabase.createClient) await loadScript("vendor/supabase.js");
+      sb = window.supabase.createClient(window.SP_CONFIG.url, window.SP_CONFIG.key);
+      if (sb.auth.onAuthStateChange) sb.auth.onAuthStateChange(function (ev) { if (ev === "PASSWORD_RECOVERY") { cloudView = "newpass"; render(); } });
+      var r = await sb.auth.getSession(), ses = r && r.data && r.data.session;
+      if (ses && ses.user) { me = { id: ses.user.id, email: ses.user.email, meta: ses.user.user_metadata || {} }; await cloudLoad(); }
+    } catch (e) { cloudErr = msgOf(e); }
+    render();
+    document.addEventListener("visibilitychange", function () { if (document.visibilityState === "visible") cloudRefresh(true); });
+    window.addEventListener("pagehide", function () { if (saveTimer) { clearTimeout(saveTimer); cloudFlush(); } });
+  }
+  async function cloudRefresh(quiet) {
+    if (!me || saving || saveTimer) return;
+    var a = document.activeElement; if (quiet && a && /INPUT|TEXTAREA|SELECT/.test(a.tagName)) return;
+    try { await cloudLoad(); var y = window.scrollY; render(); window.scrollTo(0, y); if (!quiet) toast("Up to date."); }
+    catch (e) { if (!quiet) toast("Couldn't refresh: " + msgOf(e)); }
+  }
+
+  // ----- Load: build the same store the screens already use -----
+  async function cloudLoad() {
+    prof = await cq(sb.from("profiles").select("*").eq("id", me.id).maybeSingle()) || { id: me.id, display_name: "", is_coach: false, age_ok: false };
+    if (!prof.age_ok && me.meta && me.meta.age_ok) { await cq(sb.from("profiles").update({ age_ok: true }).eq("id", me.id)); prof.age_ok = true; }
+    var mems = await cq(sb.rpc("my_clubs")) || [];
+    var coachM = mems.filter(function (m) { return m.role !== "player" && m.status === "active"; })[0];
+    var coachP = mems.filter(function (m) { return m.role === "coach" && m.status === "pending"; })[0];
+    var playerM = mems.filter(function (m) { return m.role === "player" && m.status !== "declined"; })[0] || mems.filter(function (m) { return m.role === "player"; })[0];
+    if (prof.is_coach || coachM || coachP) { cloudRole = "coach"; await loadCoach(coachM, coachP); }
+    else { cloudRole = "player"; await loadPlayer(playerM); }
+  }
+  function mergeVouch(p, vouch) { Object.keys(vouch || {}).forEach(function (sid) { var t = trackOf(p, sid); if (!t.steps.coachnote) { t.steps.coachnote = vouch[sid]; t.star = true; } }); }
+  function reviewsOf(p, replies) {
+    return (p.reviews || []).map(function (r) { var o = jcopy(r), x = (replies || {})[r.id]; o.pid = p.id; o.status = x ? x.status : "open"; o.reply = x ? x.reply || "" : ""; o.drills = x ? x.drills || [] : []; o.done = o.done || {}; return o; });
+  }
+  async function loadPlayer(m) {
+    var mine = await cq(sb.from("player_state").select("data").eq("user_id", me.id).maybeSingle());
+    var priv = await cq(sb.from("player_private").select("data").eq("user_id", me.id).maybeSingle());
+    var d = (mine && mine.data) || {}, pv = (priv && priv.data) || {}, st = d._store || {};
+    store = emptyStore("player");
+    store.tags = st.tags || ""; store.schools = st.schools || []; store.extraCoaches = st.extraCoaches || {}; store.plan = st.plan || null;
+    var p = null;
+    if (d.name) {
+      p = jcopy(d); delete p._store; p.id = me.id;
+      Object.keys(pv.notes || {}).forEach(function (sid) { trackOf(p, sid).notes = pv.notes[sid]; });
+      if (pv.ask) p.ask = pv.ask;
+      store.players = [p]; store.current = me.id;
+    }
+    cloudOrg = null; store.club = null;
+    var memStatus = null;
+    if (m && p) {
+      cloudOrg = m.org_id; memStatus = m.status;
+      var c = { id: m.org_id, name: m.name, type: m.type, roster: [], pending: [], declined: [] };
+      if (m.status === "active") {
+        var os = await cq(sb.from("org_state").select("data").eq("org_id", m.org_id).maybeSingle());
+        var pl = await cq(sb.from("player_plans").select("data").eq("org_id", m.org_id).eq("player_id", me.id).maybeSingle());
+        Object.assign(c, jcopy((os && os.data) || {}));
+        c.id = m.org_id; c.name = m.name; c.type = m.type; c.roster = [me.id]; c.pending = []; c.declined = [];
+        c.teamOf = {}; if (m.team_id) c.teamOf[me.id] = m.team_id;
+        var pd = (pl && pl.data) || {}, seen = p.seenNudges || {}, rs = pd.reqStatus || {};
+        c.indiv = {}; if (pd.indiv) c.indiv[me.id] = pd.indiv;
+        c.lessons = {}; if (pd.lesson) c.lessons[me.id] = pd.lesson;
+        c.nudges = (pd.nudges || []).map(function (n) { n.pid = me.id; n.seen = seen[n.id] || false; return n; });
+        c.coachReq = (p.coachReq || []).map(function (r) { var o = jcopy(r); o.pid = me.id; o.status = rs[r.id] ? rs[r.id].status : "open"; if (rs[r.id]) o.by = rs[r.id].by; return o; });
+        mergeVouch(p, pd.vouch);
+        store.coaching = reviewsOf(p, pd.replies);
+      } else if (m.status === "pending") { c.pending = [me.id]; c.pendTeam = {}; if (m.team_id) c.pendTeam[me.id] = m.team_id; store.coaching = reviewsOf(p, {}); }
+      else { c.declined = [me.id]; store.coaching = reviewsOf(p, {}); }
+      store.club = normClub(c);
+      if (m.status === "active") applyClub(p);
+    } else if (p) store.coaching = reviewsOf(p, {});
+    cloudSnap = { player: JSON.stringify(playerPub(p)), priv: JSON.stringify(playerPriv(p)), memStatus: memStatus };
+  }
+  async function loadCoach(m, pend) {
+    store = emptyStore("coach"); store.club = null; cloudOrg = null; cloudPendClub = null; cloudMemSnap = [];
+    if (!m) { cloudPendClub = pend || null; cloudSnap = {}; return; }
+    var oid = m.org_id; cloudOrg = oid;
+    var o = await cq(sb.from("orgs").select("*").eq("id", oid).single());
+    var os = await cq(sb.from("org_state").select("data").eq("org_id", oid).maybeSingle());
+    var opv = await cq(sb.from("org_private").select("data").eq("org_id", oid).maybeSingle());
+    var mems = await cq(sb.from("memberships").select("user_id, role, status, team_id").eq("org_id", oid)) || [];
+    var ids = mems.map(function (x) { return x.user_id; });
+    var profs = ids.length ? await cq(sb.from("profiles").select("id, display_name").in("id", ids)) || [] : [];
+    var nameOf = function (id) { var f = profs.filter(function (q) { return q.id === id; })[0]; return f ? f.display_name : ""; };
+    var pids = mems.filter(function (x) { return x.role === "player" && x.status !== "declined"; }).map(function (x) { return x.user_id; });
+    var states = pids.length ? await cq(sb.from("player_state").select("user_id, data").in("user_id", pids)) || [] : [];
+    var plans = await cq(sb.from("player_plans").select("player_id, data").eq("org_id", oid)) || [];
+    var c = jcopy((os && os.data) || {}), roles = c.coachRoles || {};
+    c.id = oid; c.name = o.name; c.type = o.type; c.code = o.join_code; c.autoAccept = !!o.auto_accept;
+    var pv = (opv && opv.data) || {}; c.notes = pv.notes || {}; c.log = pv.log || []; c.pcoach = pv.pcoach || {};
+    c.coaches = mems.filter(function (x) { return x.role !== "player" && x.status === "active"; }).map(function (x) { return { id: x.user_id, name: nameOf(x.user_id) || "Coach", role: x.role === "admin" ? "Admin" : (roles[x.user_id] || "Coach"), admin: x.role === "admin" }; });
+    c.pendingCoaches = mems.filter(function (x) { return x.role === "coach" && x.status === "pending"; }).map(function (x) { return { id: x.user_id, name: nameOf(x.user_id) || "New coach" }; });
+    c.roster = []; c.pending = []; c.declined = []; c.teamOf = {}; c.pendTeam = {};
+    mems.filter(function (x) { return x.role === "player"; }).forEach(function (x) {
+      if (x.status === "active") { c.roster.push(x.user_id); if (x.team_id) c.teamOf[x.user_id] = x.team_id; }
+      else if (x.status === "pending") { c.pending.push(x.user_id); if (x.team_id) c.pendTeam[x.user_id] = x.team_id; }
+      else c.declined.push(x.user_id);
+    });
+    var planOf = {}; plans.forEach(function (r) { planOf[r.player_id] = r.data || {}; });
+    store.players = states.map(function (r) { var p = jcopy(r.data || {}); delete p._store; p.id = r.user_id; if (!p.name) p.name = nameOf(r.user_id) || "New player"; if (!p.grad) p.grad = ""; p.positions = p.positions || []; return p; });
+    c.indiv = {}; c.lessons = {}; c.nudges = []; c.coachReq = []; store.coaching = [];
+    store.players.forEach(function (p) {
+      var pd = planOf[p.id] || {}, seen = p.seenNudges || {}, rs = pd.reqStatus || {};
+      if (pd.indiv) c.indiv[p.id] = pd.indiv;
+      if (pd.lesson) c.lessons[p.id] = pd.lesson;
+      (pd.nudges || []).forEach(function (n) { n.pid = p.id; n.seen = seen[n.id] || false; c.nudges.push(n); });
+      (p.coachReq || []).forEach(function (r) { var q = jcopy(r); q.pid = p.id; q.status = rs[r.id] ? rs[r.id].status : "open"; if (rs[r.id]) q.by = rs[r.id].by; c.coachReq.push(q); });
+      mergeVouch(p, pd.vouch);
+      store.coaching = store.coaching.concat(reviewsOf(p, pd.replies));
+    });
+    c.as = me.id;
+    store.club = normClub(c);
+    store.players.forEach(function (p) { if (store.club.roster.indexOf(p.id) >= 0) applyClub(p); });
+    cloudMemSnap = mems;
+    var pc = coachPieces(); cloudSnap = snapOf(pc); cloudSnap.shared = JSON.stringify((os && os.data) || {});
+    if (cloudSnap.shared !== JSON.stringify(pc.shared)) cloudQueue();
+  }
+
+  // ----- Save: split the store back into the rows each person may write -----
+  function playerPub(p) {
+    if (!p) return null;
+    var x = jcopy(p); delete x.ask; delete x.id;
+    if (p.shareNotes === false) Object.keys(x.track || {}).forEach(function (sid) { if (x.track[sid]) delete x.track[sid].notes; });
+    var c = store.club;
+    if (c && cloudOrg && c.id === cloudOrg) {
+      x.coachReq = (c.coachReq || []).filter(function (r) { return r.pid === p.id; }).map(function (r) { return { id: r.id, kind: r.kind, d: r.d }; });
+      var seen = jcopy(p.seenNudges || {}); (c.nudges || []).forEach(function (n) { if (n.pid === p.id && n.seen) seen[n.id] = n.seen; }); x.seenNudges = seen;
+    }
+    x.reviews = (store.coaching || []).filter(function (r) { return r.pid === p.id; }).map(function (r) { return { id: r.id, coach: r.coach, coachEmail: r.coachEmail || "", video: r.video, ask: r.ask || "", date: r.date, created: r.created, done: r.done || {} }; });
+    x._store = { tags: store.tags || "", schools: store.schools || [], extraCoaches: store.extraCoaches || {}, plan: store.plan || null };
+    return x;
+  }
+  function playerPriv(p) {
+    if (!p) return null;
+    var notes = {}; Object.keys(p.track || {}).forEach(function (sid) { var t = p.track[sid]; if (t && t.notes) notes[sid] = t.notes; });
+    return { notes: notes, ask: p.ask || [] };
+  }
+  function coachPieces() {
+    var c = store.club; if (!c) return null;
+    var shared = {}, roles = {};
+    Object.keys(c).forEach(function (k) { if (CLUB_LOCAL.indexOf(k) < 0 && k !== "coaches") shared[k] = c[k]; });
+    shared.coaches = (c.coaches || []).map(function (x) { if (x.role && x.role !== "Admin" && x.role !== "Coach") roles[x.id] = x.role; return { id: x.id, name: x.name, role: x.role || "" }; });
+    shared.coachRoles = roles;
+    var plans = {};
+    c.roster.concat(c.pending).forEach(function (pid) {
+      var d = {}, x = store.players.filter(function (q) { return q.id === pid; })[0];
+      if (c.indiv[pid] && hasV(c.indiv[pid])) d.indiv = c.indiv[pid];
+      if (c.lessons[pid]) d.lesson = c.lessons[pid];
+      var ns = c.nudges.filter(function (n) { return n.pid === pid; }).map(function (n) { var o = jcopy(n); delete o.seen; delete o.pid; return o; }); if (ns.length) d.nudges = ns;
+      var rs = {}; c.coachReq.filter(function (r) { return r.pid === pid && r.status && r.status !== "open"; }).forEach(function (r) { rs[r.id] = { status: r.status, by: r.by || "" }; }); if (Object.keys(rs).length) d.reqStatus = rs;
+      var rr = {}; (store.coaching || []).filter(function (r) { return r.pid === pid && (r.status !== "open" || r.reply || (r.drills || []).length); }).forEach(function (r) { rr[r.id] = { status: r.status, reply: r.reply || "", drills: r.drills || [] }; }); if (Object.keys(rr).length) d.replies = rr;
+      var vouch = {}; if (x) Object.keys(x.track || {}).forEach(function (sid) { var t = x.track[sid]; if (t && t.steps && t.steps.coachnote) vouch[sid] = t.steps.coachnote; }); if (Object.keys(vouch).length) d.vouch = vouch;
+      plans[pid] = d;
+    });
+    var mt = {};
+    c.roster.forEach(function (id) { mt[id] = { status: "active", team_id: c.teamOf[id] || null }; });
+    c.pending.forEach(function (id) { mt[id] = { status: "pending", team_id: c.pendTeam[id] || null }; });
+    c.declined.forEach(function (id) { if (!mt[id]) mt[id] = { status: "declined", team_id: null }; });
+    (c.coaches || []).forEach(function (x) { mt[x.id] = { status: "active", team_id: null }; });
+    (c.pendingCoaches || []).forEach(function (x) { mt[x.id] = { status: x.declined ? "declined" : "pending", team_id: null }; });
+    mt[me.id] = { status: "active", team_id: null };
+    return { org: { name: c.name, type: c.type || "Travel club", auto_accept: !!c.autoAccept }, shared: shared, priv: { notes: c.notes || {}, log: c.log || [], pcoach: c.pcoach || {} }, plans: plans, mems: mt };
+  }
+  function snapOf(pc) {
+    if (!pc) return {};
+    var plans = {}; Object.keys(pc.plans).forEach(function (k) { plans[k] = JSON.stringify(pc.plans[k]); });
+    return { org: JSON.stringify(pc.org), shared: JSON.stringify(pc.shared), priv: JSON.stringify(pc.priv), plans: plans };
+  }
+  async function saveCoach() {
+    var pc = coachPieces(), s = cloudSnap || {}, now = new Date().toISOString(), oid = cloudOrg, J = JSON.stringify;
+    if (!oid) return;
+    if (!pc) { await cq(sb.from("orgs").delete().eq("id", oid)); cloudOrg = null; cloudSnap = {}; cloudMemSnap = []; return; }
+    if (J(pc.org) !== s.org) await cq(sb.from("orgs").update(pc.org).eq("id", oid));
+    if (J(pc.shared) !== s.shared) await cq(sb.from("org_state").update({ data: pc.shared, updated_at: now, updated_by: me.id }).eq("org_id", oid));
+    if (J(pc.priv) !== s.priv) await cq(sb.from("org_private").update({ data: pc.priv, updated_at: now }).eq("org_id", oid));
+    var sp = s.plans || {}, pids = Object.keys(pc.plans);
+    for (var i = 0; i < pids.length; i++) { var pid = pids[i]; if (J(pc.plans[pid]) !== sp[pid]) await cq(sb.from("player_plans").upsert({ org_id: oid, player_id: pid, data: pc.plans[pid], updated_at: now, updated_by: me.id }, { onConflict: "org_id,player_id" })); }
+    var next = [];
+    for (var j = 0; j < cloudMemSnap.length; j++) {
+      var m = cloudMemSnap[j], t = pc.mems[m.user_id];
+      if (!t) { await cq(sb.from("memberships").delete().eq("org_id", oid).eq("user_id", m.user_id)); continue; }
+      if (t.status !== m.status || (t.team_id || null) !== (m.team_id || null)) await cq(sb.from("memberships").update({ status: t.status, team_id: t.team_id }).eq("org_id", oid).eq("user_id", m.user_id));
+      next.push({ user_id: m.user_id, role: m.role, status: t.status, team_id: t.team_id });
+    }
+    cloudMemSnap = next; cloudSnap = snapOf(pc);
+  }
+  async function savePlayer() {
+    var p = store.players[0], s = cloudSnap || {}, now = new Date().toISOString(), J = JSON.stringify;
+    if (!p) return;
+    var pub = playerPub(p), pv = playerPriv(p);
+    if (J(pub) !== s.player) { await cq(sb.from("player_state").update({ data: pub, updated_at: now }).eq("user_id", me.id)); s.player = J(pub); }
+    if (J(pv) !== s.priv) { await cq(sb.from("player_private").update({ data: pv, updated_at: now }).eq("user_id", me.id)); s.priv = J(pv); }
+    if (prof && p.name && p.name !== prof.display_name) { await cq(sb.from("profiles").update({ display_name: p.name }).eq("id", me.id)); prof.display_name = p.name; }
+    var c = store.club;
+    if (cloudOrg && (s.memStatus === "active" || s.memStatus === "pending")) {
+      var still = c && c.id === cloudOrg && (c.roster.indexOf(me.id) >= 0 || c.pending.indexOf(me.id) >= 0);
+      if (!still) { await cq(sb.from("memberships").delete().eq("org_id", cloudOrg).eq("user_id", me.id)); cloudOrg = null; s.memStatus = null; store.club = null; }
+    }
+    cloudSnap = s;
+  }
+  function cloudQueue() { if (!me || !sb) return; clearTimeout(saveTimer); saveTimer = setTimeout(cloudFlush, 700); }
+  async function cloudFlush() {
+    saveTimer = null;
+    if (saving) { saveAgain = true; return; }
+    saving = true;
+    try { if (cloudRole === "coach") await saveCoach(); else await savePlayer(); }
+    catch (e) { toast("Couldn't save: " + msgOf(e) + ". Check your connection."); }
+    saving = false;
+    if (saveAgain) { saveAgain = false; cloudFlush(); }
+  }
+  async function cloudSaveNow() { clearTimeout(saveTimer); saveTimer = null; await cloudFlush(); }
+
+  // ----- Screens only the real app has -----
+  function clearBars() { $("#player-bar").innerHTML = ""; $("#tabs").innerHTML = ""; setBadge(); }
+  function authNote() { return (cloudErr ? '<div class="warn">' + esc(cloudErr) + "</div>" : "") + (cloudInfo ? '<div class="callout small">' + esc(cloudInfo) + "</div>" : ""); }
+  function renderAuth() {
+    var up = cloudView === "signup";
+    clearBars();
+    $("#view").innerHTML = '<form class="card" id="au-form"><div><div class="eyebrow">StandPoint</div><h2>' + (up ? "Create your account" : "Sign in") + "</h2></div>" + authNote() +
+      (up ? '<div class="field"><label for="au-name">Your name</label><input type="text" id="au-name" autocomplete="name" required></div>' : "") +
+      '<div class="field"><label for="au-email">Email</label><input type="email" id="au-email" autocomplete="email" required></div>' +
+      '<div class="field"><label for="au-pass">Password</label><input type="password" id="au-pass" autocomplete="' + (up ? "new-password" : "current-password") + '" minlength="8" required>' + (up ? '<span class="hint">At least 8 characters.</span>' : "") + "</div>" +
+      (up ? '<label class="task"><input type="checkbox" id="au-age"><span><strong>I\'m 13 or older</strong><br><span class="muted small">StandPoint is for players 13 and up.</span></span></label>' : "") +
+      '<div class="btns"><button type="submit" class="btn red" id="au-go">' + (up ? "Create account" : "Sign in") + '</button><button type="button" class="btn" id="au-switch">' + (up ? "I already have an account" : "Create an account") + "</button></div>" +
+      (up ? "" : '<div class="btns"><button type="button" class="btn ghost" id="au-forgot">Forgot your password?</button></div>') + "</form>";
+    $("#au-switch").addEventListener("click", function () { cloudView = up ? "signin" : "signup"; cloudErr = ""; cloudInfo = ""; render(); });
+    if ($("#au-forgot")) $("#au-forgot").addEventListener("click", async function () {
+      var em = $("#au-email").value.trim(); if (!em) { cloudErr = "Type your email first, then tap Forgot your password."; render(); return; }
+      try { await cq(sb.auth.resetPasswordForEmail(em, { redirectTo: location.origin + location.pathname })); cloudErr = ""; cloudInfo = "Check your email for a link to set a new password."; }
+      catch (e) { cloudErr = msgOf(e); }
+      render();
+    });
+    $("#au-form").addEventListener("submit", async function (e) {
+      e.preventDefault();
+      var em = $("#au-email").value.trim(), pw = $("#au-pass").value, btn = $("#au-go");
+      if (up && !$("#au-age").checked) { cloudErr = "StandPoint is for players 13 and older."; cloudInfo = ""; render(); return; }
+      btn.disabled = true; btn.textContent = up ? "Creating…" : "Signing in…";
+      try {
+        if (up) {
+          var nm = $("#au-name").value.trim();
+          var r = await cq(sb.auth.signUp({ email: em, password: pw, options: { data: { full_name: nm, age_ok: true }, emailRedirectTo: location.origin + location.pathname } }));
+          if (r && r.session && r.user) { me = { id: r.user.id, email: r.user.email, meta: r.user.user_metadata || {} }; cloudErr = ""; cloudInfo = ""; await cloudLoad(); }
+          else { cloudView = "signin"; cloudErr = ""; cloudInfo = "Check your email and tap the link to confirm your account. Then sign in here."; }
+        } else {
+          var s2 = await cq(sb.auth.signInWithPassword({ email: em, password: pw }));
+          me = { id: s2.user.id, email: s2.user.email, meta: s2.user.user_metadata || {} }; cloudErr = ""; cloudInfo = ""; await cloudLoad();
+        }
+      } catch (er) { cloudErr = msgOf(er); }
+      render(); window.scrollTo(0, 0);
+    });
+  }
+  function renderNewPass() {
+    clearBars();
+    $("#view").innerHTML = '<form class="card" id="np-form"><div><div class="eyebrow">StandPoint</div><h2>Set a new password</h2></div>' + authNote() +
+      '<div class="field"><label for="np-pass">New password</label><input type="password" id="np-pass" autocomplete="new-password" minlength="8" required></div><div class="btns"><button type="submit" class="btn red">Save password</button></div></form>';
+    $("#np-form").addEventListener("submit", async function (e) {
+      e.preventDefault();
+      try { await cq(sb.auth.updateUser({ password: $("#np-pass").value })); cloudView = "signin"; cloudErr = ""; toast("Password saved."); var r = await sb.auth.getSession(), ses = r && r.data && r.data.session; if (ses) { me = { id: ses.user.id, email: ses.user.email, meta: ses.user.user_metadata || {} }; await cloudLoad(); } }
+      catch (er) { cloudErr = msgOf(er); }
+      render();
+    });
+  }
+  function renderRolePick() {
+    clearBars();
+    $("#view").innerHTML = '<section class="card"><div><div class="eyebrow">Welcome</div><h2>Are you a player or a coach?</h2></div>' +
+      '<p class="small" style="margin:0">Players track their numbers, training and recruiting. Coaches run a club, a team or a training facility.</p>' +
+      '<div class="btns"><button type="button" class="btn red" id="rp-player">I\'m a player</button><button type="button" class="btn" id="rp-coach">I\'m a coach</button></div></section>' +
+      '<section class="card"><div class="small muted">Signed in as ' + esc(me.email) + '</div><div class="btns"><button type="button" class="btn ghost" id="rp-out">Sign out</button></div></section>';
+    $("#rp-player").addEventListener("click", function () { cloudPicked = true; tab = "home"; render(); });
+    $("#rp-coach").addEventListener("click", async function () {
+      try { await cq(sb.from("profiles").update({ is_coach: true }).eq("id", me.id)); prof.is_coach = true; cloudRole = "coach"; store = emptyStore("coach"); store.club = null; render(); }
+      catch (e) { toast("Couldn't save: " + msgOf(e)); }
+    });
+    $("#rp-out").addEventListener("click", cloudSignOut);
+  }
+  function renderCoachStart() {
+    clearBars();
+    if (cloudPendClub) {
+      $("#view").innerHTML = '<section class="card"><div><div class="eyebrow">Coach app</div><h2>Waiting for ' + esc(cloudPendClub.name) + "</h2></div>" +
+        '<p class="small" style="margin:0">Your request to coach here is in. The club\'s admin accepts it in Club → Coaches, then your Coach app opens.</p>' +
+        '<div class="btns"><button type="button" class="btn primary" id="cs-refresh">Check again</button><button type="button" class="btn ghost" id="cs-out">Sign out</button></div></section>';
+      $("#cs-refresh").addEventListener("click", function () { cloudRefresh(false); });
+      $("#cs-out").addEventListener("click", cloudSignOut);
+      return;
+    }
+    var nm = (prof && prof.display_name) || (me.meta && me.meta.full_name) || "";
+    $("#view").innerHTML = '<section class="card"><div><div class="eyebrow">Coach app</div><h2>Start your club, or join one</h2></div>' + authNote() +
+      '<div class="field"><label for="cs-name">Your name</label><input type="text" id="cs-name" value="' + esc(nm) + '" placeholder="Coach Alejandro"></div></section>' +
+      '<form class="card" id="cs-new"><h3>Start a club or facility</h3><p class="small muted" style="margin:0">You become its admin. Your players and other coaches join with its code.</p>' +
+      '<div class="field"><label for="cs-club">Name</label><input type="text" id="cs-club" placeholder="Infinite Hitting" required></div>' +
+      '<div class="field"><label for="cs-type">Type</label><select id="cs-type">' + ["Training facility", "Travel club", "High school program", "Showcase"].map(function (t) { return "<option>" + t + "</option>"; }).join("") + "</select></div>" +
+      '<div class="btns"><button type="submit" class="btn red">Start it</button></div></form>' +
+      '<form class="card" id="cs-join"><h3>Join a club as a coach</h3><p class="small muted" style="margin:0">Use the code the club\'s admin gave you. They accept you, then you\'re in.</p>' +
+      '<div class="field"><label for="cs-code">Club code</label><input type="text" id="cs-code" autocapitalize="characters" autocomplete="off" placeholder="ABC123" required></div>' +
+      '<div class="btns"><button type="submit" class="btn">Send request</button></div></form>' +
+      '<section class="card"><div class="small muted">Signed in as ' + esc(me.email) + '</div><div class="btns"><button type="button" class="btn ghost" id="cs-out">Sign out</button></div></section>';
+    var saveName = async function () { var v = $("#cs-name").value.trim(); if (!v) { cloudErr = "Add your name first, so players know who you are."; render(); return false; } if (v !== prof.display_name) { await cq(sb.from("profiles").update({ display_name: v }).eq("id", me.id)); prof.display_name = v; } return true; };
+    $("#cs-new").addEventListener("submit", async function (e) {
+      e.preventDefault();
+      try { if (!(await saveName())) return; await cq(sb.rpc("create_org", { org_name: $("#cs-club").value.trim(), org_type: $("#cs-type").value })); cloudErr = ""; await cloudLoad(); coachTab = "club"; render(); toast("Your club is set up. Share the code with your players."); }
+      catch (er) { cloudErr = msgOf(er); render(); }
+    });
+    $("#cs-join").addEventListener("submit", async function (e) {
+      e.preventDefault();
+      try { if (!(await saveName())) return; var st = await cq(sb.rpc("join_org", { code: $("#cs-code").value.trim(), as_role: "coach" })); if (st === "bad_code") { cloudErr = "That code doesn't match a club. Check it with the club's admin."; render(); return; } cloudErr = ""; await cloudLoad(); render(); }
+      catch (er) { cloudErr = msgOf(er); render(); }
+    });
+    $("#cs-out").addEventListener("click", cloudSignOut);
+  }
+  async function cloudSignOut() {
+    try { await cloudSaveNow(); } catch (e) {}
+    try { await sb.auth.signOut(); } catch (e) {}
+    me = null; prof = null; cloudRole = null; cloudOrg = null; cloudPicked = false; cloudSnap = {}; cloudMemSnap = []; cloudJoin = null;
+    store = emptyStore("player"); tab = "home"; moreView = "menu"; cloudView = "signin"; cloudErr = ""; cloudInfo = "You're signed out."; render(); window.scrollTo(0, 0);
+  }
+  async function cloudDeleteMe() {
+    try { await cq(sb.rpc("delete_me")); } catch (e) { toast("Couldn't delete: " + msgOf(e)); return; }
+    try { await sb.auth.signOut(); } catch (e) {}
+    me = null; prof = null; cloudRole = null; cloudOrg = null; cloudPicked = false; cloudSnap = {}; store = emptyStore("player"); tab = "home"; cloudView = "signin"; cloudErr = ""; cloudInfo = "Your account and its data were deleted."; render(); window.scrollTo(0, 0);
+  }
+  // Player joins with a code: check the code with the database, pick a team, then wait for the coach
+  async function cloudJoinStart(p, code) {
+    code = String(code || "").trim().toUpperCase(); if (!code) return;
+    try {
+      var teams = await cq(sb.rpc("org_teams", { code: code })) || [];
+      if (teams.length) { cloudJoin = { code: code, teams: teams }; renderJoin(p); return; }
+      await cloudJoinFinish(p, code, null);
+    } catch (e) { toast("Couldn't join: " + msgOf(e)); }
+  }
+  async function cloudJoinFinish(p, code, team) {
+    try {
+      await cloudSaveNow();
+      var st = await cq(sb.rpc("join_org", { code: code, as_role: "player", team: team || null }));
+      cloudJoin = null;
+      if (st === "bad_code") { toast("That code doesn't match a club. Check it with your coach."); renderJoin(p); return "bad"; }
+      await cloudLoad(); render();
+      toast(st === "active" ? "You're on " + store.club.name + "." : st === "already" ? "You already asked to join." : "Request sent. Your coach will accept you.");
+      return st;
+    } catch (e) { toast("Couldn't join: " + msgOf(e)); return "error"; }
+  }
+  function renderCloudJoinPick(p) {
+    var j = cloudJoin;
+    $("#view").innerHTML = moreBack() + '<section class="card"><div><div class="eyebrow">Your club</div><h2>Which team or coach are you with?</h2></div>' +
+      '<p class="small" style="margin:0">Pick yours so you get the right plan for your age and level. Your coach can change it later.</p>' +
+      '<div class="tasks">' + j.teams.map(function (t) { return '<button type="button" class="btn" data-cjteam="' + esc(t.id) + '" style="justify-content:flex-start;text-align:left">' + esc(t.name) + "</button>"; }).join("") +
+      '<button type="button" class="btn ghost" data-cjteam="">Not sure yet</button></div></section>';
+    bindMore();
+    onAll("[data-cjteam]", "click", function (b) { cloudJoinFinish(p, j.code, b.getAttribute("data-cjteam")); });
+  }
+  function cloudCoachesHTML(c) {
+    var admin = (c.coaches || []).some(function (x) { return x.id === me.id && x.admin; });
+    return '<section class="card"><h3>Coaches</h3><div class="hist">' + c.coaches.map(function (x) {
+      return '<div class="hitem"><div class="h"><span>' + esc(x.name) + ' <span class="muted">· ' + esc(x.role || "Coach") + (x.id === me.id ? " (you)" : "") + "</span></span>" + (admin && x.id !== me.id ? '<button type="button" class="btn ghost small" data-rmcoach="' + esc(x.id) + '">Remove</button>' : "") + "</div></div>";
+    }).join("") + "</div>" +
+      ((c.pendingCoaches || []).filter(function (x) { return !x.declined; }).length ? '<h3 style="margin-top:8px">Waiting to join</h3><div class="hist">' + c.pendingCoaches.filter(function (x) { return !x.declined; }).map(function (x) {
+        return '<div class="hitem"><div class="h"><span>' + esc(x.name) + "</span></div>" + (admin ? '<div class="btns"><button type="button" class="btn primary" data-cpa="' + esc(x.id) + '">Accept</button><button type="button" class="btn" data-cpd="' + esc(x.id) + '">Decline</button></div>' : '<div class="small muted">The admin accepts new coaches.</div>') + "</div>";
+      }).join("") + "</div>" : "") +
+      '<p class="small muted" style="margin:0">Other coaches join with your club code <strong class="num">' + esc(c.code) + "</strong>: they create an account, choose Coach, and enter it. " + (admin ? "You accept them here." : "The admin accepts them.") + "</p></section>";
+  }
+  function bindCloudCoaches(c) {
+    onAll("[data-cpa]", "click", function (b) { var id = b.getAttribute("data-cpa"), x = c.pendingCoaches.filter(function (q) { return q.id === id; })[0]; if (!x) return; c.pendingCoaches = c.pendingCoaches.filter(function (q) { return q.id !== id; }); c.coaches.push({ id: x.id, name: x.name, role: "Coach" }); persist(); redrawHQ(); toast(x.name + " is a coach here now."); });
+    onAll("[data-cpd]", "click", function (b) { var id = b.getAttribute("data-cpd"), x = c.pendingCoaches.filter(function (q) { return q.id === id; })[0]; if (!x) return; x.declined = true; persist(); redrawHQ(); toast("Request declined."); });
+  }
+  // ===================== end of version 1 accounts =====================
+
+  function cloudGate() {
+    if (!sb) { clearBars(); $("#view").innerHTML = '<section class="card"><p class="small muted" style="margin:0">' + (cloudErr ? esc(cloudErr) : "Loading StandPoint…") + "</p></section>"; return false; }
+    if (cloudView === "newpass") { renderNewPass(); return false; }
+    if (!me) { renderAuth(); return false; }
+    if (cloudRole === "coach") { store.app = "coach"; if (!store.club) { renderCoachStart(); return false; } return true; }
+    store.app = "player";
+    if (!store.players.length && !cloudPicked) { renderRolePick(); return false; }
+    return true;
+  }
+
   // ---------- Start ----------
-  if (!cur() && store.players.length) store.current = store.players[0].id;
-  render();
+  if (CLOUD) { var sn = document.getElementById("store-note"); if (sn) sn.textContent = "Your account is saved to StandPoint's secure database, so it's on any phone you sign in on."; render(); cloudStart(); }
+  else {
+    if (!cur() && store.players.length) store.current = store.players[0].id;
+    render();
+  }
 })();
 </script>
 </body>
