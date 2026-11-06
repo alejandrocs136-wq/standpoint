@@ -718,7 +718,7 @@
         store.players.push(np); store.current = np.id; persist(); draft = null; schoolView = null; schoolFilter.show = null; schoolFilter.state = "range"; schoolFilter.levels = []; schoolFilter.q = ""; searchF.sport = null;
         var jr = code && !CLOUD ? requestJoin(np, code) : null;
         if (CLOUD && code) { go("numbers"); toast("Profile saved. Sending your join request\u2026"); cloudJoinFinish(np, code, null); return; }
-        go("numbers"); toast(jr === "joined" ? "Profile saved and you're on " + store.club.name + ". Now add your numbers." : jr === "pending" ? "Profile saved. Your coach will accept you. Now add your numbers." : "Profile saved. Now add your numbers.");
+        go("numbers"); toast(jr === "joined" ? "Profile saved and you're on " + store.club.name + ". Now add your numbers." : jr === "pending" ? "Profile saved. Your coach will accept you. Now add your numbers." : "Profile saved. Add your numbers, then a few questions build your plan.");
       } else {
         if (String(d.schedule || "").trim() !== String(p.schedule || "").trim()) p.scheduleUpdated = todayStr;
         ["name", "grad", "school", "gpa", "positions", "bats", "throws", "height", "weight", "goals", "xhandle", "ig", "email", "phone", "schedule", "pitches", "range", "sport", "search"].forEach(function (k) { p[k] = typeof d[k] === "string" ? d[k].trim() : d[k]; });
@@ -772,6 +772,7 @@
       var proof = $("#n-proof").value.trim(); if (proof && !/^https?:\/\//i.test(proof)) proof = "https://" + proof;
       var how = {}; Object.keys(vals).forEach(function (k) { how[k] = $("#nh-" + k).value; });
       p.logs.push({ id: uid(), date: date, where: $("#n-where").value.trim(), src: $("#n-src").value, how: how, proof: proof, vals: vals, created: Date.now() });
+      if (!p.intake && !clubOf(p) && !clubPending(p)) { persist(); moreView = "intake"; intakeDraft = null; go("more"); toast("Numbers saved. Now answer a few questions to build your plan."); return; }
       persist(); go("home"); toast("Numbers saved. StandPoint updated.");
     });
     Array.prototype.forEach.call(document.querySelectorAll("[data-how]"), function (sel) { sel.addEventListener("change", function () { sel.setAttribute("data-picked", "1"); }); });
@@ -1001,10 +1002,21 @@
       { t: "plyo", items: [["Line hops, 2 × 15 sec", "Depth drop and sprint 10 yards, 4 reps"], ["Lateral bound and stick × 3 each side (3 sets)", "Continuous lateral bounds × 4 each side (3 sets)"]] },
       { t: "sprint", items: [["Build-ups, 3 × 40 yards, smooth to fast", "Flying 20s: 20-yard build, 20 fast, 4 reps, 2 min rest"], ["Flying 10s: 20-yard build, 10 fast, 4 reps", "Full 60s, 2–3 reps, 4 min rest. Time one."]] },
       { t: "iso", items: ["Single-leg glute bridge hold, 3 × 20 sec each leg"] },
-      { t: "finish", items: ["Hamstring and calf stretch, 1 min each"] } ] }
+      { t: "finish", items: ["Hamstring and calf stretch, 1 min each"] } ] },
+    { name: "Speed C · Side to side and curves", blocks: [
+      { t: "warm", items: ["Jog, skips and shuffles, about 400 yards", "Dynamic warm-up, 20 yards each: knee hug, quad pull and reach, toe touch, leg cradle, high-knee run, straight-leg skip, backward open-hip skip, high-knee carioca"] },
+      { t: "plyo", items: [["Altitude landing and stick × 4 (2 sets)", "Depth drop to lateral bound × 2 each side (3 sets)"], "Backward overhead med-ball throw × 5 (2 sets)"] },
+      { t: "sprint", items: [["Half-kneeling lateral starts, 10 yards, 3 each side, 60 sec rest", "Half-kneeling lateral starts, 10 yards, 4 each side, 60 sec rest"], ["Curved sprints, 25 yards like rounding first, 2 each way, 2–3 min rest", "Curved sprints, 30 yards like rounding first, 3 each way, 2–3 min rest"], [null, "Shuffle to sprint, 2 × 20 yards, full rest"]] },
+      { t: "iso", items: ["Copenhagen plank, short lever, 2 × 15 sec each side"] },
+      { t: "finish", items: ["Post-work stretch: hamstring floss, seated pretzel, stand-to-squat, low-back rotation, butterfly groin, × 5 each"] } ] },
+    { name: "Tempo · Conditioning runs", blocks: [
+      { t: "warm", items: ["Rudiment series: forward and backward pogos × 10, single-leg pogos × 5 each, side-to-side pogos × 10", "Dynamic warm-up, 20 yards each: knee hug, quad pull and reach, toe touch, leg cradle, high-knee run, straight-leg skip, backward open-hip skip, high-knee carioca"] },
+      { t: "tempo", items: [["Tempo runs: 10 × 60 yards at about 70%, 35 sec rest", "Tempo runs: 12 × 60 yards at about 70%, 35 sec rest"], [null, "Strides: 4 × 55 yards, smooth and fast, walk back"]] },
+      { t: "finish", items: ["Post-work stretch: hamstring floss, seated pretzel, stand-to-squat, low-back rotation, butterfly groin, × 5 each"] } ] }
   ];
+  var SPEED_LAB = ["Speed A", "Speed B", "Speed C", "Tempo"];
   var BLOCK_NAMES = { warm: "Warm-up, 8–10 min", plyo: "Plyometrics: jumps and throws, full effort, full rest", iso: "Isometrics: hold or push, no movement",
-    main: "Main lift", pair: "Pair: go back and forth", finish: "Finish", sprint: "Sprints: full speed, full rest" };
+    main: "Main lift", pair: "Pair: go back and forth", finish: "Finish", sprint: "Sprints: full speed, full rest", tempo: "Tempo runs: about 70%, short rest. Not a sprint", goal: "Your goals: extra work for what you picked" };
 
   function trainOf(p) {
     if (p.lift) delete p.lift;
@@ -1033,11 +1045,24 @@
     var li = ld.indexOf(wd), si = sd.indexOf(wd);
     var prog = programFor(T);
     if (li >= 0) return "L" + Math.min(li, prog.length - 1);
-    if (si >= 0) return "S" + (si % 2);
+    if (si >= 0) {
+      var rot = sd.length >= 3 ? [0, 2, 1] : [0, 1];
+      if (sd.length >= 2 && T.auto && T.auto.goals.indexOf("lean") >= 0 && autoClubOK(T).on) rot[rot.length - 1] = 3;
+      return "S" + rot[si % rot.length];
+    }
     return null;
   }
   function sessionTitle(T, sel) { return sel.charAt(0) === "L" ? programFor(T)[+sel.slice(1)].name : SPEED[+sel.slice(1)].name; }
-  function sessionBlocks(T, sel) { return sel.charAt(0) === "L" ? programFor(T)[+sel.slice(1)].blocks : SPEED[+sel.slice(1)].blocks; }
+  function sessionBlocks(T, sel) {
+    if (sel.charAt(0) !== "L") return SPEED[+sel.slice(1)].blocks;
+    var bl = programFor(T)[+sel.slice(1)].blocks;
+    if (clubLiftFor(T) || !T.auto || !autoClubOK(T).on) return bl;
+    var drop = autoClubOK(T).drop, goal = (T.auto.goal || []).filter(function (t) { return drop.indexOf(t) < 0; });
+    if (!goal.length) return bl;
+    var out = bl.slice(), fi = -1; out.forEach(function (b, i) { if (b.t === "finish") fi = i; });
+    out.splice(fi >= 0 ? fi : out.length, 0, { t: "goal", items: goal });
+    return out;
+  }
   // Best estimated max per lift, from logged sets of the "max" variation and from tested maxes.
   function maxHistory(T, lift) {
     var pts = {};
@@ -1076,6 +1101,42 @@
   // ---- Exercise library: how to do it, the cue, how to control the weight, and what to log ----
   // log: w = weight × reps, mb = med-ball weight × reps, box = box height × reps, t = seconds (+ optional weight), none = don't log
   var EXINFO = [
+    // From Alejandro's Nov 6 sheets
+    ["snapdown", "Trap-bar snapdown to squat jump", "w", "Stand tall holding a light trap bar. Snap down fast into a quarter squat, freeze for a beat, then jump straight up.", "Snap down fast, land quiet.", "Light weight only. If you can't land soft, go lighter or use no bar."],
+    ["nordic", "Nordic hamstring lowers", "none", "Kneel with a partner holding your heels. Keep a straight line from knees to head and lower forward as slowly as you can, then catch yourself with your hands and push back up.", "Hips stay forward; don't bend at the waist.", "Lower only as far as you can control. A band from your chest to an anchor makes it easier."],
+    ["kb swing", "Banded KB swing", "w", "Hinge at the hips, hike the kettlebell back between your legs, then snap your hips forward so it floats to chest height. A band adds speed at the top.", "Hips do the work; arms just hold on.", "Pick a weight you can swing fast with a flat back."],
+    ["back extension", "Back extension", "w", "On a back-extension bench or reverse hyper, lower your chest with a flat back, then lift by squeezing your glutes and hamstrings.", "Squeeze the glutes; don't arch past straight.", "Bodyweight first. Hold a plate once 12 reps is easy."],
+    ["torso rotation", "Half-kneeling torso rotation", "w", "Kneel sideways to a cable or band, inside knee down. Hold the handle at your chest and rotate away by turning your ribs, not your hips.", "Hips square; rotate through the ribs.", "Light. Move fast, control it back."],
+    ["split-stance 1-arm", "Split-stance 1-arm row", "w", "In a split stance, row a cable, band or dumbbell to your ribs with one arm, then reach long.", "Pull with the shoulder blade first.", "Pick a weight you can pause at your ribs."],
+    ["pullover throw", "Single-leg med-ball pullover throw", "mb", "Balance on one leg with a med ball overhead, then throw it down hard into the ground or a wall in front of you.", "Stay balanced; throw with your core, not just your arms.", "Light ball, 4–6 lb. Skip it if your arm hurts."],
+    ["pull-through", "Tall-plank KB pull-through", "w", "In a push-up position, reach under your body and drag a kettlebell from one side to the other without letting your hips twist.", "Hips stay level.", "Light bell; slow is the point."],
+    ["lunge jump", "Alternating lunge jumps", "none", "From a lunge, jump and switch legs in the air, landing soft in a lunge.", "Land soft, front knee over toes.", "Stop the set if the landings get loud or sloppy."],
+    ["rotational jump", "Rotational jump and stick", "none", "Jump and turn a quarter in the air, landing in your batting stance. Hold for 2 seconds.", "Land balanced, ready to hit.", "Small jumps first."],
+    ["altitude landing", "Altitude landing", "none", "Step off a low box and land on both feet in an athletic stance. Freeze. No jump.", "Land quiet and freeze.", "Start with a 12-inch box."],
+    ["depth drop to lateral", "Depth drop to lateral bound", "none", "Step off a low box, land on both feet, and bound sideways onto one leg right away. Stick it.", "Land and go, sideways.", "Low box; full rest."],
+    ["lateral start", "Half-kneeling lateral starts", "none", "Start on one knee, sideways to where you'll run. Push off, turn your hips and sprint 10 yards.", "Push the ground away; turn the hips fast.", "Full rest, about 60 sec."],
+    ["curved sprint", "Curved sprints", "none", "Sprint a curved path, like rounding first base, leaning into the turn.", "Lean in from the ankles; outside arm drives across.", "2–3 min rest."],
+    ["shuffle to sprint", "Shuffle to sprint", "none", "Shuffle sideways 5 yards, then turn and sprint.", "Stay low in the shuffle; turn on the plant.", "Full rest."],
+    ["falling start", "Falling starts", "none", "Stand tall and lean forward until you have to step, then sprint 20 yards.", "Let the fall pull you; push hard on the first step.", "Full rest."],
+    ["push-up start", "Push-up starts", "none", "Start face down in a push-up position, pop up and sprint 15 yards.", "Get your feet under you fast.", "Full rest."],
+    ["tempo run", "Tempo runs", "none", "Run at about 70% effort with relaxed sprint form, then walk or jog the rest time.", "Relax. The first run should look like the last.", "This is not a sprint. If you're gasping, slow down."],
+    ["rudiment", "Rudiment series", "none", "Pogo hops forward and backward, single-leg pogos, then side-to-side pogos, back to back.", "Quick, stiff ankles.", "Low and fast."],
+    ["backward overhead", "Backward overhead med-ball throw", "mb", "Hold a med ball, dip into a quarter squat, then jump and throw it back over your head as far as you can.", "Hips through first, then arms.", "Clear space behind you. 6–10 lb ball."],
+    ["strides:", "Strides", "none", "Run smooth and fast, about 90% of top speed, then walk back.", "Tall and relaxed.", "Full walk-back rest."],
+    ["dynamic warm-up", "Dynamic warm-up series", "none", "Walk or run 20 yards of each: knee hug, quad pull with a reach, toe touch, leg cradle, high-knee run, straight-leg skip, backward open-hip skip, high-knee carioca.", "Get a little warmer with each drill.", ""],
+    ["post-work stretch", "Post-work stretch", "none", "Hamstring floss × 5 each leg, seated pretzel × 5 each side, stand-to-squat × 5, low-back rotation × 10 each way, butterfly groin × 5.", "Slow and controlled.", ""],
+    // Goal work in the automatic plans
+    ["shot-put throw", "Med-ball shot-put throw", "mb", "Stand sideways to a wall with the ball at your back shoulder. Shift back, then rotate and push the ball into the wall like a shot-put.", "Hips first, then the ball.", "4–8 lb ball. Full effort, full rest."],
+    ["landmine rotation", "Landmine rotation", "w", "Hold the end of a landmine bar at chest height with straight arms and swing it side to side in a rainbow, pivoting your back foot.", "Turn the hips, keep the arms long.", "Light weight; control the top."],
+    ["external rotation at 90", "Band external rotation at 90°", "none", "Elbow up at shoulder height and bent 90°. Rotate the hand up and back against a band, then lower slowly.", "Elbow stays still.", "Light band. Stop if it pinches."],
+    ["external and internal rotation", "Band external and internal rotation", "none", "Elbow at your side and bent 90°. Rotate the hand out against a band, then turn around and rotate it in.", "Elbow pinned to your side.", "Light band, smooth reps."],
+    ["overhead throw to a wall", "Med-ball overhead throw", "mb", "Stand facing a wall, ball overhead, and throw it hard into the wall like a soccer throw-in.", "Use your core, not just your arms.", "Light ball, 4–6 lb. Skip it if your arm hurts."],
+    ["push-up plus", "Push-up plus", "none", "Do a push-up, then at the top push your upper back toward the ceiling a little more.", "Spread the shoulder blades at the top.", "Knees down is fine."],
+    ["band row", "Half-kneeling band row", "none", "Kneel on one knee and row a band to your ribs with one arm.", "Shoulder blade back and down first.", "Pause at the ribs."],
+    ["farmer carry", "Farmer carry", "w", "Hold a heavy dumbbell or kettlebell in each hand and walk tall.", "Shoulders down, short quick steps.", "Heavy enough that the last 10 yards are hard."],
+    ["curl to press", "DB curl to press", "w", "Curl the dumbbells up, then press them overhead. Lower slowly.", "Ribs down when you press.", "Pick a weight you can press with control."],
+    ["walking lunges", "Walking lunges", "none", "Step long into a lunge, back knee near the ground, then step through into the next.", "Front knee over the toes.", "Hold dumbbells once it's easy."],
+    ["wrist curls", "Wrist curls and extensions", "w", "Forearm on your thigh, curl a light dumbbell up with your wrist, then turn your hand over and lift it the other way.", "Slow, full range.", "Light. Burn, not strain."],
     ["depth drop to box jump", "Depth drop to box jump", "box", "Step off a low box, land on both feet, and jump straight onto a second box as fast as you can.", "Spend as little time on the ground as possible.", "Start with a 12-inch drop. Full rest; quality over quantity."],
     ["depth drop and sprint", "Depth drop and sprint", "none", "Step off a low box, land in an athletic stance and sprint 10 yards straight out.", "Land and go, no pause.", "Low box only. Walk back and rest fully."],
     ["box jump", "Box jump", "box", "Swing your arms, jump onto the box, land soft in a quarter squat and stand tall. Step down; don't jump down.", "Land quiet, knees out over toes.", "Pick a box you land on easily. Height comes later."],
@@ -1251,7 +1312,7 @@
     var mon = mondayOf(todayStr), strip = "";
     for (var i = 0; i < 7; i++) {
       var d = addDays(mon, i), s = selFor(T, d), did = T.sessions.some(function (x) { return x.date === d; });
-      var lab = s ? (s.charAt(0) === "L" ? "Lift " + (+s.slice(1) + 1) : "Speed " + (s === "S0" ? "A" : "B")) : "Rest";
+      var lab = s ? (s.charAt(0) === "L" ? "Lift " + (+s.slice(1) + 1) : SPEED_LAB[+s.slice(1)]) : "Rest";
       strip += '<div class="day' + (d === todayStr ? " today" : "") + (did ? " did" : "") + '"><b>' + WEEKDAYS[dayOfWeek(d)] + "</b><span>" + lab + "</span>" + (did ? '<i aria-label="done">✓</i>' : "") + "</div>";
     }
     var wc = weekCounts(T, "lift", 1)[0], sc = weekCounts(T, "speed", 1)[0];
@@ -1270,7 +1331,7 @@
         '<div class="field"><span class="label">Program week</span><div class="toggles">' + [1, 2, 3, 4, 5, 6, 7, 8].map(function (k) { return '<button type="button" class="tog" data-wk="' + k + '" aria-pressed="' + (k === Math.min(w, 8)) + '" style="min-width:34px;padding:0 4px">' + k + "</button>"; }).join("") + "</div></div>" +
       "</div></details></section>";
     // session picker
-    var opts = prog.map(function (d, i) { return ["L" + i, "Lift " + (i + 1)]; }).concat([["S0", "Speed A"], ["S1", "Speed B"]]);
+    var opts = prog.map(function (d, i) { return ["L" + i, "Lift " + (i + 1)]; }).concat(SPEED_LAB.map(function (l, i) { return ["S" + i, l]; }));
     var picker = '<div class="toggles" role="group" aria-label="Session">' + opts.map(function (o) {
       return '<button type="button" class="tog" data-sel="' + o[0] + '" aria-pressed="' + (o[0] === sel) + '">' + o[1] + "</button>";
     }).join("") + "</div>";
@@ -1453,7 +1514,7 @@
     var tenPts = sp.filter(function (x) { return num(x.ten); }).map(function (x) { return { d: x.date, y: num(x.ten) }; })
       .concat(sortedByDate(T.power).filter(function (x) { return num(x.ten); }).map(function (x) { return { d: x.date, y: num(x.ten) }; })).sort(function (a, b) { return a.d < b.d ? -1 : 1; });
     var plan = SPEED.map(function (s) {
-      return '<div><div class="label">' + esc(s.name) + '</div><ul class="plain small">' + s.blocks.filter(function (b) { return b.t === "sprint" || b.t === "plyo"; }).map(function (b) {
+      return '<div><div class="label">' + esc(s.name) + '</div><ul class="plain small">' + s.blocks.filter(function (b) { return b.t === "sprint" || b.t === "plyo" || b.t === "tempo"; }).map(function (b) {
         return b.items.map(function (it) { var t = itemText(it, ph); return t ? "<li>" + esc(t) + "</li>" : ""; }).join("");
       }).join("") + "</ul></div>";
     }).join("");
@@ -1462,9 +1523,10 @@
         (gaps.length ? '<div class="callout"><strong>To reach ' + esc(gaps[0].level) + ': −' + gaps[0].gap.toFixed(2) + " sec on the 60.</strong><span class=\"small\">Two speed days a week, on fresh legs, plus the jumps in your lift days.</span></div>" : "") +
         lineChart(sixtyPts, "sec", "60-yard dash") + (sixtyPts.length >= 2 ? '<span class="hint">60-yard dash over time. Lower is faster.</span>' : "") +
       "</section>" +
-      '<section class="card"><h3>Your two speed days</h3>' + plan +
+      '<section class="card"><h3>Your speed sessions</h3>' + plan +
         '<ul class="plain small"><li>Sprint fresh, before lifting, with 1–2 min rest per 10 yards (3–4 min between 60s).</li><li>Stop the session when your times drop off.</li><li>Speed days are on your weekly schedule in Today; change the days there.</li></ul>' +
-        '<div class="btns"><button type="button" class="btn red" data-gosel="S0">Open Speed A</button><button type="button" class="btn" data-gosel="S1">Open Speed B</button></div></section>' +
+        '<div class="btns">' + SPEED_LAB.map(function (l, i) { return '<button type="button" class="btn' + (i ? "" : " red") + '" data-gosel="S' + i + '">Open ' + l + "</button>"; }).join("") + "</div>" +
+        '<span class="hint">2 speed days: A and B. 3 days: A, C, then B. Tempo is conditioning: use it on an easy day or after practice.</span></section>' +
       '<section class="card"><h3>Log sprint times</h3>' + lineChart(tenPts, "sec", "10-yard sprint") + (tenPts.length >= 2 ? '<span class="hint">10-yard sprint over time. Lower is faster.</span>' : "") +
         '<form id="spform" style="display:grid;gap:10px"><div class="row2"><div class="field"><label for="sp-ten">10-yard (sec)</label><input type="number" id="sp-ten" step="0.01"></div><div class="field"><label for="sp-thirty">30-yard (sec)</label><input type="number" id="sp-thirty" step="0.01"></div></div>' +
         '<div class="row2"><div class="field"><label for="sp-sixty">60-yard (sec)</label><input type="number" id="sp-sixty" step="0.01"></div><div class="field"><label for="sp-date">Date</label><input type="date" id="sp-date" value="' + todayStr + '"></div></div>' +
@@ -2550,7 +2612,7 @@
     if (moreView === "ask") return renderAsk(p);
     var n = openReq().length;
     var items = [
-      p.intake ? ["analysis", "Your plan and analysis", "Built from your answers on " + fmtShortDate(p.intake.date) + ". Change them anytime."] : ["intake", "Build my plan", "Answer 8 questions and get a written analysis and your week laid out."],
+      p.intake ? ["analysis", "Your plan and analysis", "Built from your answers on " + fmtShortDate(p.intake.date) + ". Change them anytime."] : ["intake", "Build my plan", "Answer " + QN + " questions and get a written analysis, your week laid out and a plan built for your goals."],
       CLOUD ? null : ["ask", "Ask StandPoint", "AI answers your training and recruiting questions using your numbers and plan."],
       ["plans", "Plans and payments", "Individual plan, club license, video reviews and online coaching." + (store.plan ? " Current: " + esc(planName(store.plan.k)) + (store.plan.test ? " (test)" : "") + "." : "")],
       ["join", "Your club", clubOf(p) ? "You're on " + esc(store.club.name) + ". See your coaches and choose whether they see your school notes." : clubPending(p) ? "Waiting for " + esc(store.club.name) + " to accept you." : "Join your travel club with the code your coach gave you."],
@@ -2573,34 +2635,99 @@
     gym: [["full", "Full gym"], ["home", "Some weights at home"], ["none", "No gym"]],
     field: [["both", "Field and cage"], ["field", "Just a field"], ["cage", "Just a cage"], ["none", "Neither"]],
     exp: [["new", "New to lifting"], ["some", "Under a year"], ["yrs", "A year or more"]],
-    pain: [["no", "No"], ["yes", "Yes"]]
+    pain: [["no", "No"], ["yes", "Yes"]],
+    pos: [["P", "Pitcher"], ["C", "Catcher"], ["IF", "Infield"], ["OF", "Outfield"], ["two", "Two-way"]],
+    season: [["off", "Off-season"], ["pre", "Pre-season"], ["in", "In-season"]],
+    arm: [["no", "No"], ["yes", "Yes"]]
   };
+  var QN = 11;
   var intakeDraft = null;
   function optName(list, k) { for (var i = 0; i < list.length; i++) if (list[i][0] === k) return list[i][1]; return k; }
   function intakeCard(p) {
-    if (!p.intake) return '<section class="card"><div class="eyebrow">Your plan</div><h3>Answer 8 questions, get your plan</h3><p class="small" style="margin:0">What you want to work on, when you can train and what you have to train with. You get a written analysis and your week laid out.</p><div class="btns"><button type="button" class="btn red" data-mvgo="intake">Build my plan</button><button type="button" class="btn" data-mvgo="ask">Ask StandPoint</button></div></section>';
+    if (!p.intake) return '<section class="card"><div class="eyebrow">Your plan</div><h3>Answer ' + QN + ' questions, get your plan</h3><p class="small" style="margin:0">What you want to work on, when you can train and what you have to train with. You get a written analysis and your week laid out.</p><div class="btns"><button type="button" class="btn red" data-mvgo="intake">Build my plan</button><button type="button" class="btn" data-mvgo="ask">Ask StandPoint</button></div></section>';
+    var due = daysSince(p.intake.date) >= 28;
+    if (due) return '<section class="card"><div class="eyebrow">Your plan</div><h3>Time to re-test</h3><p class="small" style="margin:0">It\'s been 4 weeks on this plan. Test your numbers again, then rebuild your plan so the next 4 weeks fit where you are now.</p><div class="btns"><button type="button" class="btn red" id="ic-num">Log new numbers</button><button type="button" class="btn" data-mvgo="intake">Rebuild my plan</button></div></section>';
     return '<section class="card"><div class="sh"><span><strong>Your plan</strong><br><span class="small muted">' + esc(p.intake.goals.map(function (g) { return optName(INTAKE_GOALS, g); }).join(", ") || "Built from your answers") + " · " + fmtShortDate(p.intake.date) + '</span></span></div><div class="btns"><button type="button" class="btn" data-mvgo="analysis">Your analysis</button><button type="button" class="btn" data-mvgo="ask">Ask StandPoint</button></div></section>';
   }
-  function bindMvGo() { onAll("[data-mvgo]", "click", function (b) { moreView = b.getAttribute("data-mvgo"); if (moreView === "intake") intakeDraft = null; tab = "more"; render(); window.scrollTo(0, 0); }); }
+  function bindMvGo() { if ($("#ic-num")) $("#ic-num").addEventListener("click", function () { go("numbers"); }); onAll("[data-mvgo]", "click", function (b) { moreView = b.getAttribute("data-mvgo"); if (moreView === "intake") intakeDraft = null; tab = "more"; render(); window.scrollTo(0, 0); }); }
   function applyIntake(p) {
     var T = trainOf(p), n = +p.intake.days, sp = p.intake.goals.indexOf("speed") >= 0;
     var map = { 2: [[1, 4], []], 3: sp ? [[1, 4], [3]] : [[1, 3, 5], []], 4: sp ? [[1, 4], [2, 5]] : [[1, 3, 5], [2]], 5: [[1, 3, 5], [2, 4]], 6: [[1, 3, 5], [2, 4, 6]] };
     var m = map[n] || map[4]; T.liftDays = m[0].slice(); T.speedDays = m[1].slice();
+    T.season = p.intake.season === "in" ? "in" : "off";
+    if (!T.auto || daysSince(T.auto.made) >= 28) T.start = todayStr;
+    T.auto = buildAuto(p);
   }
+  // ----- Automatic plans: built from the library and his answers. Coaches' own plans always come first. -----
+  // Goal work added to each lift. eq: what it needs (gym, mb = med ball, band, none). arm: skipped if his arm hurts.
+  // eq: none, band, mb (med ball), gym (dumbbells or kettlebells), bar (barbell, trap bar, cable or bench). arm: 1 = skipped if his arm hurts.
+  var AUTO_GOAL = {
+    hit: [{ t: "Med-ball shot-put throw × 5 each side (3 sets)", eq: "mb" }, { t: "Half-kneeling cable or band torso rotation × 6 each side (3 sets)", eq: "band" }, { t: "Landmine rotation × 6 each side (3 sets)", eq: "bar" }, { t: "Rotational jump and stick × 4 each side (2 sets)", eq: "none" }],
+    arm: [{ t: "Band external rotation at 90° × 10 each arm", eq: "band", arm: 1 }, { t: "Split-stance 1-arm cable or band row × 8 each arm (3 sets)", eq: "band" }, { t: "Prone Y-T-W raises × 6 each", eq: "none", arm: 1 }, { t: "Push-up plus × 10 (2 sets)", eq: "none" }],
+    pitch: [{ t: "Med-ball overhead throw to a wall × 6 (3 sets)", eq: "mb", arm: 1 }, { t: "Single-leg med-ball pullover throw × 4 each leg (2 sets)", eq: "mb", arm: 1 }, { t: "Tall-plank KB pull-through × 6 each side (2 sets)", eq: "gym" }, { t: "Half-kneeling band row × 10 each arm (2 sets)", eq: "band" }],
+    speed: [{ t: "Trap-bar snapdown to squat jump × 3 (3 sets)", eq: "bar" }, { t: "Nordic hamstring lowers × 3, partner holds your feet (2 sets)", eq: "none" }, { t: "Pogo hops × 15 (2 sets)", eq: "none" }, { t: "Alternating lunge jumps × 3 each leg (2 sets)", eq: "none" }],
+    strength: [{ t: "Banded KB swing × 6 (3 sets)", eq: "gym" }, { t: "Back extension × 8 (2 sets)", eq: "bar" }, { t: "Goblet squat × 10 (2 sets)", eq: "gym" }, { t: "Push-up × 10 (2 sets)", eq: "none" }, { t: "Walking lunges, 2 × 20 steps", eq: "none" }],
+    gain: [{ t: "DB curl to press × 10 (3 sets)", eq: "gym" }, { t: "Farmer carry, 30 yards (3 rounds)", eq: "gym" }, { t: "Push-up × 12 (3 sets)", eq: "none" }, { t: "Walking lunges, 2 × 20 steps", eq: "none" }],
+    lean: [{ t: "Finisher: tempo runs, 6 × 60 yards at about 70%, 35 sec rest", eq: "none" }, { t: "Walking lunges, 2 × 20 steps", eq: "none" }],
+    recruit: []
+  };
+  var AUTO_EQ = { none: ["none", "band"], home: ["none", "band", "mb", "gym"], full: ["none", "band", "mb", "gym", "bar"] };
+  var AUTO_HIT = {
+    power: { name: "Bat speed and exit velo", items: ["Tee, middle: 10 swings at full intent", "High tee and low tee: 8 each", "Inside and outside tee: 8 each", "Top-hand and bottom-hand drill with a light bat: 10 each", "Front toss or soft toss: 3 rounds of 8, full intent"],
+      alt: ["Tee into a net or fence: 3 rounds of 10, full intent", "Dry swings at full intent × 20", "Pause-at-launch swings × 10"] },
+    base: { name: "Swing work", items: ["Tee, middle: 10 swings", "Inside and outside tee: 6 each", "Front toss or soft toss: 2 rounds of 8"],
+      alt: ["Tee into a net or fence: 2 rounds of 10", "Dry swings × 15"] }
+  };
+  var AUTO_ARMCARE = { name: "Arm care", items: ["Band external and internal rotation × 12 each arm", "Band pull-aparts × 15", "Prone Y-T-W raises × 6 each", "Wrist curls and extensions with a light dumbbell × 12 each"] };
+  function buildAuto(p) {
+    var I = p.intake, gym = I.gym || "full", armHurts = I.arm === "yes", out = { made: todayStr, goals: I.goals.slice(), goal: [], hitting: [], throwing: [], throwNote: "" };
+    I.goals.slice(0, 2).forEach(function (g) {
+      (AUTO_GOAL[g] || []).filter(function (x) { return !(armHurts && x.arm) && (AUTO_EQ[gym] || AUTO_EQ.full).indexOf(x.eq) >= 0; }).slice(0, 2).forEach(function (x) { if (out.goal.indexOf(x.t) < 0) out.goal.push(x.t); });
+    });
+    out.goal = out.goal.slice(0, 4);
+    if (I.pos !== "P") {
+      var H = I.goals.indexOf("hit") >= 0 ? AUTO_HIT.power : AUTO_HIT.base, noCage = I.field === "none" || I.field === "field";
+      out.hitting.push({ name: H.name, flex: I.goals.indexOf("hit") >= 0 ? 3 : 2, items: (noCage ? H.alt : H.items).slice(), alt: noCage ? [] : H.alt.slice() });
+    }
+    if (armHurts) out.throwNote = "No throwing program while your arm hurts. Tell your parents and coach, and see a doctor or athletic trainer before you throw hard again.";
+    else {
+      out.throwing.push({ name: AUTO_ARMCARE.name, flex: 3, items: AUTO_ARMCARE.items.slice() });
+      out.throwNote = "StandPoint's throwing programs are being written by our coaches. Until yours is added, throw only as your coach directs.";
+    }
+    return out;
+  }
+  function autoClubOK(T) {
+    var c = store.club;
+    if (!T.club || !c || (T.club.id && c.id && T.club.id !== c.id)) return { on: true, drop: [] };
+    var ind = (c.indiv || {})[T.club.pid] || {};
+    return { on: c.autoPlans !== false && !ind.autoOff, drop: ind.autoDrop || [] };
+  }
+  function autoOn(p) { var T = trainOf(p); return !!(T.auto && autoClubOK(T).on); }
+  function autoR(p, kind) {
+    var T = trainOf(p); if (!T.auto || !autoClubOK(T).on) return null;
+    var drop = autoClubOK(T).drop, days = (T.auto[kind] || []).map(function (d) { var x = jcopyA(d); x.items = x.items.filter(function (t) { return drop.indexOf(t) < 0; }); return x; }).filter(function (d) { return d.items.length; });
+    return days.length ? { v: days, lv: "auto", o: {} } : null;
+  }
+  function jcopyA(o) { return JSON.parse(JSON.stringify(o)); }
   function renderIntake(p) {
     var d = intakeDraft = intakeDraft || JSON.parse(JSON.stringify(p.intake || { goals: [], days: "4", mins: "60", gym: "full", field: "both", exp: "some", pain: "no", painWhere: "", hard: [] }));
-    var multi = function (key, list, max) { return '<div class="toggles">' + list.map(function (o) { return '<button type="button" class="tog" data-im="' + key + "|" + o[0] + '" aria-pressed="' + (d[key].indexOf(o[0]) >= 0) + '" style="font-family:var(--body);font-size:15px">' + esc(o[1]) + "</button>"; }).join("") + "</div>"; };
+    if (!d.pos) { var gp = groupsFor(p); d.pos = gp.indexOf("P") >= 0 && gp.length > 1 ? "two" : gp[0] || "IF"; }
+    if (!d.season) d.season = "off"; if (!d.arm) d.arm = "no";
+    var multi = function (key, list, max) { return '<div class="toggles">' + list.map(function (o) { var at = d[key].indexOf(o[0]); return '<button type="button" class="tog" data-im="' + key + "|" + o[0] + '" aria-pressed="' + (at >= 0) + '" style="font-family:var(--body);font-size:15px">' + esc(o[1]) + (key === "goals" && at >= 0 ? " · #" + (at + 1) : "") + "</button>"; }).join("") + "</div>"; };
     var one = function (key) { return '<div class="toggles">' + INTAKE_ONE[key].map(function (o) { return '<button type="button" class="tog" data-io="' + key + "|" + o[0] + '" aria-pressed="' + (String(d[key]) === o[0]) + '" style="font-family:var(--body);font-size:15px">' + esc(o[1]) + "</button>"; }).join("") + "</div>"; };
-    var q = function (n, label, body, hint) { return '<section class="card"><div class="eyebrow">Question ' + n + ' of 8</div><h3>' + label + "</h3>" + body + (hint ? '<span class="hint">' + hint + "</span>" : "") + "</section>"; };
-    $("#view").innerHTML = moreBack() + '<section class="card"><div><div class="eyebrow">Build my plan</div><h2>8 questions</h2></div><p class="small muted" style="margin:0">Takes about a minute. Your answers shape your week and your analysis. Change them anytime.</p></section>' +
-      q(1, "What do you want to work on?", multi("goals", INTAKE_GOALS), "Pick up to 3.") +
-      q(2, "How many days a week can you train?", one("days")) +
-      q(3, "How long is a session?", one("mins")) +
-      q(4, "What do you have for lifting?", one("gym")) +
-      q(5, "Where can you throw and hit?", one("field")) +
-      q(6, "How long have you been lifting?", one("exp")) +
-      q(7, "Does anything hurt right now?", one("pain") + (d.pain === "yes" ? '<div class="field"><label for="in-pain">Where?</label><input type="text" id="in-pain" value="' + esc(d.painWhere || "") + '" placeholder="Elbow, shoulder, back…"></div>' : "")) +
-      q(8, "What's hardest about recruiting?", multi("hard", INTAKE_HARD), "Pick any.") +
+    var q = function (n, label, body, hint) { return '<section class="card"><div class="eyebrow">Question ' + n + ' of ' + QN + '</div><h3>' + label + "</h3>" + body + (hint ? '<span class="hint">' + hint + "</span>" : "") + "</section>"; };
+    $("#view").innerHTML = moreBack() + '<section class="card"><div><div class="eyebrow">Build my plan</div><h2>' + QN + ' questions</h2></div><p class="small muted" style="margin:0">Takes about two minutes. Your answers shape your week and your analysis. Change them anytime.</p></section>' +
+      q(1, "What do you want to work on?", multi("goals", INTAKE_GOALS), "Pick up to 3, most important first. Your plan leans hardest on #1.") +
+      q(2, "What position do you play?", one("pos")) +
+      q(3, "What part of the season are you in?", one("season"), "In-season plans lift less so you're fresh for games.") +
+      q(4, "How many days a week can you train?", one("days")) +
+      q(5, "How long is a session?", one("mins")) +
+      q(6, "What do you have for lifting?", one("gym")) +
+      q(7, "Where can you throw and hit?", one("field")) +
+      q(8, "How long have you been lifting?", one("exp")) +
+      q(9, "Does anything hurt right now?", one("pain") + (d.pain === "yes" ? '<div class="field"><label for="in-pain">Where?</label><input type="text" id="in-pain" value="' + esc(d.painWhere || "") + '" placeholder="Elbow, shoulder, back…"></div>' : "")) +
+      q(10, "Does your arm hurt when you throw?", one("arm"), "Shoulder or elbow pain that lasts after you throw. Be honest: it changes your plan.") +
+      q(11, "What's hardest about recruiting?", multi("hard", INTAKE_HARD), "Pick any.") +
       '<section class="card"><div class="btns"><button type="button" class="btn red" id="in-save">See my plan</button></div><span class="hint" id="in-err"></span></section>';
     bindMore();
     onAll("[data-im]", "click", function (b) { var a = b.getAttribute("data-im").split("|"), arr = d[a[0]], i = arr.indexOf(a[1]); if (i >= 0) arr.splice(i, 1); else { if (a[0] === "goals" && arr.length >= 3) { toast("Pick up to 3. Tap one to drop it first."); return; } arr.push(a[1]); } var y = window.scrollY; renderIntake(p); window.scrollTo(0, y); });
@@ -2664,7 +2791,8 @@
     var I = p.intake, ev = evaluateAll(p), gaps = allGaps(ev), cl = clubOf(p), T = trainOf(p);
     var lvl = ev.best ? ev.best.four[ev.best.bestIdx].L.name + " range today" : ev.lt.logs.length ? "Building toward a four-year range" : "No numbers yet";
     var mins = +I.mins, split = mins <= 30 ? "warm-up 5, main work 20, cool-down 5" : mins <= 45 ? "warm-up 10, main work 30, arm care 5" : mins <= 60 ? "warm-up 10, main work 40, arm care or cool-down 10" : "warm-up 15, main work 60, skill work or arm care 15";
-    var pain = I.pain === "yes" ? '<div class="warn">You said ' + (I.painWhere ? "your " + esc(I.painWhere) + " hurts" : "something hurts") + ". Get it checked by a doctor or athletic trainer before you push hard. Until then, skip anything that makes it hurt.</div>" : "";
+    var pain = (I.pain === "yes" ? '<div class="warn">You said ' + (I.painWhere ? "your " + esc(I.painWhere) + " hurts" : "something hurts") + ". Get it checked by a doctor or athletic trainer before you push hard. Until then, skip anything that makes it hurt.</div>" : "") +
+      (I.arm === "yes" ? '<div class="warn">You said your arm hurts when you throw. Your plan has no throwing until a doctor or athletic trainer clears you. Tell your parents and your coach.</div>' : "");
     var gear = [I.gym === "none" ? "no gym" : I.gym === "home" ? "weights at home" : "a full gym", I.field === "both" ? "a field and a cage" : I.field === "field" ? "a field, no cage" : I.field === "cage" ? "a cage, no field" : "no field or cage"];
     var more = cl ? '<section class="card"><h3>Want a coach on it?</h3><p class="small" style="margin:0">You\'re on ' + esc(cl.name) + ". Your club's coaches run your coaching, and your plan in Train comes from them first.</p><div class=\"btns\"><button type=\"button\" class=\"btn\" data-mvgo=\"plans\">Coaching options</button><button type=\"button\" class=\"btn\" data-mvgo=\"ask\">Ask StandPoint</button></div></section>" :
       '<section class="card"><h3>Want more?</h3><p class="small" style="margin:0">Send a video for a coach\'s breakdown, or get weekly online coaching: a coach, a program built for you that changes week to week, and a fueling check-in with a parent.</p><div class="btns"><button type="button" class="btn red" data-mvgo="plans">See coaching options</button><button type="button" class="btn" data-mvgo="ask">Ask StandPoint</button></div></section>';
@@ -2674,7 +2802,24 @@
       '<div class="btns"><button type="button" class="btn" data-mvgo="intake">Change my answers</button></div></section>' +
       '<section class="card"><h3>Your goals and what to do</h3>' + I.goals.map(function (g) { return goalBlock(p, g, ev, gaps, cl); }).join("") + '<span class="hint">Level ranges are typical numbers, not cutoffs, and nothing here guarantees an offer. Re-test every 4 to 6 weeks.</span></section>' +
       '<section class="card"><h3>Your week</h3>' + weekGridHTML(p) + '<div class="small">Each session: ' + esc(split) + ".</div>" + (cl ? '<span class="hint">Your coaches set your lifts, throwing and hitting. This fits around their plan.</span>' : '<span class="hint">Your lift and speed days are set from your answers. Change them in Train → Change your schedule.</span>') + "</section>" + more;
+    var autoSec = autoAnalysisHTML(p, cl);
+    if (autoSec) $("#view").insertAdjacentHTML("beforeend", autoSec);
     bindMore(); bindMvGo();
+  }
+  function autoAnalysisHTML(p, cl) {
+    var T = trainOf(p), A = T.auto; if (!A) return "";
+    if (!autoOn(p)) return '<section class="card"><h3>Your automatic plan</h3><p class="small" style="margin:0">Your coaches turned StandPoint\'s automatic plan off for you. Your plan in Train comes from them.</p></section>';
+    var drop = autoClubOK(T).drop, keep = function (l) { return (l || []).filter(function (t) { return drop.indexOf(t) < 0; }); };
+    var own = function (k) { return cl ? resolve(cl, p.id, k) : null; }, clubLift = !!clubLiftFor(T);
+    var li = function (l) { return '<ul class="plain small">' + l.map(function (t) { return "<li>" + esc(t) + "</li>"; }).join("") + "</ul>"; };
+    var parts = [], g = keep(A.goal), hit = [], thr = [];
+    (A.hitting || []).forEach(function (d) { hit = hit.concat(keep(d.items)); }); (A.throwing || []).forEach(function (d) { thr = thr.concat(keep(d.items)); });
+    if (g.length && !clubLift) parts.push('<div class="label" style="margin-top:8px">Added to every lift, for ' + esc(A.goals.slice(0, 2).map(function (q) { return optName(INTAKE_GOALS, q).toLowerCase(); }).join(" and ")) + "</div>" + li(g));
+    if (hit.length && !own("hitting")) parts.push('<div class="label" style="margin-top:8px">Hitting, ' + esc(daysText(A.hitting[0])) + "</div>" + li(hit));
+    if (!own("throwing")) parts.push('<div class="label" style="margin-top:8px">Throwing</div>' + (thr.length ? li(thr) : "") + '<div class="small">' + esc(A.throwNote) + "</div>");
+    if (!parts.length) return "";
+    return '<section class="card"><h3>Your automatic plan</h3><p class="small" style="margin:0">Built from your answers' + (cl ? ". Your coaches' plans come first, so this only fills in what they haven't set." : ". It's in Train now. Your coach can change any of it once you join your club.") + "</p>" + parts.join("") +
+      '<span class="hint">You still do the work. This is a starting point, not a promise of results. Re-test in 4 weeks and rebuild it.</span></section>';
   }
   // Ask StandPoint: AI answers, with guardrails for a teenage athlete
   function askPrompt(p, q) {
@@ -2686,12 +2831,13 @@
       ["throwing", "hitting"].forEach(function (kind) { var r = resolve(cl, p.id, kind); if (r) plan.push(KIND[kind].name + ": " + r.v.map(function (d) { return (d.name || KIND[kind].one) + " (" + daysText(d) + "): " + d.items.join(", "); }).join("; ")); });
       var nt = resolve(cl, p.id, "note"); if (nt) plan.push("Coach's note: " + nt.v);
     } else plan.push("Not on a club. Uses StandPoint's base plan.");
+    if (autoOn(p)) { var AA = trainOf(p).auto; plan.push("StandPoint automatic plan: goal work in lifts: " + (AA.goal.join(", ") || "none") + ". " + AA.throwNote); }
     var T = trainOf(p); plan.push("Lift days: " + T.liftDays.map(function (k) { return WEEKDAYS[k]; }).join(", ") + ". Speed days: " + (T.speedDays.map(function (k) { return WEEKDAYS[k]; }).join(", ") || "none") + ".");
     var data = [
       "Name: " + p.name + ". Class of " + p.grad + ". Positions: " + posLabel(p) + ". Bats/throws: " + (p.bats || "?") + "/" + (p.throws || "?") + "." + (p.height ? " Height: " + p.height + "." : "") + (p.weight ? " Weight: " + p.weight + " lb." : ""),
       "Latest numbers: " + (nums.join("; ") || "none logged") + ".",
       "Level: " + (ev.best ? ev.best.four[ev.best.bestIdx].L.name + " range" : "building toward a four-year range") + ". Gaps: " + (gaps.map(function (g) { return METRICS[g.k].label + " " + gapText(g.k, g.gap) + " to " + g.level; }).join("; ") || "none") + ".",
-      I ? "His answers: working on " + I.goals.map(function (g) { return optName(INTAKE_GOALS, g); }).join(", ") + "; trains " + I.days + " days a week, " + I.mins + " min; " + optName(INTAKE_ONE.gym, I.gym) + "; " + optName(INTAKE_ONE.field, I.field) + "; lifting: " + optName(INTAKE_ONE.exp, I.exp) + "; pain now: " + (I.pain === "yes" ? "yes" + (I.painWhere ? " (" + I.painWhere + ")" : "") : "no") + "." : "He hasn't answered the plan questions yet.",
+      I ? "His answers: working on " + I.goals.map(function (g) { return optName(INTAKE_GOALS, g); }).join(", ") + "; trains " + I.days + " days a week, " + I.mins + " min; " + optName(INTAKE_ONE.gym, I.gym) + "; " + optName(INTAKE_ONE.field, I.field) + "; lifting: " + optName(INTAKE_ONE.exp, I.exp) + (I.pos ? "; position: " + optName(INTAKE_ONE.pos, I.pos) : "") + (I.season ? "; season: " + optName(INTAKE_ONE.season, I.season) : "") + "; arm hurts when throwing: " + (I.arm === "yes" ? "yes" : "no") + "; pain now: " + (I.pain === "yes" ? "yes" + (I.painWhere ? " (" + I.painWhere + ")" : "") : "no") + "." : "He hasn't answered the plan questions yet.",
       plan.join(" ")
     ].join("\n");
     var coachWay = cl ? "his coaches at " + cl.name + " (Train → Skills → send a video)" : "Train → Skills → send a video for a coach's review, or online coaching in More → Plans";
@@ -2830,7 +2976,7 @@
   }
   function resolveL(L, key) { for (var i = 0; i < L.length; i++) if (hasV(L[i].o[key])) return { v: L[i].o[key], lv: L[i].lv, o: L[i].o }; return null; }
   function resolve(c, pid, key) { return resolveL(layersOf(c, pid), key); }
-  function srcLabel(c, r, forPlayer) { if (!r) return "the StandPoint base plan"; if (r.lv === "player") return forPlayer ? "your coach, just for you" : "his own plan"; if (r.lv === "team") return r.o.name; return c.name; }
+  function srcLabel(c, r, forPlayer) { if (!r) return "the StandPoint base plan"; if (r.lv === "auto") return forPlayer ? "StandPoint's automatic plan, from your answers" : "StandPoint's automatic plan"; if (r.lv === "player") return forPlayer ? "your coach, just for you" : "his own plan"; if (r.lv === "team") return r.o.name; return c.name; }
   function liftFor(c, pid) { var r = resolve(c, pid, "lift"); return r ? r.v : null; }
   function daysForL(L) {
     var lf = resolveL(L, "lift"), s = resolveL(L, "season"), dd = resolveL(L, "days");
@@ -2952,7 +3098,10 @@
   function routinesCard(p, T) {
     var c = clubOf(p), date = trainView.date || todayStr, wd = dayOfWeek(date), lg = (T.throwLog = T.throwLog || {})[date] || {};
     var parts = ["throwing", "hitting"].map(function (kind) {
-      var K = KIND[kind], r = c ? resolve(c, p.id, kind) : null;
+      var K = KIND[kind], own = c ? resolve(c, p.id, kind) : null, r = own || autoR(p, kind), note = kind === "throwing" && !own && autoOn(p) ? T.auto.throwNote || "" : "";
+      var hurt = kind === "throwing" && p.intake && p.intake.arm === "yes";
+      if (hurt && !note) note = "You said your arm hurts when you throw. Tell your parents and coach, and get it checked by a doctor or athletic trainer before you throw hard again.";
+      if (!r && note) return '<div class="card-sub"><strong>' + K.name + '</strong>' + (hurt ? '<div class="warn">' + esc(note) + "</div>" : '<span class="small">' + esc(note) + "</span>") + "</div>";
       if (!r) return '<div class="card-sub"><strong>' + K.name + '</strong><span class="small muted">' + (c ? "Your coaches haven't added a " + K.name.toLowerCase() + " program yet. It shows up here when they do." :
         kind === "throwing" ? "StandPoint's base throwing program is coming. On a club or facility? Join it under More → Your club and your coach adds yours." : "Join your club or facility under More → Your club and your coach adds your hitting routine, or get one through the coaching upgrade in Skills.") + "</span></div>";
       var today = r.v.map(function (d, i) { return { d: d, i: i }; }).filter(function (q) { return (q.d.flex || (q.d.wd || []).indexOf(wd) >= 0) && q.d.items.length; });
@@ -2964,15 +3113,15 @@
       }).join("") : '<span class="small">No ' + K.name.toLowerCase() + " on " + WEEKDAYS_FULL[wd] + ".</span>";
       return '<div class="card-sub"><div class="sh"><strong>' + K.name + '</strong><span class="small muted">from ' + esc(srcLabel(c, r, true)) + "</span></div>" + body +
         '<details><summary>Your ' + K.name.toLowerCase() + " week</summary>" + '<div class="small" style="margin-top:6px">' + week + "</div>" +
-        r.v.map(function (d) { return '<div class="small" style="margin-top:6px"><strong>' + esc(d.name || K.one) + ":</strong> " + esc(d.items.join(" · ") || "nothing listed") + "</div>"; }).join("") + "</details></div>";
+        r.v.map(function (d) { return '<div class="small" style="margin-top:6px"><strong>' + esc(d.name || K.one) + ":</strong> " + esc(d.items.join(" · ") || "nothing listed") + "</div>"; }).join("") + "</details>" + (note ? (hurt ? '<div class="warn">' + esc(note) + "</div>" : '<span class="hint">' + esc(note) + "</span>") : "") + "</div>";
     });
     return '<section class="card"><div><div class="eyebrow">Throwing and hitting</div><h3>' + (date === todayStr ? "Today" : fmtDate(date)) + "</h3></div>" + parts.join("") + "</section>";
   }
   function routineMoves(p) {
-    var c = clubOf(p); if (!c) return [];
+    var c = clubOf(p); if (!c && !autoOn(p)) return [];
     var wd = dayOfWeek(todayStr), out = [];
     var T = trainOf(p);
-    ["throwing", "hitting"].forEach(function (kind) { var r = resolve(c, p.id, kind); if (r) r.v.forEach(function (d, i) {
+    ["throwing", "hitting"].forEach(function (kind) { var r = (c ? resolve(c, p.id, kind) : null) || autoR(p, kind); if (r) r.v.forEach(function (d, i) {
       if (!d.items.length) return;
       if (d.flex) { var n = flexDone(T, kind, i, todayStr); if (n < d.flex && !dayDone(T, kind, i, todayStr)) out.push({ t: "This week: " + KIND[kind].name + " · " + (d.name || KIND[kind].one) + " (" + n + " of " + d.flex + ")", s: d.items.slice(0, 3).join(" · ") + ". Any day works. Check it off in Train.", tab: "train" }); return; }
       if ((d.wd || []).indexOf(wd) >= 0) out.push({ t: "Today: " + KIND[kind].name + " · " + (d.name || KIND[kind].one), s: d.items.slice(0, 3).join(" · ") + ". Check it off in Train.", tab: "train" });
@@ -3217,12 +3366,12 @@
       '<div class="small"><strong>Schedule:</strong> ' + esc(scheduleLine(x)) + "</div>" + (scheduleLines(x).length ? '<ul class="plain small">' + scheduleLines(x).map(function (l) { return "<li>" + esc(l) + "</li>"; }).join("") + "</ul>" : "") + "</section>";
     var pco = c.pcoach[x.id] || [], tco = team ? (team.coachIds || []) : [];
     var plans = '<section class="card"><h3>His plans</h3><div class="small">Lifts: ' + esc(src("lift")) + " · Throwing: " + esc(src("throwing")) + " · Hitting: " + esc(src("hitting")) + " · Skills: " + esc(skillKeys().filter(function (k) { return skillFor(c, x.id, k); }).length ? "coach drills" : "StandPoint starter drills") + " · Fuel: " + esc(src("fuel")) + "</div>" +
-      (x.intake ? '<div class="small"><strong>His goals:</strong> ' + esc(x.intake.goals.map(function (g) { return optName(INTAKE_GOALS, g); }).join(", ")) + " · trains " + esc(x.intake.days) + " days, " + esc(x.intake.mins) + " min · " + esc(optName(INTAKE_ONE.gym, x.intake.gym).toLowerCase()) + " · " + esc(optName(INTAKE_ONE.field, x.intake.field).toLowerCase()) + (x.intake.pain === "yes" ? ' · <span class="pill close">Said something hurts' + (x.intake.painWhere ? ": " + esc(x.intake.painWhere) : "") + "</span>" : "") + "</div>" : "") +
+      (x.intake ? '<div class="small"><strong>His goals:</strong> ' + esc(x.intake.goals.map(function (g) { return optName(INTAKE_GOALS, g); }).join(", ")) + " · trains " + esc(x.intake.days) + " days, " + esc(x.intake.mins) + " min · " + esc(optName(INTAKE_ONE.gym, x.intake.gym).toLowerCase()) + " · " + esc(optName(INTAKE_ONE.field, x.intake.field).toLowerCase()) + (x.intake.arm === "yes" ? ' · <span class="pill close">Arm hurts when he throws</span>' : "") + (x.intake.season ? " · " + esc(optName(INTAKE_ONE.season, x.intake.season).toLowerCase()) : "") + (x.intake.pain === "yes" ? ' · <span class="pill close">Said something hurts' + (x.intake.painWhere ? ": " + esc(x.intake.painWhere) : "") + "</span>" : "") + "</div>" : "") +
       '<div class="row2"><div class="field"><label for="cp-lesson">Next lesson</label><input type="date" id="cp-lesson" value="' + esc(((c.lessons || {})[x.id] || {}).date || "") + '"></div><div class="field"><label for="cp-lnote">Time and coach <span class="hint">(optional)</span></label><input type="text" id="cp-lnote" value="' + esc(((c.lessons || {})[x.id] || {}).note || "") + '" placeholder="4:30 pm with Alejandro"></div></div>' +
       (c.coaches.length ? '<div class="field"><span class="label">Coaches working with him</span><div class="toggles">' + c.coaches.map(function (q) { var viaTeam = tco.indexOf(q.id) >= 0, on = viaTeam || pco.indexOf(q.id) >= 0; return '<button type="button" class="tog" data-pco="' + esc(x.id) + "|" + esc(q.id) + '" aria-pressed="' + on + '"' + (viaTeam ? ' disabled title="Coaches his team"' : "") + ' style="font-family:var(--body);font-size:14px">' + esc(q.name) + (viaTeam ? " (team)" : "") + "</button>"; }).join("") + '</div><span class="hint">Add any coach who works with him. They see him under "My players." Any coach in the club can change his plans.</span></div>' : "") +
       (c.indiv[x.id] && hasV(c.indiv[x.id].note) ? '<div class="small"><strong>His focus:</strong> ' + esc(c.indiv[x.id].note) + (c.indiv[x.id].updated ? " (updated " + fmtShortDate(c.indiv[x.id].updated) + ")" : "") + "</div>" : "") +
       '<div class="btns"><button type="button" class="btn primary" data-ownplan="' + esc(x.id) + '">Make or change his own plan</button></div>' +
-      '<span class="hint">His own plan replaces the team and club plan for him only. Change it week to week or month to month.</span>' + logHTML(c, logFor(c, x.id), "Plan changes") + "</section>";
+      '<span class="hint">His own plan replaces the team and club plan for him only. Change it week to week or month to month.</span>' + logHTML(c, logFor(c, x.id), "Plan changes") + "</section>" + autoCoachHTML(c, x);
     var rec = '<section class="card"><h3>Recruiting</h3><div class="small">' + k.list + " schools · " + k.emailed + " emailed · " + k.replies + " replied · " + k.offers + " offers" + (k.due ? ' · <span class="pill close">' + k.due + " due</span>" : "") + "</div>" + (rows.length ? '<details class="card-sub"><summary>Pipeline: ' + esc(STAGES.filter(function (st) { return rows.some(function (r) { return stageOf(r.t) === st[0]; }); }).map(function (st) { return st[1] + " " + rows.filter(function (r) { return stageOf(r.t) === st[0]; }).length; }).join(" · ")) + "</summary>" + pipelineInner(rows) + "</details>" : "") +
       (rows.length ? '<div class="hist">' + rows.map(function (r) {
         var done = STEPS.filter(function (st) { return r.t.steps[st[0]]; }).map(function (st) { return st[2] + " " + fmtShortDate(r.t.steps[st[0]]); });
@@ -3383,6 +3532,18 @@
       '<div class="field"><label for="tm-kind">Type</label><select id="tm-kind"><option value="team"' + (t2 === "team" ? " selected" : "") + '>Team (age group)</option><option value="group"' + (t2 !== "team" ? " selected" : "") + ">Coach group (private training)</option></select></div></div>" +
       '<div class="btns"><button type="button" class="btn primary" id="tm-add">Add</button></div></section>';
   }
+  // Coach view of a player's automatic plan: what it adds, remove any part, or turn it off for him.
+  function autoCoachHTML(c, x) {
+    var T = x.train && x.train.auto ? x.train : null; if (!T) return "";
+    var A = T.auto, ind = c.indiv[x.id] || {}, drop = ind.autoDrop || [], off = c.autoPlans === false || !!ind.autoOff;
+    var row = function (t) { var gone = drop.indexOf(t) >= 0; return '<div class="hitem"><div class="h"><span' + (gone ? ' class="muted"' : "") + ">" + esc(t) + (gone ? " (removed)" : "") + '</span><button type="button" class="btn ghost small" data-' + (gone ? "aback" : "adrop") + '="' + esc(x.id) + '" data-atext="' + esc(t) + '">' + (gone ? "Bring back" : "Remove") + "</button></div></div>"; };
+    var part = function (label, list) { return list.length ? '<div class="label" style="margin-top:8px">' + label + '</div><div class="hist">' + list.map(row).join("") + "</div>" : ""; };
+    var hit = [], thr = []; (A.hitting || []).forEach(function (d) { hit = hit.concat(d.items); }); (A.throwing || []).forEach(function (d) { thr = thr.concat(d.items); });
+    return '<section class="card"><h3>StandPoint automatic plan</h3><div class="small">Built from his answers on ' + esc(fmtShortDate(A.made)) + " for " + esc(A.goals.map(function (g) { return optName(INTAKE_GOALS, g); }).join(", ")) + ". " +
+      (c.autoPlans === false ? "Automatic plans are off for your club (Club tab)." : ind.autoOff ? "Off for him: he follows only the plans you set." : "It fills in only where you haven't set his lifts, throwing or hitting.") + "</div>" +
+      (off ? "" : part("Goal work in his lifts", A.goal || []) + part("Hitting", hit) + part("Throwing: arm care", thr) + (A.throwNote ? '<span class="hint">' + esc(A.throwNote) + "</span>" : "")) +
+      (c.autoPlans === false ? "" : '<div class="btns"><button type="button" class="btn" data-aoff="' + esc(x.id) + '">' + (ind.autoOff ? "Turn it back on for him" : "Turn it off for him") + "</button></div>") + "</section>";
+  }
   function clubSettingsHTML(c) {
     var head = '<section class="card"><div><div class="eyebrow">' + esc(c.type || "Club") + "</div><h3>" + esc(c.name) + '</h3></div><div class="btns"><button type="button" class="btn" id="cl-edit">Edit name and type</button><button type="button" class="btn ghost" id="cl-del">Delete this club</button></div></section>';
     var coaches = '<section class="card"><h3>Coaches</h3>' + (c.coaches.length ? '<div class="hist">' + c.coaches.map(function (x) {
@@ -3487,6 +3648,7 @@
     return '<section class="card"><h3>Invite your players</h3><div class="big num">' + esc(c.code) + '</div><p class="small" style="margin:0">Players enter this code when they sign up, or later under More → Your club, then pick their team or coach. You accept them, and their plan shows up in their app.</p>' +
       '<label class="task"><input type="checkbox" id="inv-auto"' + (c.autoAccept ? " checked" : "") + '><span><strong>Accept players automatically</strong><br><span class="muted small">Anyone with the code joins right away, on the team they pick. Leave it off to approve each player.</span></span></label>' +
       '<div class="btns"><a class="btn primary" href="sms:?&body=' + encodeURIComponent(msg) + '">Text it</a><a class="btn" href="mailto:?subject=' + encodeURIComponent("Join " + c.name + " on StandPoint") + "&body=" + encodeURIComponent(msg) + '">Email it</a><button type="button" class="btn" id="inv-copy">Copy</button></div></section>' +
+      '<section class="card"><h3>Automatic plans</h3><label class="task"><input type="checkbox" id="cl-autoplans"' + (c.autoPlans !== false ? " checked" : "") + '><span><strong>Fill gaps with StandPoint\'s automatic plans</strong><br><span class="muted small">Players who answer the questions in Build my plan get goal work in their lifts, a hitting routine and arm care wherever you haven\'t set your own. Your plans for the club, a team or one player always come first. You can remove any part for a player, or turn it off for him.</span></span></label></section>' +
       '<section class="card"><h3>License</h3><p class="small" style="margin:0">' + (lic ? "License on" + (store.plan.test ? " (test, no charge)" : "") + "." : "Covers every player in your club. Price set after the cost model.") + "</p>" +
       '<div class="btns">' + (link ? '<a class="btn red" href="' + esc(link) + '" target="_blank" rel="noopener">Buy the license</a>' : "") + '<button type="button" class="btn" id="lic-test">' + (lic ? "End test license" : "Start a test license") + "</button></div></section>";
   }
@@ -3503,6 +3665,9 @@
     if ($("#cp-lesson")) { $("#cp-lesson").addEventListener("change", function () { saveLesson(); toast($("#cp-lesson").value ? "Next lesson saved. He sees it on Home." : "Lesson cleared."); }); $("#cp-lnote").addEventListener("input", saveLesson); }
     if ($("#cp-team")) $("#cp-team").addEventListener("change", function (e) { if (e.target.value) c.teamOf[clubPlayer] = e.target.value; else delete c.teamOf[clubPlayer]; var x = store.players.filter(function (q) { return q.id === clubPlayer; })[0]; if (x) applyClub(x); persist(); redrawHQ(); toast("Team updated."); });
     onAll("[data-pco]", "click", function (b) { var a = ix(b.getAttribute("data-pco")), arr = c.pcoach[a[0]] = c.pcoach[a[0]] || [], i = arr.indexOf(a[1]); if (i >= 0) arr.splice(i, 1); else arr.push(a[1]); persist(); redrawHQ(); });
+    onAll("[data-adrop]", "click", function (b) { var pid = b.getAttribute("data-adrop"), t = b.getAttribute("data-atext"), ind = c.indiv[pid] = c.indiv[pid] || {}; ind.autoDrop = (ind.autoDrop || []).concat([t]); persist(); redrawHQ(); toast("Removed from his automatic plan."); });
+    onAll("[data-aback]", "click", function (b) { var pid = b.getAttribute("data-aback"), t = b.getAttribute("data-atext"), ind = c.indiv[pid] = c.indiv[pid] || {}; ind.autoDrop = (ind.autoDrop || []).filter(function (q) { return q !== t; }); persist(); redrawHQ(); toast("Back in his automatic plan."); });
+    onAll("[data-aoff]", "click", function (b) { var pid = b.getAttribute("data-aoff"), ind = c.indiv[pid] = c.indiv[pid] || {}; ind.autoOff = !ind.autoOff; persist(); redrawHQ(); toast(ind.autoOff ? "Automatic plan off for him. Write his own with Make or change his own plan." : "Automatic plan back on for him."); });
     onAll("[data-ownplan]", "click", function (b) { planScope = { level: "player", id: b.getAttribute("data-ownplan") }; coachTab = "training"; trainSub = "lifts"; clubPlayer = null; render(); window.scrollTo(0, 0); });
     onAll("[data-cvouch]", "click", function (b) {
       var pr = ix(b.getAttribute("data-cvouch")), x = store.players.filter(function (q) { return q.id === pr[0]; })[0]; if (!x) return;
@@ -3605,6 +3770,7 @@
     onAll("[data-tsub]", "click", function (b) { trainSub = b.getAttribute("data-tsub"); render(); window.scrollTo(0, 0); });
     if ($("#inv-copy")) $("#inv-copy").addEventListener("click", function () { copyText(inviteText(c), "Invite copied. Send it to your players."); });
     if ($("#inv-auto")) $("#inv-auto").addEventListener("change", function (e) { c.autoAccept = e.target.checked; persist(); toast(e.target.checked ? "New players join right away." : "You'll approve each new player."); });
+    if ($("#cl-autoplans")) $("#cl-autoplans").addEventListener("change", function (e) { c.autoPlans = e.target.checked; persist(); toast(e.target.checked ? "Automatic plans fill any gaps in your players' plans." : "Automatic plans are off for your club."); });
     onAll("[data-acc]", "click", function (b) { var id = b.getAttribute("data-acc"), sel = document.querySelector('[data-rqteam="' + id + '"]'), x = store.players.filter(function (q) { return q.id === id; })[0]; acceptPlayer(id, true, sel ? sel.value : c.pendTeam[id]); redrawHQ(); toast((x ? x.name : "Player") + " is on your roster."); });
     onAll("[data-dec]", "click", function (b) { acceptPlayer(b.getAttribute("data-dec"), false); redrawHQ(); toast("Request declined."); });
     onAll("[data-cra]", "click", function (b) { var r = (c.coachReq || []).filter(function (q) { return q.id === b.getAttribute("data-cra"); })[0], me = coachMe(c); if (!r) return; r.status = "accepted"; r.by = me ? me.name : "A coach"; if (me) { c.pcoach[r.pid] = c.pcoach[r.pid] || []; if (playerCoachIds(c, r.pid).indexOf(me.id) < 0) c.pcoach[r.pid].push(me.id); } persist(); redrawHQ(); toast("Accepted. He sees it in Plans, and you're on his coaches."); });
