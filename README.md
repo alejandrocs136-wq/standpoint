@@ -77,7 +77,7 @@ The app now has two modes, picked by `public/config.js`:
 **Layout**
 
 - `public/` is the whole website: `index.html`, `config.js`, `vendor/supabase.js` (supabase-js 2.119.0, pinned), the manifest and icons.
-- `supabase/01_tables.sql`, `02_security.sql`, `03_app_functions.sql`, `04_hardening.sql` build the database. Run them in order in the Supabase SQL Editor.
+- `supabase/01_tables.sql`, `02_security.sql`, `03_app_functions.sql`, `04_hardening.sql`, `05_video.sql` build the database and video storage. Run them in order in the Supabase SQL Editor.
 - `public/_headers` sets security headers (content security policy, no framing) on everything Cloudflare serves. If the Supabase project changes, update its address there too.
 - `wrangler.jsonc` tells Cloudflare to serve `public/`. Every push to `main` redeploys.
 
@@ -96,4 +96,16 @@ Run `supabase/04_hardening.sql` in the Supabase SQL Editor **before** pushing th
 - **Two coaches at once:** saves carry a version number; if another coach saved first, the app merges both changes, saves again and says so.
 - **Scale:** refreshes ask for version numbers first and only download players whose data changed, in batches of 100. A refresh with nothing new no longer rewrites the club's data. A tapped refresh during a save now waits for the save and then runs. A refresh downloads everything first and swaps it in at once, so a tap while it loads can't leave a half-loaded screen (the "screen resets until I refresh" bug).
 - **Tested:** 55 checks (database attacks as each kind of user, a booby-trapped player profile, two coaches saving at once, refresh downloads, a 201-player club, the app running under the security headers), plus the earlier suites on the database with and without step 4.
+
+## Video beta and screen setting (Nov 7, 2026)
+
+Run `supabase/05_video.sql` in the Supabase SQL Editor **before** pushing this version. It is safe to run more than once.
+
+- **Players** (Video tab, which used to be Post): upload a video (up to 50 MB, about 30 to 60 seconds from a phone; up to 20 videos), pick what kind it is, mark clips with a start and an end (bookmarks, so the full video stays as it is), play a clip, delete a video. Deleting the account deletes his videos.
+- **Coaches** (Training > Video): every player's videos, newest first; play the clips; leave a note tied to a moment in the video. The player sees the note with the video and can tap the time to jump there.
+- **Storage:** a private `videos` bucket. Each player's videos live in a folder named after his account. Only he can add or delete them; he and his club's coaches can watch them through links that expire after an hour. Nobody else can, and nothing is public. Videos only, 50 MB a file (the most Supabase's free plan allows), 20 per player.
+- **Where things are kept:** the video list and clips in `player_state.data.videos`; coach notes in `player_plans.data.vidNotes`.
+- **Screen:** the app is light unless someone picks Dark or Match my phone (More for players, the Club tab for coaches). The choice is saved on that phone.
+- **Not yet:** automatic clipping, highlight reels and posting clips straight to X. Supabase's free plan holds 1 GB of files in total; Pro ($25 a month) holds 100 GB.
+- **Tested:** 32 video checks (upload, clips, coach notes, the storage rules from outside the app, size and type limits, delete, the one-phone preview) and 9 screen-setting checks, plus every earlier suite.
 

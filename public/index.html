@@ -6,6 +6,7 @@
 <title>StandPoint</title>
 <link rel="manifest" href="manifest.webmanifest">
 <script src="config.js"></script>
+<script>try { document.documentElement.setAttribute("data-theme", localStorage.getItem("sp-theme") || "light"); } catch (e) { document.documentElement.setAttribute("data-theme", "light"); }</script>
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="theme-color" content="#0F2340">
@@ -38,7 +39,7 @@
     color-scheme: light;
   }
   @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
+    :root[data-theme="auto"] {
       --bg: #0C1624; --surface: #13202F; --ink: #E7ECF1; --muted: #9DAABA; --line: #2A3A4E;
       --accent: #FF5A63; --navy: #0A1626; --focus: #7AA7FF; --good: #57C98E; --close: #E5AE45; --notyet: #8592A0;
       --good-bg: #173226; --close-bg: #33280F; --notyet-bg: #1F2A34;
@@ -253,7 +254,16 @@
   .tabs button[aria-current="page"]::before { content: ""; position: absolute; top: -1px; left: 26%; right: 26%; height: 3px;
     border-radius: 0 0 2px 2px; background: var(--accent); }
   .toast { background: var(--navy); color: #fff; border-radius: 8px; }
-  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .toast { background: #fff; color: #0F2340; } }
+  .vlist { display: grid; }
+  .vrow { all: unset; box-sizing: border-box; display: grid; gap: 2px; padding: 12px 0; border-top: 1px solid var(--line); cursor: pointer; min-height: 44px; }
+  .vrow:first-child { border-top: 0; }
+  .vrow:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+  .vrow .vt { font-weight: 700; }
+  .vclip, .vnote { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; padding: 8px 0; border-top: 1px solid var(--line); }
+  .vnote { display: grid; gap: 2px; }
+  .vclip:first-child, .vnote:first-child { border-top: 0; }
+  .vclip .btn { min-height: 38px; padding: 4px 12px; font-size: 14px; }
+  @media (prefers-color-scheme: dark) { :root[data-theme="auto"] .toast { background: #fff; color: #0F2340; } }
   :root[data-theme="dark"] .toast { background: #fff; color: #0F2340; }
 </style>
 </head>
@@ -574,6 +584,9 @@
   var tab = "home";
   var schoolView = null, schoolFilter = { show: null, level: "all", q: "", state: "all" }, coachPick = {};
   var post ={ url: null, name: "", session: "cage", include: {}, tagsPicked: [] };
+  // Video: which video is open (player: its id; coach: {pid, id}), upload state, clip being marked, local previews, signed links
+  var VID_MAX = 50 * 1024 * 1024, VID_CAP = 20, CLIP_CAP = 30;
+  var vidView = null, vidBusy = false, vidKind = "cage", vidDraft = { id: null, s: null, e: null }, vidLocal = {}, vidUrls = {}, vidDelArm = null, clipStop = null;
   var ICONS = {
     home: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
     numbers: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg>',
@@ -582,7 +595,7 @@
     schools: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 10l9-5 9 5-9 5z"/><path d="M7 12.5V17c3 2 7 2 10 0v-4.5"/></svg>',
     post: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="M16 10l5-3v10l-5-3z"/></svg>'
   };
-  var TAB_NAMES = { home: "Home", numbers: "Numbers", train: "Train", recruit: "Recruit", schools: "Schools", post: "Post" };
+  var TAB_NAMES = { home: "Home", numbers: "Numbers", train: "Train", recruit: "Recruit", schools: "Schools", post: "Video" };
 
   function toast(msg) {
     var t = $("#toast"); t.textContent = msg; t.classList.add("show");
@@ -595,7 +608,7 @@
       else fail();
     } catch (e) { fail(); }
   }
-  function go(t) { tab = t; if (t === "schools") schoolView = null; if (pushedSchool) { pushedSchool = false; try { history.replaceState(null, ""); } catch (e) {} } render(); window.scrollTo(0, 0); }
+  function go(t) { tab = t; if (t === "schools") schoolView = null; if (t === "post") vidView = null; if (pushedSchool) { pushedSchool = false; try { history.replaceState(null, ""); } catch (e) {} } render(); window.scrollTo(0, 0); }
   function openSchool(id) {
     tab = "schools"; schoolView = id; render(); window.scrollTo(0, 0);
     try { if (!pushedSchool) { history.pushState({ sp: "school" }, ""); pushedSchool = true; } } catch (e) { pushedSchool = false; }
@@ -618,7 +631,7 @@
       $("#tabs").style.gridTemplateColumns = "repeat(5, 1fr)";
       var nreq = store.club ? (store.club.pending || []).filter(function (id) { return store.players.some(function (q) { return q.id === id; }); }).length : 0;
       $("#tabs").innerHTML = Object.keys(COACH_TABS).map(function (k) { return '<button type="button" id="ctab-' + k + '"' + (coachTab === k ? ' aria-current="page"' : "") + (ok ? "" : " disabled") + ">" + CICONS[k] + "<span>" + COACH_TABS[k] + (k === "team" && nreq ? " (" + nreq + ")" : "") + "</span></button>"; }).join("");
-      Object.keys(COACH_TABS).forEach(function (k) { $("#ctab-" + k).addEventListener("click", function () { coachTab = k; clubPlayer = null; render(); window.scrollTo(0, 0); }); });
+      Object.keys(COACH_TABS).forEach(function (k) { $("#ctab-" + k).addEventListener("click", function () { coachTab = k; clubPlayer = null; vidView = null; render(); window.scrollTo(0, 0); }); });
       return;
     }
     var p = cur();
@@ -2578,11 +2591,159 @@
     if (tags.length) lines.push(tags.join(" "));
     return lines.join("\n");
   }
+
+  // ----- Video: upload, clips, coach notes -----
+  function mb(n) { return (n / 1048576).toFixed(n < 10485760 ? 1 : 0) + " MB"; }
+  function tfmt(t) { if (t == null || isNaN(t)) return "—"; var m = Math.floor(t / 60), x = t - m * 60; return m + ":" + (x < 10 ? "0" : "") + x.toFixed(1); }
+  function vDate(d, f) { return typeof d === "string" && /^\d{4}-\d\d-\d\d$/.test(d) ? f(d) : ""; }
+  function round1(t) { return Math.round((+t || 0) * 10) / 10; }
+  function kindName(k) { var f = SESSIONS.filter(function (x) { return x[0] === k; })[0]; return f ? f[1] : "Video"; }
+  function vidNotesFor(pid, vid) { var c = store.club, n = c && c.vidNotes && c.vidNotes[pid]; return n && Array.isArray(n[vid]) ? n[vid] : []; }
+  function vidRowHTML(v, pid, who) {
+    var nc = vidNotesFor(pid, v.id).length, cc = (v.clips || []).length;
+    return '<button type="button" class="vrow" data-vopen="' + esc(who ? pid + "|" + v.id : v.id) + '"><span class="vt">' + (who ? esc(who) + ": " : "") + esc(kindName(v.kind)) + ", " + esc(vDate(v.date, fmtDate)) + '</span>' +
+      '<span class="small muted">' + cc + (cc === 1 ? " clip" : " clips") + " · " + nc + (nc === 1 ? " coach note" : " coach notes") + (v.size ? " · " + mb(v.size) : "") + (v.local && !vidLocal[v.id] ? " · only on the device that added it" : "") + "</span></button>";
+  }
+  function videosHTML(p) {
+    var vs = p.videos || [];
+    return '<section class="card"><div><h2>Your videos</h2><p class="muted small" style="margin:4px 0 0">Upload swings, bullpens or at-bats, mark the clips that matter, and ' + (clubOf(p) ? "your coaches can watch them and leave notes." : "keep them in one place.") + "</p></div>" +
+      '<div class="field"><span class="label" id="l-vk">What kind</span><div class="toggles" role="group" aria-labelledby="l-vk">' +
+        SESSIONS.map(function (s) { return '<button type="button" class="tog" data-vk="' + s[0] + '" aria-pressed="' + (vidKind === s[0]) + '">' + s[1] + "</button>"; }).join("") + "</div></div>" +
+      '<div class="field"><label for="vid-file">Add a video</label><input type="file" id="vid-file" accept="video/*"' + (vidBusy ? " disabled" : "") + '>' +
+        '<span class="hint">Up to 50 MB each, about 30 to 60 seconds from a phone. Up to ' + VID_CAP + " videos." + (CLOUD ? "" : " In this preview, a video stays on this device until you reload.") + "</span></div>" +
+      (vidBusy ? '<p class="small" role="status" style="margin:0"><strong>Uploading…</strong> Keep this screen open.</p>' : "") +
+      (vs.length ? '<div class="vlist">' + vs.map(function (v) { return vidRowHTML(v, p.id, null); }).join("") + "</div>" : '<p class="small muted" style="margin:0">No videos yet. Add your first one above.</p>') +
+      "</section>";
+  }
+  function bindVideos(p) {
+    onAll("[data-vk]", "click", function (b) { vidKind = b.getAttribute("data-vk"); renderPost(cur()); });
+    onAll("[data-vopen]", "click", function (b) { vidView = b.getAttribute("data-vopen"); vidDraft = { id: null, s: null, e: null }; vidDelArm = null; render(); window.scrollTo(0, 0); });
+    var f = $("#vid-file");
+    if (f) f.addEventListener("change", function (e) { var file = e.target.files && e.target.files[0]; e.target.value = ""; if (file) addVideo(p.id, file); });
+  }
+  async function addVideo(pid, f) {
+    var p = store.players.filter(function (x) { return x.id === pid; })[0]; if (!p) return;
+    if (!/^video\//.test(f.type || "")) { toast("That file isn't a video."); return; }
+    if (f.size > VID_MAX) { toast("That video is " + mb(f.size) + ". The limit is 50 MB, so trim it in your Photos app first."); return; }
+    if ((p.videos || []).length >= VID_CAP) { toast("You have " + VID_CAP + " videos. Delete one to add another."); return; }
+    var id = uid() + uid(), v = { id: id, name: String(f.name || "video").slice(0, 80), size: f.size, type: f.type, kind: vidKind, date: todayStr, created: Date.now(), clips: [] };
+    if (CLOUD && me) {
+      var ext = ((f.name || "").match(/\.([A-Za-z0-9]{2,5})$/) || [0, "mp4"])[1].toLowerCase();
+      v.path = me.id + "/" + id + "." + ext;
+      vidBusy = true; render();
+      try { await cq(sb.storage.from("videos").upload(v.path, f, { contentType: f.type, upsert: false, cacheControl: "3600" })); }
+      catch (e) { vidBusy = false; render(); toast("Couldn't upload: " + msgOf(e)); return; }
+      vidBusy = false;
+      p = store.players.filter(function (x) { return x.id === pid; })[0]; if (!p) return;   // a refresh may have swapped the data while it uploaded
+    } else { vidLocal[id] = URL.createObjectURL(f); v.local = true; }
+    p.videos = p.videos || []; p.videos.unshift(v); persist();
+    vidView = id; vidDraft = { id: null, s: null, e: null }; tab = "post"; render(); window.scrollTo(0, 0); toast("Video added.");
+  }
+  async function vidSrc(v) {
+    if (vidLocal[v.id]) return vidLocal[v.id];
+    if (!CLOUD || !v.path || !sb) return null;
+    var hit = vidUrls[v.path]; if (hit && hit.exp > Date.now()) return hit.url;
+    var r = await cq(sb.storage.from("videos").createSignedUrl(v.path, 3600));
+    vidUrls[v.path] = { url: r.signedUrl, exp: Date.now() + 50 * 60000 };
+    return r.signedUrl;
+  }
+  function renderVideo(p, v, coach) {
+    var clips = (v.clips || []).filter(function (c) { return c && isFinite(c.s) && isFinite(c.e); }), notes = vidNotesFor(p.id, v.id);
+    var known = vidLocal[v.id] || (v.path && vidUrls[v.path] && vidUrls[v.path].exp > Date.now() ? vidUrls[v.path].url : null);
+    var draft = vidDraft.id === v.id ? vidDraft : { id: v.id, s: null, e: null }; vidDraft = draft;
+    $("#view").innerHTML = (coach ? coachTrainSeg() : "") +
+      '<div class="backbar"><button type="button" class="btn" id="vid-back">← ' + (coach ? "All videos" : "Your videos") + "</button></div>" +
+      '<section class="card"><div><h2>' + (coach ? esc(p.name) + ": " : "") + esc(kindName(v.kind)) + ", " + esc(vDate(v.date, fmtDate)) + '</h2><div class="small muted">' + esc(v.name || "") + (v.size ? " · " + mb(v.size) : "") + "</div></div>" +
+        '<video id="vid-el" controls playsinline preload="metadata"' + (known ? ' src="' + esc(known) + '"' : "") + "></video>" +
+        '<p class="small muted" id="vid-msg" style="margin:0">' + (known ? "" : v.local && !vidLocal[v.id] ? "This video was added in the preview on another device or before a reload, so it can't play here." : "Loading the video…") + "</p>" +
+        (coach ? "" :
+          '<div class="field"><span class="label">Mark a clip</span><span class="hint">Play to the moment, then tap. Clips are bookmarks: the full video stays as it is.</span>' +
+            '<div class="btns"><button type="button" class="btn" id="vc-start">Mark start</button><button type="button" class="btn" id="vc-end">Mark end</button></div>' +
+            '<div class="small" id="vc-show">Start ' + tfmt(draft.s) + " · End " + tfmt(draft.e) + "</div>" +
+            '<div class="field"><label for="vc-label">Clip name</label><input type="text" id="vc-label" maxlength="40" value="Clip ' + (clips.length + 1) + '"></div>' +
+            '<div class="btns"><button type="button" class="btn primary" id="vc-save">Save clip</button></div></div>') +
+        '<div class="field"><span class="label">Clips</span>' + (clips.length ? '<div class="vlist">' + clips.map(function (c) {
+          return '<div class="vclip"><span><strong>' + esc(c.label || "Clip") + '</strong> <span class="muted small">' + tfmt(c.s) + "–" + tfmt(c.e) + '</span></span><span class="btns"><button type="button" class="btn" data-vplay="' + esc(c.id) + '">Play</button>' +
+            (coach ? "" : '<button type="button" class="btn ghost" data-vcdel="' + esc(c.id) + '">Remove</button>') + "</span></div>";
+        }).join("") + "</div>" : '<span class="small muted">' + (coach ? "No clips marked yet." : "No clips yet. Mark the swings worth keeping.") + "</span>") + "</div>" +
+        '<div class="field"><span class="label">Coach notes</span>' + (notes.length ? '<div class="vlist">' + notes.map(function (n) {
+          return '<div class="vnote"><div class="small"><strong>' + esc(n.name || "Coach") + "</strong>" + (n.t != null ? ' at <button type="button" class="linkbtn" data-vseek="' + esc(n.t) + '">' + tfmt(n.t) + "</button>" : "") + " · " + esc(vDate(n.date, fmtShortDate)) + "</div><div>" + esc(n.text) + "</div></div>";
+        }).join("") + "</div>" : '<span class="small muted">' + (coach ? "No notes yet." : clubOf(p) ? "Your coaches' notes show up here." : "Join a club and your coaches can leave notes here.") + "</span>") + "</div>" +
+        (coach ? '<div class="field"><label for="cv-note">Add a note</label><textarea id="cv-note" rows="3" maxlength="600" placeholder="Hands are late on the inside pitch. Start your load earlier."></textarea>' +
+            '<label class="task" style="font-weight:400"><input type="checkbox" id="cv-at" checked><span>Tie it to the moment the video is on</span></label>' +
+            '<div class="btns"><button type="button" class="btn primary" id="cv-save">Save note</button></div></div>'
+          : '<div class="btns"><button type="button" class="btn ghost" id="vid-del">' + (vidDelArm === v.id ? "Tap again to delete this video" : "Delete video") + "</button></div>") +
+      "</section>";
+    if (coach) bindCoachExtras(store.club);
+    var el = $("#vid-el"), msg = $("#vid-msg");
+    if (!known && !(v.local && !vidLocal[v.id])) vidSrc(v).then(function (u) { var e2 = $("#vid-el"); if (e2 === el && u) { el.src = u; if (msg) msg.textContent = ""; } }, function (e) { if (msg) msg.textContent = "Couldn't load the video: " + msgOf(e); });
+    $("#vid-back").addEventListener("click", function () { vidView = null; render(); window.scrollTo(0, 0); });
+    var seek = function (t) { if (!el) return; try { el.currentTime = t; } catch (e) {} };
+    onAll("[data-vseek]", "click", function (b) { seek(+b.getAttribute("data-vseek")); el.play().catch(function () {}); });
+    onAll("[data-vplay]", "click", function (b) {
+      var c = clips.filter(function (x) { return x.id === b.getAttribute("data-vplay"); })[0]; if (!c || !el) return;
+      if (clipStop) el.removeEventListener("timeupdate", clipStop);
+      clipStop = function () { if (el.currentTime >= c.e) { el.pause(); el.removeEventListener("timeupdate", clipStop); clipStop = null; } };
+      seek(c.s); el.addEventListener("timeupdate", clipStop); el.play().catch(function () {});
+    });
+    if (coach) {
+      $("#cv-save").addEventListener("click", function () {
+        var txt = $("#cv-note").value.trim(); if (!txt) { toast("Write the note first."); return; }
+        var c = store.club; if (!c) return; normClub(c);
+        var cm = coachMe(c), at = $("#cv-at").checked && el ? round1(el.currentTime) : null;
+        c.vidNotes[p.id] = c.vidNotes[p.id] || {}; (c.vidNotes[p.id][v.id] = c.vidNotes[p.id][v.id] || []).push({ id: uid(), by: cm ? cm.id : "", name: cm ? cm.name : "Coach", t: at, text: txt.slice(0, 600), date: todayStr });
+        persist(); var keep = el ? el.currentTime : 0; renderVideo(p, v, true); var e3 = $("#vid-el"); if (e3) e3.addEventListener("loadedmetadata", function () { try { e3.currentTime = keep; } catch (e) {} }, { once: true });
+        toast("Note saved. " + p.name.split(" ")[0] + " sees it with the video.");
+      });
+      return;
+    }
+    var show = function () { var x = $("#vc-show"); if (x) x.textContent = "Start " + tfmt(draft.s) + " · End " + tfmt(draft.e); };
+    $("#vc-start").addEventListener("click", function () { if (!el) return; draft.s = round1(el.currentTime); if (draft.e != null && draft.e <= draft.s) draft.e = null; show(); });
+    $("#vc-end").addEventListener("click", function () { if (!el) return; draft.e = round1(el.currentTime); if (draft.s == null) draft.s = 0; show(); });
+    $("#vc-save").addEventListener("click", function () {
+      if (draft.s == null || draft.e == null) { toast("Mark a start and an end first."); return; }
+      if (draft.e <= draft.s) { toast("Mark the end after the start."); return; }
+      var me2 = cur(), vv = me2 && (me2.videos || []).filter(function (x) { return x.id === v.id; })[0]; if (!vv) return;
+      vv.clips = Array.isArray(vv.clips) ? vv.clips : []; if (vv.clips.length >= CLIP_CAP) { toast("Up to " + CLIP_CAP + " clips per video."); return; }
+      vv.clips.push({ id: uid(), s: draft.s, e: draft.e, label: ($("#vc-label").value.trim() || "Clip " + (vv.clips.length + 1)).slice(0, 40) });
+      vidDraft = { id: v.id, s: null, e: null }; persist();
+      var keep = el.currentTime; renderVideo(me2, vv, false); var e4 = $("#vid-el"); if (e4) e4.addEventListener("loadedmetadata", function () { try { e4.currentTime = keep; } catch (e) {} }, { once: true });
+      toast("Clip saved.");
+    });
+    onAll("[data-vcdel]", "click", function (b) {
+      var me2 = cur(), vv = me2 && (me2.videos || []).filter(function (x) { return x.id === v.id; })[0]; if (!vv) return;
+      vv.clips = (vv.clips || []).filter(function (c) { return c.id !== b.getAttribute("data-vcdel"); }); persist(); renderVideo(me2, vv, false);
+    });
+    $("#vid-del").addEventListener("click", async function () {
+      if (vidDelArm !== v.id) { vidDelArm = v.id; this.textContent = "Tap again to delete this video"; return; }
+      vidDelArm = null;
+      if (CLOUD && v.path) { try { await cq(sb.storage.from("videos").remove([v.path])); } catch (e) { toast("Couldn't delete: " + msgOf(e)); return; } }
+      if (vidLocal[v.id]) { try { URL.revokeObjectURL(vidLocal[v.id]); } catch (e) {} delete vidLocal[v.id]; }
+      var me2 = cur(); if (me2) me2.videos = (me2.videos || []).filter(function (x) { return x.id !== v.id; });
+      vidView = null; persist(); render(); window.scrollTo(0, 0); toast("Video deleted.");
+    });
+  }
+  // Coach: every player's videos, newest first
+  function renderCoachVideos() {
+    var c = store.club, roster = clubRoster();
+    if (vidView && typeof vidView === "string" && vidView.indexOf("|") > 0) {
+      var parts = vidView.split("|"), pl = roster.filter(function (x) { return x.id === parts[0]; })[0], v = pl && (pl.videos || []).filter(function (x) { return x.id === parts[1]; })[0];
+      if (pl && v) { renderVideo(pl, v, true); return; }
+      vidView = null;
+    }
+    var all = []; roster.forEach(function (pl) { (Array.isArray(pl.videos) ? pl.videos : []).forEach(function (v) { if (v && v.id) all.push({ pl: pl, v: v }); }); });
+    all.sort(function (a, b) { return (b.v.created || 0) - (a.v.created || 0); });
+    $("#view").innerHTML = coachTrainSeg() + '<section class="card"><div><h2>Player videos</h2><p class="small muted" style="margin:4px 0 0">Watch the clips your players marked and leave a note at the moment that matters. Players see your notes with the video.</p></div>' +
+      (all.length ? '<div class="vlist">' + all.map(function (x) { return vidRowHTML(x.v, x.pl.id, x.pl.name); }).join("") + "</div>" : '<p class="small muted" style="margin:0">No videos yet. Players add them in their Video tab.</p>') + "</section>";
+    bindCoachExtras(c);
+    onAll("[data-vopen]", "click", function (b) { vidView = b.getAttribute("data-vopen"); render(); window.scrollTo(0, 0); });
+  }
   function renderPost(p) {
+    if (vidView && typeof vidView === "string") { var ov = (p.videos || []).filter(function (v) { return v.id === vidView; })[0]; if (ov) { renderVideo(p, ov, false); return; } vidView = null; }
     var lt = latest(p), mlist = metricsFor(p).filter(function (k) { return lt.v[k] != null; });
     var tl = tagList();
     var caption = buildCaption(p, lt);
-    $("#view").innerHTML =
+    $("#view").innerHTML = videosHTML(p) +
       '<section class="card"><div><h2>Post a clip</h2><p class="muted small" style="margin:4px 0 0">Record or pick a swing, check the caption, then post it on X.</p></div>' +
         '<div class="field"><label for="clip">1. Add a video</label><input type="file" id="clip" accept="video/*" capture="environment">' +
         '<span class="hint">On a phone this opens the camera or your camera roll. The video stays on your phone.</span></div>' +
@@ -2604,6 +2765,7 @@
         '<div class="btns"><button type="button" class="btn" id="posted">I posted it</button></div>' +
         '<span class="hint">' + ((p.posts || []).length ? "Posts logged: " + p.posts.length + ", last " + fmtShortDate(p.posts.map(function (q) { return q.date; }).sort().slice(-1)[0]) + ". " : "") + (clubOf(p) ? "Your coaches see when you post, not what you post." : "Logging your posts keeps your streak going.") + "</span>" +
       "</section>";
+    bindVideos(p);
     $("#clip").addEventListener("change", function (e) {
       var f = e.target.files && e.target.files[0];
       if (!f) return;
@@ -2659,6 +2821,16 @@
     var mb = $("#mback"); if (mb) mb.addEventListener("click", function () { moreView = "menu"; clubView.edit = false; tab = "more"; render(); window.scrollTo(0, 0); });
   }
 
+  // Screen: light unless he picks dark (saved on this phone only)
+  function themeNow() { try { return localStorage.getItem("sp-theme") || "light"; } catch (e) { return "light"; } }
+  function themeHTML() {
+    var t = themeNow();
+    return '<section class="card"><div><h3>Screen</h3><p class="small muted" style="margin:4px 0 0">Saved on this phone.</p></div><div class="toggles" role="group" aria-label="Screen">' +
+      [["light", "Light"], ["dark", "Dark"], ["auto", "Match my phone"]].map(function (x) { return '<button type="button" class="tog" data-theme-pick="' + x[0] + '" aria-pressed="' + (t === x[0]) + '">' + x[1] + "</button>"; }).join("") + "</div></section>";
+  }
+  function bindTheme() {
+    onAll("[data-theme-pick]", "click", function (b) { var t = b.getAttribute("data-theme-pick"); try { localStorage.setItem("sp-theme", t); } catch (e) {} document.documentElement.setAttribute("data-theme", t); render(); });
+  }
   function renderMore(p) {
     if (moreView === "plans") return renderPlans(p);
     if (moreView === "club") moreView = "menu";
@@ -2682,7 +2854,8 @@
       CLOUD ? ["signout", "Sign out", "Signed in as " + esc(me.email) + ". To delete your account, go to Edit profile."] : ["erase", "Erase everything on this phone", "For test runs: deletes every player, the club, coaches and plans saved here."]
     ].filter(Boolean);
     $("#view").innerHTML = '<section class="card"><div><div class="eyebrow">More</div><h2>Run StandPoint</h2></div><p class="small muted" style="margin:0">' + (CLOUD ? "Signed in as " + esc(me.email) + "." : "These work as demos on this device. The full app moves them to real accounts.") + "</p></section>" +
-      items.map(function (it) { return '<section class="card"><h3>' + it[1] + '</h3><p class="small" style="margin:0">' + it[2] + '</p><div class="btns"><button type="button" class="btn primary" data-mv="' + it[0] + '">Open</button></div></section>'; }).join("");
+      items.map(function (it) { return '<section class="card"><h3>' + it[1] + '</h3><p class="small" style="margin:0">' + it[2] + '</p><div class="btns"><button type="button" class="btn primary" data-mv="' + it[0] + '">Open</button></div></section>'; }).join("") + themeHTML();
+    bindTheme();
     bindMore();
   }
 
@@ -3017,7 +3190,7 @@
     if (!c.id) c.id = uid();
     c.coaches = c.coaches || []; c.roster = c.roster || []; c.throwing = c.throwing || []; c.routine = c.routine || {};
     c.nudges = c.nudges || []; c.notes = c.notes || {}; c.pending = c.pending || []; c.declined = c.declined || [];
-    c.teams = c.teams || []; c.teamOf = c.teamOf || {}; c.lessons = c.lessons || {}; c.coachReq = c.coachReq || []; c.indiv = c.indiv || {}; c.pendTeam = c.pendTeam || {}; c.pcoach = c.pcoach || {}; c.log = c.log || [];
+    c.teams = c.teams || []; c.teamOf = c.teamOf || {}; c.lessons = c.lessons || {}; c.coachReq = c.coachReq || []; c.indiv = c.indiv || {}; c.pendTeam = c.pendTeam || {}; c.pcoach = c.pcoach || {}; c.log = c.log || []; c.vidNotes = c.vidNotes || {};
     if (c.plan) { if (c.season == null) c.season = c.plan.season || "off"; if (c.note == null) c.note = c.plan.note || ""; if (c.days == null) c.days = c.plan.days || 3; }
     if (c.season == null) c.season = "off"; if (c.days == null) c.days = 3;
     return c;
@@ -3353,15 +3526,17 @@
     if (!c || clubView.edit) { renderClubSetup(null); return; }
     normClub(c);
     if (coachTab === "training" && trainSub === "reviews") { renderCoachInbox(null); return; }
+    if (coachTab === "training" && trainSub === "video") { renderCoachVideos(); return; }
     var body;
     if (coachTab === "recruiting") body = coachRecruitingHTML(c);
     else if (coachTab === "training") body = coachTrainingHTML(c);
     else if (coachTab === "schedule") body = scopeCard(c, false) + clubRoutineHTML(c) + coachEventsHTML(c);
-    else if (coachTab === "club") body = requestsHTML(c) + coachInviteHTML(c) + teamsHTML(c) + clubSettingsHTML(c);
+    else if (coachTab === "club") body = requestsHTML(c) + coachInviteHTML(c) + teamsHTML(c) + clubSettingsHTML(c) + themeHTML();
     else body = clubPlayer ? clubPlayerHTML(c, clubPlayer) : '<section class="card"><div><div class="eyebrow">' + esc(c.type || "Club") + "</div><h2>" + esc(c.name) + "</h2></div>" + teamFilterSelect(c, "rt-team", rosterTeam) + "</section>" + requestsHTML(c) + coachReqHTML(c) + clubRosterHTML(c) + coachActivityHTML(c);
     $("#view").innerHTML = (c.coaches.length ? "" : '<div class="warn">Add yourself as a coach in the Club tab.</div>') + body;
     bindClubBody(c);
     bindCoachExtras(c);
+    bindTheme();
   }
 
   // Team tab: roster by team, player page
@@ -3680,7 +3855,7 @@
   // Training tab
   function throwDays14(T) { var from = addDays(todayStr, -13); return Object.keys(T.throwLog || {}).filter(function (d) { return d >= from && d <= todayStr && Object.keys(T.throwLog[d]).some(function (k) { return T.throwLog[d][k]; }); }).length; }
   function coachTrainSeg() {
-    var n = openReq().length, subs = [["lifts", "Lifts"], ["throwing", "Throwing"], ["hitting", "Hitting"], ["skills", "Skills"], ["fuel", "Fuel"], ["who", "Who's training"], ["reviews", "Reviews" + (n ? " (" + n + ")" : "")]];
+    var n = openReq().length, subs = [["lifts", "Lifts"], ["throwing", "Throwing"], ["hitting", "Hitting"], ["skills", "Skills"], ["fuel", "Fuel"], ["who", "Who's training"], ["video", "Video"], ["reviews", "Reviews" + (n ? " (" + n + ")" : "")]];
     return '<section class="card"><div class="toggles" role="group" aria-label="Training">' + subs.map(function (s) { return '<button type="button" class="tog" data-tsub="' + s[0] + '" aria-pressed="' + (trainSub === s[0]) + '">' + s[1] + "</button>"; }).join("") + "</div></section>";
   }
   function coachTrainingHTML(c) {
@@ -3827,7 +4002,7 @@
     if ($("#rf-team")) $("#rf-team").addEventListener("change", function (e) { recF.team = e.target.value; recF.who = "all"; redrawHQ(); });
     ["rt-team", "wt-team"].forEach(function (id) { if ($("#" + id)) $("#" + id).addEventListener("change", function (e) { rosterTeam = e.target.value; redrawHQ(); }); });
     onAll("[data-cp2]", "click", function (b) { clubPlayer = b.getAttribute("data-cp2"); coachTab = "team"; render(); window.scrollTo(0, 0); });
-    onAll("[data-tsub]", "click", function (b) { trainSub = b.getAttribute("data-tsub"); render(); window.scrollTo(0, 0); });
+    onAll("[data-tsub]", "click", function (b) { trainSub = b.getAttribute("data-tsub"); vidView = null; render(); window.scrollTo(0, 0); });
     if ($("#inv-copy")) $("#inv-copy").addEventListener("click", function () { copyText(inviteText(c), "Invite copied. Send it to your players."); });
     if ($("#inv-auto")) $("#inv-auto").addEventListener("change", function (e) { c.autoAccept = e.target.checked; persist(); toast(e.target.checked ? "New players join right away." : "You'll approve each new player."); });
     if ($("#cl-autoplans")) $("#cl-autoplans").addEventListener("change", function (e) { c.autoPlans = e.target.checked; persist(); toast(e.target.checked ? "Automatic plans fill any gaps in your players' plans." : "Automatic plans are off for your club."); });
@@ -4123,7 +4298,7 @@
     var rs = d.reqStatus || {}; (c.coachReq || []).forEach(function (r) { if (r.pid === pid && rs[r.id]) { r.status = rs[r.id].status; r.by = rs[r.id].by; } });
     var rr = d.replies || {}; (store.coaching || []).forEach(function (r) { if (r.pid === pid && rr[r.id]) { r.status = rr[r.id].status; r.reply = rr[r.id].reply || ""; r.drills = rr[r.id].drills || []; } });
   }
-  var CLUB_LOCAL = ["id", "name", "type", "code", "autoAccept", "roster", "pending", "declined", "teamOf", "pendTeam", "indiv", "nudges", "lessons", "notes", "log", "pcoach", "coachReq", "as", "pendingCoaches", "email"];
+  var CLUB_LOCAL = ["id", "name", "type", "code", "autoAccept", "roster", "pending", "declined", "teamOf", "pendTeam", "indiv", "nudges", "lessons", "notes", "log", "pcoach", "coachReq", "as", "pendingCoaches", "email", "vidNotes"];
   function cq(pr) { return Promise.resolve(pr).then(function (r) { if (r && r.error) throw r.error; return r ? r.data : null; }); }
   function msgOf(e) { return (e && (e.message || e.error_description || e.msg)) || String(e || "Something went wrong"); }
   function jcopy(x) { return x == null ? x : JSON.parse(JSON.stringify(x)); }
@@ -4152,6 +4327,7 @@
     if (saving || saveTimer || pulling) return;
     var a = document.activeElement; if (quiet && a && /INPUT|TEXTAREA|SELECT/.test(a.tagName)) return;
     if (auto === "poll" && typedEl && document.contains(typedEl) && Date.now() - typedAt < 120000) return; // a form he's still filling in
+    if (auto && $("#vid-el") && !$("#vid-el").paused) return; // he's watching a video
     if (auto === "tab" && Date.now() - lastPull < 5000) return;
     pulling = true;
     var keep = { store: store, prof: prof, role: cloudRole, org: cloudOrg, pend: cloudPendClub, snap: cloudSnap, mems: cloudMemSnap };
@@ -4221,6 +4397,7 @@
         var pd = (pl && pl.data) || {}, seen = p.seenNudges || {}, rs = pd.reqStatus || {};
         c.indiv = {}; if (pd.indiv) c.indiv[me.id] = pd.indiv;
         c.lessons = {}; if (pd.lesson) c.lessons[me.id] = pd.lesson;
+        c.vidNotes = {}; if (pd.vidNotes && typeof pd.vidNotes === "object") c.vidNotes[me.id] = pd.vidNotes;
         c.nudges = (pd.nudges || []).map(function (n) { n.pid = me.id; n.seen = seen[n.id] || false; return n; });
         c.coachReq = (p.coachReq || []).map(function (r) { var o = jcopy(r); o.pid = me.id; o.status = rs[r.id] ? rs[r.id].status : "open"; if (rs[r.id]) o.by = rs[r.id].by; return o; });
         mergeVouch(p, pd.vouch);
@@ -4279,14 +4456,15 @@
       // Another person's row: keep the shapes the screens expect, so odd data can't break the coach's app
       p.name = typeof p.name === "string" && p.name ? p.name : nameOf(r.user_id) || "New player"; p.grad = p.grad == null ? "" : String(p.grad);
       p.positions = Array.isArray(p.positions) ? p.positions.filter(function (k) { return POS[k]; }) : [];
-      ["logs", "reviews", "coachReq"].forEach(function (k) { if (!Array.isArray(p[k])) p[k] = []; });
+      ["logs", "reviews", "coachReq", "videos"].forEach(function (k) { if (!Array.isArray(p[k])) p[k] = []; });
       return p;
     });
-    c.indiv = {}; c.lessons = {}; c.nudges = []; c.coachReq = []; store.coaching = [];
+    c.indiv = {}; c.lessons = {}; c.nudges = []; c.coachReq = []; c.vidNotes = {}; store.coaching = [];
     store.players.forEach(function (p) {
       var pd = planOf[p.id] || {}, seen = p.seenNudges || {}, rs = pd.reqStatus || {};
       if (pd.indiv) c.indiv[p.id] = pd.indiv;
       if (pd.lesson) c.lessons[p.id] = pd.lesson;
+      if (pd.vidNotes && typeof pd.vidNotes === "object") c.vidNotes[p.id] = pd.vidNotes;
       (pd.nudges || []).forEach(function (n) { n.pid = p.id; n.seen = seen[n.id] || false; c.nudges.push(n); });
       (p.coachReq || []).forEach(function (r) { var q = jcopy(r); q.pid = p.id; q.status = rs[r.id] ? rs[r.id].status : "open"; if (rs[r.id]) q.by = rs[r.id].by; c.coachReq.push(q); });
       mergeVouch(p, pd.vouch);
@@ -4338,6 +4516,7 @@
       var ns = c.nudges.filter(function (n) { return n.pid === pid; }).map(function (n) { var o = jcopy(n); delete o.seen; delete o.pid; return o; }); if (ns.length) d.nudges = ns;
       var rs = {}; c.coachReq.filter(function (r) { return r.pid === pid && r.status && r.status !== "open"; }).forEach(function (r) { rs[r.id] = { status: r.status, by: r.by || "" }; }); if (Object.keys(rs).length) d.reqStatus = rs;
       var rr = {}; (store.coaching || []).filter(function (r) { return r.pid === pid && (r.status !== "open" || r.reply || (r.drills || []).length); }).forEach(function (r) { rr[r.id] = { status: r.status, reply: r.reply || "", drills: r.drills || [] }; }); if (Object.keys(rr).length) d.replies = rr;
+      if (c.vidNotes && c.vidNotes[pid] && Object.keys(c.vidNotes[pid]).length) d.vidNotes = c.vidNotes[pid];
       var vouch = {}; if (x) Object.keys(x.track || {}).forEach(function (sid) { var t = x.track[sid]; if (t && t.steps && t.steps.coachnote) vouch[sid] = t.steps.coachnote; }); if (Object.keys(vouch).length) d.vouch = vouch;
       plans[pid] = d;
     });
@@ -4528,6 +4707,8 @@
     store = emptyStore("player"); tab = "home"; moreView = "menu"; cloudView = "signin"; cloudErr = ""; cloudInfo = "You're signed out."; render(); window.scrollTo(0, 0);
   }
   async function cloudDeleteMe() {
+    var mine = (store.players[0] && store.players[0].videos || []).map(function (v) { return v.path; }).filter(Boolean);
+    if (mine.length) { try { await cq(sb.storage.from("videos").remove(mine)); } catch (e) {} }
     try { await cq(sb.rpc("delete_me")); } catch (e) { toast("Couldn't delete: " + msgOf(e)); return; }
     try { await sb.auth.signOut(); } catch (e) {}
     me = null; prof = null; cloudRole = null; cloudOrg = null; cloudPicked = false; cloudSnap = {}; store = emptyStore("player"); tab = "home"; cloudView = "signin"; cloudErr = ""; cloudInfo = "Your account and its data were deleted."; render(); window.scrollTo(0, 0);
