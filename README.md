@@ -77,11 +77,23 @@ The app now has two modes, picked by `public/config.js`:
 **Layout**
 
 - `public/` is the whole website: `index.html`, `config.js`, `vendor/supabase.js` (supabase-js 2.119.0, pinned), the manifest and icons.
-- `supabase/01_tables.sql`, `02_security.sql`, `03_app_functions.sql` build the database. Run them in order in the Supabase SQL Editor.
+- `supabase/01_tables.sql`, `02_security.sql`, `03_app_functions.sql`, `04_hardening.sql` build the database. Run them in order in the Supabase SQL Editor.
+- `public/_headers` sets security headers (content security policy, no framing) on everything Cloudflare serves. If the Supabase project changes, update its address there too.
 - `wrangler.jsonc` tells Cloudflare to serve `public/`. Every push to `main` redeploys.
 
 **How the app maps to the tables:** a player's profile, numbers, training and schools are in `player_state` (his coaches can read it); private school notes and Ask StandPoint chats are in `player_private`; club and team plans are in `org_state`; coach notes, the change log and "coaches working with him" are in `org_private`; a player's own plan, nudges, next lesson, coaching-request answers, video-review replies and coach vouches are in `player_plans`. Players only write their own rows; coaches only write club rows. Membership changes (accept, decline, move team, remove) are written as edits to `memberships`.
 
 **Tested:** a local Postgres with the same rules plus a stand-in for Supabase's sign-in ran a two-phone script with 39 checks (sign-up, 13+ gate, coach starts a club, player joins and is accepted, plans and logs flow both ways, private notes and coach notes stay private, a third player sees nothing of the first, a second coach joins and can't promote players, sign out and back in, delete account, delete club).
 
-**Not yet:** Ask StandPoint is hidden in the real app until it runs on our own server. Live updates are manual (the ↻ button, or reopening the app). Two coaches editing the same club plan at the same moment: the last save wins.
+**Not yet:** Ask StandPoint is hidden in the real app until it runs on our own server.
+
+## Security and scale update (Nov 7, 2026)
+
+Run `supabase/04_hardening.sql` in the Supabase SQL Editor **before** pushing this version. It is safe to run once and rotates every club's join code.
+
+- **Database:** people can only change the columns they should (no moving a membership or plan to another account, no hand-set join codes or club owners); only an admin changes roles; a plan stays with its club and player; row size limits; 8-character join codes with no look-alike letters, accepted typed in lowercase or with a dash; 20 wrong codes an hour per account, then a wait; the 13+ check is enforced on the server.
+- **App:** links from another person's data only open web, email, phone and text addresses (anything else becomes a dead link), and script links are blocked on click; odd data in a player's row can't break the coach's screens.
+- **Two coaches at once:** saves carry a version number; if another coach saved first, the app merges both changes, saves again and says so.
+- **Scale:** refreshes ask for version numbers first and only download players whose data changed, in batches of 100. A refresh with nothing new no longer rewrites the club's data. A tapped refresh during a save now waits for the save and then runs.
+- **Tested:** 55 checks (database attacks as each kind of user, a booby-trapped player profile, two coaches saving at once, refresh downloads, a 201-player club, the app running under the security headers), plus the earlier suites on the database with and without step 4.
+

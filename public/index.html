@@ -379,6 +379,17 @@
 
   // ---------- Storage ----------
   var KEY = "standpoint-v2";
+  // Only open web, email, phone and text links. Anything else (javascript:, data:) becomes a dead link.
+  function safeUrl(u) {
+    u = String(u == null ? "" : u).trim();
+    if (/^(https?:|mailto:|tel:|sms:)/i.test(u)) return u;
+    if (/^[a-z0-9][a-z0-9.-]*\.[a-z]{2,}(?:[\/?#:]|$)/i.test(u)) return "https://" + u;
+    return "#";
+  }
+  document.addEventListener("click", function (e) {
+    var a = e.target && e.target.closest && e.target.closest("a[href]");
+    if (a && /^\s*(javascript|data|vbscript):/i.test(a.getAttribute("href") || "")) { e.preventDefault(); e.stopPropagation(); }
+  }, true);
   var canSave = true;
   var CLOUD = !!(window.SP_CONFIG && window.SP_CONFIG.url && window.SP_CONFIG.key);
   var store = (function () {
@@ -414,7 +425,7 @@
   }
   function isPitcher(p) { return (p.positions || []).some(function (k) { return k === "RHP" || k === "LHP"; }); }
   function scheduleLines(p) { return String(p.schedule || "").split("\n").map(function (s) { return s.trim(); }).filter(Boolean); }
-  function posLabel(p) { return (p.positions || []).map(function (k) { return POS[k].label; }).join("/"); }
+  function posLabel(p) { return (Array.isArray(p.positions) ? p.positions : []).filter(function (k) { return POS[k]; }).map(function (k) { return POS[k].label; }).join("/"); }
   function sortedLogs(p) {
     return (p.logs || []).slice().sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : a.created - b.created; });
   }
@@ -631,7 +642,7 @@
           (isNew ? '<div class="btns"><button type="button" class="btn ghost" id="f-coachapp">I\'m a coach: open the Coach app</button></div>' : "") + "</div>" +
         (canSave ? "" : '<div class="warn">This browser isn\'t saving. Entries reset when you close the page.</div>') +
         (FEATURES.softball ? '<div class="field"><span class="label" id="l-sport">Sport</span><div class="toggles" role="group" aria-labelledby="l-sport">' + tog("sport", "baseball", "Baseball", d.sport === "baseball") + tog("sport", "softball", "Softball", d.sport === "softball") + "</div></div>" : "") +
-        (isNew ? '<div class="field"><label for="f-club">Travel club code <span class="hint">(optional, from your coach)</span></label><input type="text" id="f-club" value="' + esc(d.clubCode || "") + '" autocomplete="off" autocapitalize="characters" placeholder="ABC123"></div>' :
+        (isNew ? '<div class="field"><label for="f-club">Travel club code <span class="hint">(optional, from your coach)</span></label><input type="text" id="f-club" value="' + esc(d.clubCode || "") + '" autocomplete="off" autocapitalize="characters" placeholder="ABCD2345"></div>' :
           (clubOf(p) ? '<div class="small"><strong>Club:</strong> ' + esc(store.club.name) + "</div>" : clubPending(p) ? '<div class="small"><strong>Club:</strong> waiting for ' + esc(store.club.name) + " to accept you</div>" : '<div class="small muted">Got a club code? Enter it under More → Your club.</div>')) +
         '<div class="field"><label for="f-name">Player name</label><input type="text" id="f-name" value="' + esc(d.name) + '" placeholder="First Last" required></div>' +
         '<div class="row2"><div class="field"><label for="f-grad">Grad year</label><select id="f-grad">' + gradOpts + '</select></div>' +
@@ -739,7 +750,7 @@
     var hist = lt.logs.slice().reverse().map(function (l) {
       var vals = METRIC_ORDER.filter(function (k) { return num(l.vals[k]) != null; }).map(function (k) { return METRICS[k].short + " " + fmtVal(k, num(l.vals[k])) + (l.how && l.how[k] ? " (" + HOW_WORD[l.how[k]] + ")" : ""); }).join(" · ");
       return '<div class="hitem"><div class="h"><span>' + fmtDate(l.date) + '</span><button type="button" class="btn ghost small" data-del="' + esc(l.id) + '">Remove</button></div>' +
-        '<div class="muted">' + esc(l.where || "Where not noted") + " " + verifPill(l) + (l.proof ? ' · <a href="' + esc(l.proof) + '" target="_blank" rel="noopener">proof</a>' : "") + '</div><div class="num" style="font-size:16px">' + esc(vals) + "</div></div>";
+        '<div class="muted">' + esc(l.where || "Where not noted") + " " + verifPill(l) + (l.proof ? ' · <a href="' + esc(safeUrl(l.proof)) + '" target="_blank" rel="noopener">proof</a>' : "") + '</div><div class="num" style="font-size:16px">' + esc(vals) + "</div></div>";
     }).join("");
     var progress = mlist.map(function (k) {
       var f = firstVal(p, k), l = lt.v[k];
@@ -2410,7 +2421,7 @@
         (s.note ? '<div class="small muted">' + esc(s.note) + "</div>" : "") +
         '<div class="next"><strong>Next:</strong> ' + esc(nextFor(t, s)) + "</div>" +
         '<div class="small' + (cl.open ? "" : " warn") + '">' + esc(cl.t) + "</div>" +
-        '<div class="links">' + (s.site ? '<a href="' + esc(s.site) + '" target="_blank" rel="noopener">Team site</a>' : "") + teamX +
+        '<div class="links">' + (s.site ? '<a href="' + esc(safeUrl(s.site)) + '" target="_blank" rel="noopener">Team site</a>' : "") + teamX +
           '<a href="' + findCoachesLink(s) + '" target="_blank" rel="noopener">Find the coaches</a>' +
           '<a href="https://nces.ed.gov/collegenavigator/?q=' + encodeURIComponent(s.navq || s.name) + '" target="_blank" rel="noopener">Cost, net price, admissions</a></div>' +
       "</section>" +
@@ -2425,13 +2436,13 @@
       "</section>" +
       '<section class="card"><h3>Messages for ' + esc(s.short || s.name) + "</h3>" + coachSelect +
         '<div class="label">First email</div><textarea id="m-email" rows="14">' + esc(msg.email) + '</textarea>' +
-        '<div class="btns"><button type="button" class="btn primary" id="mc-email">Copy</button>' + (emH ? '<a class="btn" id="mo-email" href="' + esc(emH) + '">Open in email</a>' : "") +
+        '<div class="btns"><button type="button" class="btn primary" id="mc-email">Copy</button>' + (emH ? '<a class="btn" id="mo-email" href="' + esc(safeUrl(emH)) + '">Open in email</a>' : "") +
           '<button type="button" class="btn" data-mark="email">' + (t.steps.email ? "Log another email" : "Mark emailed") + "</button></div>" +
         '<div class="label">X DM <span class="hint">(after you follow them)</span></div><textarea id="m-dm" rows="4">' + esc(msg.dm) + '</textarea>' +
         '<div class="btns"><button type="button" class="btn primary" id="mc-dm">Copy</button>' + (pickX ? '<a class="btn" href="' + pickX + '" target="_blank" rel="noopener">' + (pick.x ? "Open @" + esc(pick.x) : "Find " + esc(lastName(pick.n)) + " on X") + "</a>" : "") +
           '<button type="button" class="btn" data-mark="dm">Mark DM sent</button></div>' +
         '<div class="label">Update every 4–6 weeks</div><textarea id="m-follow" rows="9">' + esc(msg.follow) + '</textarea>' +
-        '<div class="btns"><button type="button" class="btn primary" id="mc-follow">Copy</button>' + (fuH ? '<a class="btn" id="mo-follow" href="' + esc(fuH) + '">Open in email</a>' : "") +
+        '<div class="btns"><button type="button" class="btn primary" id="mc-follow">Copy</button>' + (fuH ? '<a class="btn" id="mo-follow" href="' + esc(safeUrl(fuH)) + '">Open in email</a>' : "") +
           '<button type="button" class="btn" data-mark="update">Mark update sent</button></div>' +
         '<div class="label">Note for your coach to send</div><textarea id="m-coach" rows="10">' + esc(msg.coachNote) + '</textarea>' +
         '<div class="btns"><button type="button" class="btn primary" id="mc-coach">Copy</button><button type="button" class="btn" data-mark="coachnote">My coach sent it</button></div>' +
@@ -2526,7 +2537,7 @@
       '<section class="card"><div><h2>Post a clip</h2><p class="muted small" style="margin:4px 0 0">Record or pick a swing, check the caption, then post it on X.</p></div>' +
         '<div class="field"><label for="clip">1. Add a video</label><input type="file" id="clip" accept="video/*" capture="environment">' +
         '<span class="hint">On a phone this opens the camera or your camera roll. The video stays on your phone.</span></div>' +
-        (post.url ? '<video src="' + post.url + '" controls playsinline></video><div class="small muted">' + esc(post.name) + "</div>" : "") +
+        (post.url ? '<video src="' + esc(post.url) + '" controls playsinline></video><div class="small muted">' + esc(post.name) + "</div>" : "") +
         '<div class="field"><span class="label" id="l-sess">2. What kind of clip</span><div class="toggles" role="group" aria-labelledby="l-sess">' +
           SESSIONS.map(function (s) { return '<button type="button" class="tog" data-sess="' + s[0] + '" aria-pressed="' + (post.session === s[0]) + '">' + s[1] + "</button>"; }).join("") + "</div></div>" +
         '<div class="field"><span class="label">3. Numbers to include</span>' + (mlist.length ? '<div class="tasks">' + mlist.map(function (k) {
@@ -2907,7 +2918,7 @@
         '<ul class="plain">' + pl.gets.map(function (g) { return "<li>" + esc(g) + "</li>"; }).join("") + "</ul>" +
         coachingNote(pl, p) +
         (on ? '<div><span class="pill good">Your plan' + (cp.test ? " · test, no charge" : "") + " · since " + fmtDate(cp.since) + "</span></div>" : "") +
-        '<div class="btns">' + (link ? '<a class="btn red" href="' + esc(link) + '" target="_blank" rel="noopener">' + (pl.k === "club" ? "Buy the club license" : pl.k === "coaching" ? "Add video reviews" : pl.k === "online" ? "Start online coaching" : "Subscribe") + "</a>" : "") +
+        '<div class="btns">' + (link ? '<a class="btn red" href="' + esc(safeUrl(link)) + '" target="_blank" rel="noopener">' + (pl.k === "club" ? "Buy the club license" : pl.k === "coaching" ? "Add video reviews" : pl.k === "online" ? "Start online coaching" : "Subscribe") + "</a>" : "") +
         '<button type="button" class="btn' + (link ? "" : " primary") + '" data-testplan="' + pl.k + '">' + (on ? "End test plan" : "Start a test plan") + "</button></div>" +
         (link ? '<span class="hint">Checkout opens on Stripe. Card details never touch StandPoint.</span>' : '<span class="hint">Checkout turns on once the LLC\'s Stripe account is set up and its payment link is added below. A test plan charges nothing.</span>') + "</section>";
     }).join("");
@@ -3224,7 +3235,7 @@
     $("#view").innerHTML = moreBack() + '<section class="card"><div><div class="eyebrow">Your club</div><h2>Join your club or facility</h2></div>' +
       (wasDeclined ? '<div class="warn">Your last request wasn\'t accepted. Check the code with your coach and try again.</div>' : "") +
       '<p class="small" style="margin:0">Enter the StandPoint code from your travel team or training facility. Then pick your team or coach, and your coach accepts you.</p>' +
-      '<div class="field"><label for="jn-code">Club code</label><input type="text" id="jn-code" autocomplete="off" autocapitalize="characters" placeholder="ABC123"></div>' +
+      '<div class="field"><label for="jn-code">Club code</label><input type="text" id="jn-code" autocomplete="off" autocapitalize="characters" placeholder="ABCD2345"></div>' +
       '<div class="btns"><button type="button" class="btn red" id="jn-go">Next</button></div><div id="jn-err" class="warn" style="display:none"></div></section>';
     bindMore();
     $("#jn-go").addEventListener("click", function () {
@@ -3380,7 +3391,7 @@
           '<div class="small">' + (done.length ? esc(done.join(" · ")) : "On the list, no contact yet") + (ups.length ? " · " + ups.length + " update" + (ups.length > 1 ? "s" : "") + ", last " + fmtShortDate(ups[ups.length - 1]) : "") + "</div>" +
           (r.due ? '<div class="small"><span class="pill close">Update due</span> last contact ' + fmtShortDate(r.lc) + "</div>" : "") +
           (x.shareNotes !== false && r.t.notes && r.t.notes.trim() ? '<div class="small"><strong>What coaches said:</strong> <span style="white-space:pre-line">' + esc(r.t.notes.trim()) + "</span></div>" : "") +
-          '<div class="btns"><a class="btn" href="' + esc(coachEmail(c, me, x, r.s)) + '">Email their coach for him</a>' +
+          '<div class="btns"><a class="btn" href="' + esc(safeUrl(coachEmail(c, me, x, r.s))) + '">Email their coach for him</a>' +
           (r.t.steps.coachnote ? "" : '<button type="button" class="btn ghost" data-cvouch="' + esc(x.id) + "|" + esc(r.s.id) + '">I reached out for him</button>') + "</div></div>";
       }).join("") + "</div>" : '<p class="small muted" style="margin:0">No schools on his list yet.</p>') +
       (x.shareNotes === false ? '<span class="hint">He keeps his school notes private. You still see his list and who he contacted.</span>' : "") +
@@ -3650,7 +3661,7 @@
       '<div class="btns"><a class="btn primary" href="sms:?&body=' + encodeURIComponent(msg) + '">Text it</a><a class="btn" href="mailto:?subject=' + encodeURIComponent("Join " + c.name + " on StandPoint") + "&body=" + encodeURIComponent(msg) + '">Email it</a><button type="button" class="btn" id="inv-copy">Copy</button></div></section>' +
       '<section class="card"><h3>Automatic plans</h3><label class="task"><input type="checkbox" id="cl-autoplans"' + (c.autoPlans !== false ? " checked" : "") + '><span><strong>Fill gaps with StandPoint\'s automatic plans</strong><br><span class="muted small">Players who answer the questions in Build my plan get goal work in their lifts, a hitting routine and arm care wherever you haven\'t set your own. Your plans for the club, a team or one player always come first. You can remove any part for a player, or turn it off for him.</span></span></label></section>' +
       '<section class="card"><h3>License</h3><p class="small" style="margin:0">' + (lic ? "License on" + (store.plan.test ? " (test, no charge)" : "") + "." : "Covers every player in your club. Price set after the cost model.") + "</p>" +
-      '<div class="btns">' + (link ? '<a class="btn red" href="' + esc(link) + '" target="_blank" rel="noopener">Buy the license</a>' : "") + '<button type="button" class="btn" id="lic-test">' + (lic ? "End test license" : "Start a test license") + "</button></div></section>";
+      '<div class="btns">' + (link ? '<a class="btn red" href="' + esc(safeUrl(link)) + '" target="_blank" rel="noopener">Buy the license</a>' : "") + '<button type="button" class="btn" id="lic-test">' + (lic ? "End test license" : "Start a test license") + "</button></div></section>";
   }
 
   function bindClubBody(c) {
@@ -3813,7 +3824,7 @@
     var list = mine.map(function (r) {
       var done = r.status === "done";
       var h = '<div class="h"><span>' + fmtDate(r.date) + " · " + esc(r.coach) + '</span><span class="pill ' + (done ? "good" : "close") + '">' + (done ? "Reviewed " + fmtDate(r.replied) : "Waiting on coach") + "</span></div>" +
-        '<div class="small">' + esc(r.ask || "No note") + ' · <a href="' + esc(r.video) + '" target="_blank" rel="noopener">your video</a></div>';
+        '<div class="small">' + esc(r.ask || "No note") + ' · <a href="' + esc(safeUrl(r.video)) + '" target="_blank" rel="noopener">your video</a></div>';
       if (!done && r.coachEmail) h += '<div class="btns"><a class="btn" href="mailto:' + esc(r.coachEmail) + "?subject=" + encodeURIComponent("Video for review: " + p.name) + "&body=" + encodeURIComponent("Coach,\n\nHere's my video: " + r.video + "\n\n" + (r.ask ? "What I'd like you to look at: " + r.ask + "\n\n" : "") + "Thanks,\n" + p.name) + '">Email ' + esc(r.coach) + " the link</a></div>";
       if (done) h += '<div class="callout"><strong>Coach\'s breakdown</strong><span class="small" style="white-space:pre-line">' + esc(r.reply) + "</span></div>" +
         (r.drills.length ? '<div class="tasks">' + r.drills.map(function (d, i) { var dn = r.done && r.done[i]; return '<label class="task' + (dn ? " done" : "") + '"><input type="checkbox" data-cdrill="' + esc(r.id) + "|" + i + '"' + (dn ? " checked" : "") + "><span>" + esc(d) + "</span></label>"; }).join("") + "</div>" : "");
@@ -3852,7 +3863,7 @@
       var pl = byId[r.pid], bank = drillBank(pl);
       return '<section class="card"><div><div class="eyebrow">Sent ' + fmtDate(r.date) + " · to " + esc(r.coach) + "</div><h3>" + esc(pl.name) + '</h3><div class="small muted">' + esc(posLabel(pl)) + " · Class of " + esc(pl.grad) + (pl.school ? " · " + esc(pl.school) : "") + "</div></div>" +
         '<div class="small"><strong>They asked:</strong> ' + esc(r.ask || "No note") + "</div>" +
-        '<div class="btns"><a class="btn primary" href="' + esc(r.video) + '" target="_blank" rel="noopener">Watch the video</a></div>' +
+        '<div class="btns"><a class="btn primary" href="' + esc(safeUrl(r.video)) + '" target="_blank" rel="noopener">Watch the video</a></div>' +
         '<div class="field"><label for="ci-' + esc(r.id) + '">Your breakdown</label><textarea id="ci-' + esc(r.id) + '" rows="4" placeholder="What you see, what to change first, and why"></textarea></div>' +
         '<details><summary>Assign drills</summary><div class="tasks" style="margin-top:8px">' + bank.map(function (d) { return '<label class="task"><input type="checkbox" data-cid="' + esc(r.id) + '" value="' + esc(d) + '"><span>' + esc(d) + "</span></label>"; }).join("") + "</div></details>" +
         '<div class="field"><label for="cx-' + esc(r.id) + '">Your own drills <span class="hint">(one per line)</span></label><textarea id="cx-' + esc(r.id) + '" rows="2"></textarea></div>' +
@@ -3899,7 +3910,7 @@
       var s = x.search || {}, subj = encodeURIComponent((x.grad ? "Class of " + x.grad + " · " : "") + x.name);
       return '<section class="card"><div><div class="eyebrow">Class of ' + esc(x.grad) + " · " + esc(posLabel(x)) + (x.bats ? " · B/T " + esc(x.bats) + "/" + esc(x.throws) : "") + "</div><h3>" + esc(x.name) + "</h3>" +
         '<div class="small">' + esc(x.school || "School not listed") + (x.gpa ? " · GPA " + esc(x.gpa) : "") + (x.height ? " · " + esc(x.height) : "") + (x.weight ? " · " + esc(x.weight) + " lb" : "") + "</div></div>" +
-        (mets.length ? '<div class="hist">' + mets.map(function (k) { var l = lt.src[k]; return '<div class="hitem"><div class="h"><span>' + METRICS[k].label + '</span><span class="num">' + fmtVal(k, lt.v[k]) + sp(k) + "</span></div><div>" + verifPill(l, k) + " · " + fmtDate(l.date) + (l.where ? " · " + esc(l.where) : "") + (l.proof ? ' · <a href="' + esc(l.proof) + '" target="_blank" rel="noopener">proof</a>' : "") + "</div></div>"; }).join("") + "</div>" : '<p class="muted small" style="margin:0">No numbers logged yet.</p>') +
+        (mets.length ? '<div class="hist">' + mets.map(function (k) { var l = lt.src[k]; return '<div class="hitem"><div class="h"><span>' + METRICS[k].label + '</span><span class="num">' + fmtVal(k, lt.v[k]) + sp(k) + "</span></div><div>" + verifPill(l, k) + " · " + fmtDate(l.date) + (l.where ? " · " + esc(l.where) : "") + (l.proof ? ' · <a href="' + esc(safeUrl(l.proof)) + '" target="_blank" rel="noopener">proof</a>' : "") + "</div></div>"; }).join("") + "</div>" : '<p class="muted small" style="margin:0">No numbers logged yet.</p>') +
         (x.schedule ? '<div class="small"><strong>Upcoming:</strong> ' + scheduleLines(x).slice(0, 3).map(esc).join(" · ") + "</div>" : "") +
         '<div class="btns">' + (x.email ? '<a class="btn primary" href="mailto:' + esc(x.email) + (s.parentEmail ? "?cc=" + encodeURIComponent(s.parentEmail) + "&" : "?") + "subject=" + subj + '">Email ' + esc(x.name.split(" ")[0]) + (s.parentEmail ? " and parent" : "") + "</a>" : "") +
         (x.xhandle ? '<a class="btn" href="https://x.com/' + encodeURIComponent(x.xhandle.replace(/^@/, "")) + '" target="_blank" rel="noopener">X profile</a>' : "") + "</div></section>";
@@ -3960,9 +3971,109 @@
   // On only when config.js sets window.SP_CONFIG = { url, key }. Without it this page stays the prototype.
   var sb = null, me = null, prof = null, cloudRole = null, cloudOrg = null, cloudPendClub = null, cloudPicked = false;
   var cloudErr = "", cloudInfo = "", cloudView = "signin", cloudSnap = {}, cloudMemSnap = [], cloudJoin = null;
-  var saveTimer = null, saving = false, saveAgain = false;
+  var saveTimer = null, saving = false, saveAgain = false, refreshAfterSave = false;
   // Refresh on its own: when a tab is opened and every 30 seconds while the app is on screen.
   var cloudEdits = 0, typedAt = 0, typedEl = null, lastPull = 0, pulling = false, flushLater = false, clubGone = null;
+  // HAS_REV: the database has version numbers (supabase/04_hardening.sql). rowCache: rows by version, so a refresh
+  // downloads only what changed. mergedSave: another coach saved at the same time and both changes were kept.
+  var HAS_REV = null, rowCache = { os: {}, opv: {}, ps: {}, pp: {} }, mergedSave = false;
+  async function detectRev() {
+    try { var r = await sb.from("player_state").select("rev").eq("user_id", me.id).maybeSingle(); HAS_REV = !(r && r.error); }
+    catch (e) { HAS_REV = false; }
+  }
+  // Big lists go in pieces of 100 so the request never gets too long
+  // Same text for the same content, whatever order the keys come in
+  function stableJSON(v) {
+    if (v === undefined) return "null";
+    if (Array.isArray(v)) return "[" + v.map(stableJSON).join(",") + "]";
+    if (v && typeof v === "object") return "{" + Object.keys(v).sort().filter(function (k) { return v[k] !== undefined && typeof v[k] !== "function"; }).map(function (k) { return JSON.stringify(k) + ":" + stableJSON(v[k]); }).join(",") + "}";
+    return JSON.stringify(v);
+  }
+  async function inChunks(make, ids) {
+    var out = [];
+    for (var i = 0; i < ids.length; i += 100) { var r = await cq(make(ids.slice(i, i + 100))); if (r) out = out.concat(r); }
+    return out;
+  }
+  // One row by version: ask for the version first, download the data only when it changed
+  async function cachedRow(table, key, val, bucket) {
+    var v = await cq(sb.from(table).select("rev").eq(key, val).maybeSingle());
+    if (!v) { delete rowCache[bucket][val]; return null; }
+    var hit = rowCache[bucket][val];
+    if (!hit || hit.rev !== v.rev) {
+      var full = await cq(sb.from(table).select("data, rev").eq(key, val).maybeSingle());
+      if (!full) return null;
+      hit = rowCache[bucket][val] = { rev: full.rev, data: full.data || {} };
+    }
+    return hit;
+  }
+  function sameJ(a, b) { return JSON.stringify(a) === JSON.stringify(b); }
+  // Three-way merge: keep everything I changed and everything they changed since we both loaded. Same field: mine wins.
+  function merge3(base, mine, theirs) {
+    if (sameJ(mine, base)) return jcopy(theirs);
+    if (sameJ(theirs, base) || sameJ(mine, theirs)) return jcopy(mine);
+    var isObj = function (x) { return !!x && typeof x === "object" && !Array.isArray(x); };
+    if (isObj(mine) && isObj(theirs)) {
+      var b = isObj(base) ? base : {}, out = {}, keys = {};
+      Object.keys(theirs).concat(Object.keys(mine), Object.keys(b)).forEach(function (k) { keys[k] = 1; });
+      Object.keys(keys).forEach(function (k) {
+        var inM = k in mine, inT = k in theirs, inB = k in b;
+        if (!inM && !inT) return;
+        if (!inM && inB && sameJ(b[k], theirs[k])) return;
+        if (!inT && inB && sameJ(b[k], mine[k])) return;
+        if (!inM) { out[k] = jcopy(theirs[k]); return; }
+        if (!inT) { out[k] = jcopy(mine[k]); return; }
+        out[k] = merge3(inB ? b[k] : undefined, mine[k], theirs[k]);
+      });
+      return out;
+    }
+    var idArr = function (x) { return Array.isArray(x) && x.every(function (e) { return isObj(e) && e.id != null; }); };
+    if (idArr(mine) && idArr(theirs)) {
+      var byId = function (arr) { var m = {}; arr.forEach(function (e) { m[e.id] = e; }); return m; };
+      var B = byId(idArr(base) ? base : []), M = byId(mine), T = byId(theirs), res = [], took = {};
+      theirs.forEach(function (e) {
+        if (!(e.id in M) && (e.id in B) && sameJ(B[e.id], e)) return;
+        res.push(e.id in M ? merge3(B[e.id], M[e.id], e) : jcopy(e)); took[e.id] = 1;
+      });
+      mine.forEach(function (e) {
+        if (took[e.id]) return;
+        if ((e.id in B) && !(e.id in T) && sameJ(B[e.id], e)) return;
+        res.push(jcopy(e));
+      });
+      return res;
+    }
+    return jcopy(mine);
+  }
+  // Save only if nobody else saved since I loaded; if they did, merge and try again
+  async function saveGuarded(table, keys, rev, baseJSON, mine, extra) {
+    var upd = function (data, r) {
+      var q = sb.from(table).update(Object.assign({ data: data }, extra));
+      Object.keys(keys).forEach(function (k) { q = q.eq(k, keys[k]); });
+      return q.eq("rev", r).select("rev");
+    };
+    var out = await cq(upd(mine, rev));
+    if (out && out.length) return { data: mine, rev: out[0].rev, merged: false };
+    for (var t = 0; t < 3; t++) {
+      var g = sb.from(table).select("data, rev"); Object.keys(keys).forEach(function (k) { g = g.eq(k, keys[k]); });
+      var cur = await cq(g.maybeSingle());
+      if (!cur) return null;
+      var merged = merge3(JSON.parse(baseJSON || "{}"), mine, cur.data || {});
+      out = await cq(upd(merged, cur.rev));
+      if (out && out.length) return { data: merged, rev: out[0].rev, merged: true };
+    }
+    throw new Error("Another coach is saving right now. Try again in a moment.");
+  }
+  // After a merge, put the other coach's changes into what's on screen
+  function applySharedBack(d) { var c = store.club; if (!c) return; Object.keys(d).forEach(function (k) { if (k !== "coaches" && k !== "coachRoles" && CLUB_LOCAL.indexOf(k) < 0) c[k] = jcopy(d[k]); }); }
+  function applyPrivBack(d) { var c = store.club; if (!c) return; c.notes = jcopy(d.notes || {}); c.log = jcopy(d.log || []); c.pcoach = jcopy(d.pcoach || {}); }
+  function applyPlanBack(pid, d) {
+    var c = store.club; if (!c) return;
+    if (d.indiv) c.indiv[pid] = jcopy(d.indiv); else delete c.indiv[pid];
+    if (d.lesson) c.lessons[pid] = jcopy(d.lesson); else delete c.lessons[pid];
+    var old = {}; c.nudges.forEach(function (n) { if (n.pid === pid) old[n.id] = n.seen; });
+    c.nudges = c.nudges.filter(function (n) { return n.pid !== pid; }).concat((d.nudges || []).map(function (n) { var o = jcopy(n); o.pid = pid; o.seen = old[o.id] || false; return o; }));
+    var rs = d.reqStatus || {}; (c.coachReq || []).forEach(function (r) { if (r.pid === pid && rs[r.id]) { r.status = rs[r.id].status; r.by = rs[r.id].by; } });
+    var rr = d.replies || {}; (store.coaching || []).forEach(function (r) { if (r.pid === pid && rr[r.id]) { r.status = rr[r.id].status; r.reply = rr[r.id].reply || ""; r.drills = rr[r.id].drills || []; } });
+  }
   var CLUB_LOCAL = ["id", "name", "type", "code", "autoAccept", "roster", "pending", "declined", "teamOf", "pendTeam", "indiv", "nudges", "lessons", "notes", "log", "pcoach", "coachReq", "as", "pendingCoaches", "email"];
   function cq(pr) { return Promise.resolve(pr).then(function (r) { if (r && r.error) throw r.error; return r ? r.data : null; }); }
   function msgOf(e) { return (e && (e.message || e.error_description || e.msg)) || String(e || "Something went wrong"); }
@@ -3986,7 +4097,10 @@
     window.addEventListener("pagehide", function () { if (saveTimer) { clearTimeout(saveTimer); cloudFlush(); } });
   }
   async function cloudRefresh(quiet, auto) {
-    if (!me || saving || saveTimer || pulling) return;
+    if (!me) return;
+    // A tapped refresh waits for the save in progress, then runs, instead of doing nothing
+    if (!quiet && !auto && (saving || saveTimer)) { refreshAfterSave = true; if (saveTimer) cloudSaveNow(); return; }
+    if (saving || saveTimer || pulling) return;
     var a = document.activeElement; if (quiet && a && /INPUT|TEXTAREA|SELECT/.test(a.tagName)) return;
     if (auto === "poll" && typedEl && document.contains(typedEl) && Date.now() - typedAt < 120000) return; // a form he's still filling in
     if (auto === "tab" && Date.now() - lastPull < 5000) return;
@@ -4013,6 +4127,7 @@
 
   // ----- Load: build the same store the screens already use -----
   async function cloudLoad() {
+    if (HAS_REV === null) await detectRev();
     prof = await cq(sb.from("profiles").select("*").eq("id", me.id).maybeSingle()) || { id: me.id, display_name: "", is_coach: false, age_ok: false };
     if (!prof.age_ok && me.meta && me.meta.age_ok) { await cq(sb.from("profiles").update({ age_ok: true }).eq("id", me.id)); prof.age_ok = true; }
     var mems = await cq(sb.rpc("my_clubs")) || [];
@@ -4045,7 +4160,7 @@
       cloudOrg = m.org_id; memStatus = m.status;
       var c = { id: m.org_id, name: m.name, type: m.type, roster: [], pending: [], declined: [] };
       if (m.status === "active") {
-        var os = await cq(sb.from("org_state").select("data").eq("org_id", m.org_id).maybeSingle());
+        var os = HAS_REV ? await cachedRow("org_state", "org_id", m.org_id, "os") : await cq(sb.from("org_state").select("data").eq("org_id", m.org_id).maybeSingle());
         var pl = await cq(sb.from("player_plans").select("data").eq("org_id", m.org_id).eq("player_id", me.id).maybeSingle());
         Object.assign(c, jcopy((os && os.data) || {}));
         c.id = m.org_id; c.name = m.name; c.type = m.type; c.roster = [me.id]; c.pending = []; c.declined = [];
@@ -4069,15 +4184,30 @@
     if (!m) { cloudPendClub = pend || null; cloudSnap = {}; return; }
     var oid = m.org_id; cloudOrg = oid;
     var o = await cq(sb.from("orgs").select("*").eq("id", oid).single());
-    var os = await cq(sb.from("org_state").select("data").eq("org_id", oid).maybeSingle());
-    var opv = await cq(sb.from("org_private").select("data").eq("org_id", oid).maybeSingle());
+    var os = HAS_REV ? await cachedRow("org_state", "org_id", oid, "os") : await cq(sb.from("org_state").select("data").eq("org_id", oid).maybeSingle());
+    var opv = HAS_REV ? await cachedRow("org_private", "org_id", oid, "opv") : await cq(sb.from("org_private").select("data").eq("org_id", oid).maybeSingle());
     var mems = await cq(sb.from("memberships").select("user_id, role, status, team_id").eq("org_id", oid)) || [];
     var ids = mems.map(function (x) { return x.user_id; });
-    var profs = ids.length ? await cq(sb.from("profiles").select("id, display_name").in("id", ids)) || [] : [];
+    var profs = ids.length ? await inChunks(function (part) { return sb.from("profiles").select("id, display_name").in("id", part); }, ids) : [];
     var nameOf = function (id) { var f = profs.filter(function (q) { return q.id === id; })[0]; return f ? f.display_name : ""; };
     var pids = mems.filter(function (x) { return x.role === "player" && x.status !== "declined"; }).map(function (x) { return x.user_id; });
-    var states = pids.length ? await cq(sb.from("player_state").select("user_id, data").in("user_id", pids)) || [] : [];
-    var plans = await cq(sb.from("player_plans").select("player_id, data").eq("org_id", oid)) || [];
+    var states, plans, planRev = {};
+    if (HAS_REV) {
+      // Versions first (tiny), then only the players whose data changed since the last look
+      var sv = pids.length ? await inChunks(function (part) { return sb.from("player_state").select("user_id, rev").in("user_id", part); }, pids) : [];
+      var needS = sv.filter(function (r) { var h = rowCache.ps[r.user_id]; return !h || h.rev !== r.rev; }).map(function (r) { return r.user_id; });
+      var gotS = needS.length ? await inChunks(function (part) { return sb.from("player_state").select("user_id, data, rev").in("user_id", part); }, needS) : [];
+      gotS.forEach(function (r) { rowCache.ps[r.user_id] = { rev: r.rev, data: r.data || {} }; });
+      states = sv.map(function (r) { return { user_id: r.user_id, data: (rowCache.ps[r.user_id] || {}).data || {} }; });
+      var pv2 = await cq(sb.from("player_plans").select("player_id, rev").eq("org_id", oid)) || [];
+      var needP = pv2.filter(function (r) { var h = rowCache.pp[oid + ":" + r.player_id]; return !h || h.rev !== r.rev; }).map(function (r) { return r.player_id; });
+      var gotP = needP.length ? await inChunks(function (part) { return sb.from("player_plans").select("player_id, data, rev").eq("org_id", oid).in("player_id", part); }, needP) : [];
+      gotP.forEach(function (r) { rowCache.pp[oid + ":" + r.player_id] = { rev: r.rev, data: r.data || {} }; });
+      plans = pv2.map(function (r) { planRev[r.player_id] = r.rev; return { player_id: r.player_id, data: (rowCache.pp[oid + ":" + r.player_id] || {}).data || {} }; });
+    } else {
+      states = pids.length ? await inChunks(function (part) { return sb.from("player_state").select("user_id, data").in("user_id", part); }, pids) : [];
+      plans = await cq(sb.from("player_plans").select("player_id, data").eq("org_id", oid)) || [];
+    }
     var c = jcopy((os && os.data) || {}), roles = c.coachRoles || {};
     c.id = oid; c.name = o.name; c.type = o.type; c.code = o.join_code; c.autoAccept = !!o.auto_accept;
     var pv = (opv && opv.data) || {}; c.notes = pv.notes || {}; c.log = pv.log || []; c.pcoach = pv.pcoach || {};
@@ -4090,7 +4220,14 @@
       else c.declined.push(x.user_id);
     });
     var planOf = {}; plans.forEach(function (r) { planOf[r.player_id] = r.data || {}; });
-    store.players = states.map(function (r) { var p = jcopy(r.data || {}); delete p._store; p.id = r.user_id; if (!p.name) p.name = nameOf(r.user_id) || "New player"; if (!p.grad) p.grad = ""; p.positions = p.positions || []; return p; });
+    store.players = states.map(function (r) {
+      var p = jcopy(r.data || {}); delete p._store; p.id = r.user_id;
+      // Another person's row: keep the shapes the screens expect, so odd data can't break the coach's app
+      p.name = typeof p.name === "string" && p.name ? p.name : nameOf(r.user_id) || "New player"; p.grad = p.grad == null ? "" : String(p.grad);
+      p.positions = Array.isArray(p.positions) ? p.positions.filter(function (k) { return POS[k]; }) : [];
+      ["logs", "reviews", "coachReq"].forEach(function (k) { if (!Array.isArray(p[k])) p[k] = []; });
+      return p;
+    });
     c.indiv = {}; c.lessons = {}; c.nudges = []; c.coachReq = []; store.coaching = [];
     store.players.forEach(function (p) {
       var pd = planOf[p.id] || {}, seen = p.seenNudges || {}, rs = pd.reqStatus || {};
@@ -4105,7 +4242,12 @@
     store.club = normClub(c);
     store.players.forEach(function (p) { if (store.club.roster.indexOf(p.id) >= 0) applyClub(p); });
     cloudMemSnap = mems;
-    var pc = coachPieces(); cloudSnap = snapOf(pc); cloudSnap.shared = JSON.stringify((os && os.data) || {});
+    // The database hands keys back in its own order, so compare by content: only save when something really differs
+    var pc = coachPieces(); cloudSnap = snapOf(pc); var dbShared = (os && os.data) || {};
+    if (stableJSON(dbShared) !== stableJSON(pc.shared)) cloudSnap.shared = JSON.stringify(dbShared);
+    if (HAS_REV) {
+      cloudSnap.rev = { shared: os ? os.rev : 0, priv: opv ? opv.rev : 0, plans: planRev };
+    }
     if (cloudSnap.shared !== JSON.stringify(pc.shared)) cloudQueue();
   }
 
@@ -4164,10 +4306,29 @@
     if (!oid) return;
     if (!pc) { if (clubGone !== oid) return; await cq(sb.from("orgs").delete().eq("id", oid)); clubGone = null; cloudOrg = null; cloudSnap = {}; cloudMemSnap = []; return; }
     if (J(pc.org) !== s.org) await cq(sb.from("orgs").update(pc.org).eq("id", oid));
-    if (J(pc.shared) !== s.shared) await cq(sb.from("org_state").update({ data: pc.shared, updated_at: now, updated_by: me.id }).eq("org_id", oid));
-    if (J(pc.priv) !== s.priv) await cq(sb.from("org_private").update({ data: pc.priv, updated_at: now }).eq("org_id", oid));
+    var rv = HAS_REV && s.rev ? s.rev : null, res;
+    if (J(pc.shared) !== s.shared) {
+      if (rv) {
+        res = await saveGuarded("org_state", { org_id: oid }, rv.shared, s.shared, pc.shared, { updated_at: now, updated_by: me.id });
+        if (res) { rv.shared = res.rev; if (res.merged) { applySharedBack(res.data); pc.shared = res.data; mergedSave = true; } }
+      } else await cq(sb.from("org_state").update({ data: pc.shared, updated_at: now, updated_by: me.id }).eq("org_id", oid));
+    }
+    if (J(pc.priv) !== s.priv) {
+      if (rv) {
+        res = await saveGuarded("org_private", { org_id: oid }, rv.priv, s.priv, pc.priv, { updated_at: now });
+        if (res) { rv.priv = res.rev; if (res.merged) { applyPrivBack(res.data); pc.priv = res.data; mergedSave = true; } }
+      } else await cq(sb.from("org_private").update({ data: pc.priv, updated_at: now }).eq("org_id", oid));
+    }
     var sp = s.plans || {}, pids = Object.keys(pc.plans);
-    for (var i = 0; i < pids.length; i++) { var pid = pids[i]; if (J(pc.plans[pid]) !== sp[pid]) await cq(sb.from("player_plans").upsert({ org_id: oid, player_id: pid, data: pc.plans[pid], updated_at: now, updated_by: me.id }, { onConflict: "org_id,player_id" })); }
+    for (var i = 0; i < pids.length; i++) {
+      var pid = pids[i]; if (J(pc.plans[pid]) === sp[pid]) continue;
+      if (rv && rv.plans[pid] != null) {
+        res = await saveGuarded("player_plans", { org_id: oid, player_id: pid }, rv.plans[pid], sp[pid], pc.plans[pid], { updated_at: now, updated_by: me.id });
+        if (res) { rv.plans[pid] = res.rev; if (res.merged) { applyPlanBack(pid, res.data); pc.plans[pid] = res.data; mergedSave = true; } continue; }
+      }
+      var up = await cq(sb.from("player_plans").upsert({ org_id: oid, player_id: pid, data: pc.plans[pid], updated_at: now, updated_by: me.id }, { onConflict: "org_id,player_id" }).select(rv ? "rev" : "player_id"));
+      if (rv && up && up[0]) rv.plans[pid] = up[0].rev;
+    }
     var next = [];
     for (var j = 0; j < cloudMemSnap.length; j++) {
       var m = cloudMemSnap[j], t = pc.mems[m.user_id];
@@ -4175,7 +4336,7 @@
       if (t.status !== m.status || (t.team_id || null) !== (m.team_id || null)) await cq(sb.from("memberships").update({ status: t.status, team_id: t.team_id }).eq("org_id", oid).eq("user_id", m.user_id));
       next.push({ user_id: m.user_id, role: m.role, status: t.status, team_id: t.team_id });
     }
-    cloudMemSnap = next; cloudSnap = snapOf(pc);
+    cloudMemSnap = next; cloudSnap = snapOf(pc); if (rv) cloudSnap.rev = rv;
   }
   async function savePlayer() {
     var p = store.players[0], s = cloudSnap || {}, now = new Date().toISOString(), J = JSON.stringify;
@@ -4197,10 +4358,14 @@
     if (pulling) { flushLater = true; return; }
     if (saving) { saveAgain = true; return; }
     saving = true;
-    try { if (cloudRole === "coach") await saveCoach(); else await savePlayer(); }
+    try {
+      if (cloudRole === "coach") await saveCoach(); else await savePlayer();
+      if (mergedSave) { mergedSave = false; toast("Another coach saved changes at the same time. Both were kept."); render(); }
+    }
     catch (e) { toast("Couldn't save: " + msgOf(e) + ". Check your connection."); }
     saving = false;
     if (saveAgain) { saveAgain = false; cloudFlush(); }
+    else if (refreshAfterSave && !saveTimer) { refreshAfterSave = false; cloudRefresh(false); }
   }
   async function cloudSaveNow() { clearTimeout(saveTimer); saveTimer = null; await cloudFlush(); }
 
@@ -4285,7 +4450,7 @@
       '<div class="field"><label for="cs-type">Type</label><select id="cs-type">' + ["Training facility", "Travel club", "High school program", "Showcase"].map(function (t) { return "<option>" + t + "</option>"; }).join("") + "</select></div>" +
       '<div class="btns"><button type="submit" class="btn red">Start it</button></div></form>' +
       '<form class="card" id="cs-join"><h3>Join a club as a coach</h3><p class="small muted" style="margin:0">Use the code the club\'s admin gave you. They accept you, then you\'re in.</p>' +
-      '<div class="field"><label for="cs-code">Club code</label><input type="text" id="cs-code" autocapitalize="characters" autocomplete="off" placeholder="ABC123" required></div>' +
+      '<div class="field"><label for="cs-code">Club code</label><input type="text" id="cs-code" autocapitalize="characters" autocomplete="off" placeholder="ABCD2345" required></div>' +
       '<div class="btns"><button type="submit" class="btn">Send request</button></div></form>' +
       '<section class="card"><div class="small muted">Signed in as ' + esc(me.email) + '</div><div class="btns"><button type="button" class="btn ghost" id="cs-out">Sign out</button></div></section>';
     var saveName = async function () { var v = $("#cs-name").value.trim(); if (!v) { cloudErr = "Add your name first, so players know who you are."; render(); return false; } if (v !== prof.display_name) { await cq(sb.from("profiles").update({ display_name: v }).eq("id", me.id)); prof.display_name = v; } return true; };
@@ -4305,6 +4470,7 @@
     try { await cloudSaveNow(); } catch (e) {}
     try { await sb.auth.signOut(); } catch (e) {}
     me = null; prof = null; cloudRole = null; cloudOrg = null; cloudPicked = false; cloudSnap = {}; cloudMemSnap = []; cloudJoin = null;
+    HAS_REV = null; rowCache = { os: {}, opv: {}, ps: {}, pp: {} };
     store = emptyStore("player"); tab = "home"; moreView = "menu"; cloudView = "signin"; cloudErr = ""; cloudInfo = "You're signed out."; render(); window.scrollTo(0, 0);
   }
   async function cloudDeleteMe() {
