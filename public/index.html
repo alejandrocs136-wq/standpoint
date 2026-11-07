@@ -4155,11 +4155,11 @@
     if (auto === "tab" && Date.now() - lastPull < 5000) return;
     pulling = true;
     var keep = { store: store, prof: prof, role: cloudRole, org: cloudOrg, pend: cloudPendClub, snap: cloudSnap, mems: cloudMemSnap };
-    var before = JSON.stringify(store), edits = cloudEdits;
+    var before = stableJSON(store), edits = cloudEdits;
     try {
       await cloudLoad(); lastPull = Date.now();
       var edited = cloudEdits !== edits;
-      if (edited || (auto && JSON.stringify(store) === before)) {
+      if (edited || (auto && stableJSON(store) === before)) {
         // He changed something while it loaded, or nothing new came in: keep the screen he's using.
         store = keep.store; prof = keep.prof; cloudRole = keep.role; cloudOrg = keep.org; cloudPendClub = keep.pend; cloudSnap = keep.snap; cloudMemSnap = keep.mems;
         if (edited) flushLater = true;
@@ -4194,6 +4194,12 @@
     var mine = await cq(sb.from("player_state").select("data").eq("user_id", me.id).maybeSingle());
     var priv = await cq(sb.from("player_private").select("data").eq("user_id", me.id).maybeSingle());
     var d = (mine && mine.data) || {}, pv = (priv && priv.data) || {}, st = d._store || {};
+    // Download everything before touching the screen's data, so a tap during a refresh never sees a half-loaded app
+    var os = null, pl = null;
+    if (m && d.name && m.status === "active") {
+      os = HAS_REV ? await cachedRow("org_state", "org_id", m.org_id, "os") : await cq(sb.from("org_state").select("data").eq("org_id", m.org_id).maybeSingle());
+      pl = await cq(sb.from("player_plans").select("data").eq("org_id", m.org_id).eq("player_id", me.id).maybeSingle());
+    }
     store = emptyStore("player");
     store.tags = st.tags || ""; store.schools = st.schools || []; store.extraCoaches = st.extraCoaches || {}; store.plan = st.plan || null;
     var p = null;
@@ -4209,8 +4215,6 @@
       cloudOrg = m.org_id; memStatus = m.status;
       var c = { id: m.org_id, name: m.name, type: m.type, roster: [], pending: [], declined: [] };
       if (m.status === "active") {
-        var os = HAS_REV ? await cachedRow("org_state", "org_id", m.org_id, "os") : await cq(sb.from("org_state").select("data").eq("org_id", m.org_id).maybeSingle());
-        var pl = await cq(sb.from("player_plans").select("data").eq("org_id", m.org_id).eq("player_id", me.id).maybeSingle());
         Object.assign(c, jcopy((os && os.data) || {}));
         c.id = m.org_id; c.name = m.name; c.type = m.type; c.roster = [me.id]; c.pending = []; c.declined = [];
         c.teamOf = {}; if (m.team_id) c.teamOf[me.id] = m.team_id;
@@ -4229,9 +4233,8 @@
     cloudSnap = { player: JSON.stringify(playerPub(p)), priv: JSON.stringify(playerPriv(p)), memStatus: memStatus };
   }
   async function loadCoach(m, pend) {
-    store = emptyStore("coach"); store.club = null; cloudOrg = null; cloudPendClub = null; cloudMemSnap = [];
-    if (!m) { cloudPendClub = pend || null; cloudSnap = {}; return; }
-    var oid = m.org_id; cloudOrg = oid;
+    if (!m) { store = emptyStore("coach"); store.club = null; cloudOrg = null; cloudMemSnap = []; cloudPendClub = pend || null; cloudSnap = {}; return; }
+    var oid = m.org_id;
     var o = await cq(sb.from("orgs").select("*").eq("id", oid).single());
     var os = HAS_REV ? await cachedRow("org_state", "org_id", oid, "os") : await cq(sb.from("org_state").select("data").eq("org_id", oid).maybeSingle());
     var opv = HAS_REV ? await cachedRow("org_private", "org_id", oid, "opv") : await cq(sb.from("org_private").select("data").eq("org_id", oid).maybeSingle());
@@ -4257,6 +4260,8 @@
       states = pids.length ? await inChunks(function (part) { return sb.from("player_state").select("user_id, data").in("user_id", part); }, pids) : [];
       plans = await cq(sb.from("player_plans").select("player_id, data").eq("org_id", oid)) || [];
     }
+    // Everything is downloaded: now swap in the new data in one step
+    store = emptyStore("coach"); store.club = null; cloudOrg = oid; cloudPendClub = null; cloudMemSnap = [];
     var c = jcopy((os && os.data) || {}), roles = c.coachRoles || {};
     c.id = oid; c.name = o.name; c.type = o.type; c.code = o.join_code; c.autoAccept = !!o.auto_accept;
     var pv = (opv && opv.data) || {}; c.notes = pv.notes || {}; c.log = pv.log || []; c.pcoach = pv.pcoach || {};
