@@ -109,3 +109,13 @@ Run `supabase/05_video.sql` in the Supabase SQL Editor **before** pushing this v
 - **Not yet:** automatic clipping, highlight reels and posting clips straight to X. Supabase's free plan holds 1 GB of files in total; Pro ($25 a month) holds 100 GB.
 - **Tested:** 32 video checks (upload, clips, coach notes, the storage rules from outside the app, size and type limits, delete, the one-phone preview) and 9 screen-setting checks, plus every earlier suite.
 
+## Computer layout (Nov 7, 2026)
+
+No database change for this one.
+
+- **On a computer** (window 1024 pixels wide or more): the navy bar runs across the top and stays put. The tabs move to a menu on the left, and sections sit side by side in two columns when there's room. One-section screens and forms stay one readable column. The player picker in the bar stops at 320 pixels wide.
+- **Setup screens** (new profile, new club) hide the menu until there's something to open.
+- **Phones and narrow windows** are unchanged: bottom tabs, one column.
+- **Both apps:** the player app and the coach app use the same layout, so a coach on a laptop gets the menu and two columns too.
+- **Tested:** 19 layout checks at computer and phone size, plus every earlier suite.
+
