@@ -1117,9 +1117,18 @@
     { name: "Tempo · Conditioning runs", blocks: [
       { t: "warm", items: ["Rudiment series: forward and backward pogos × 10, single-leg pogos × 5 each, side-to-side pogos × 10", "Dynamic warm-up, 20 yards each: knee hug, quad pull and reach, toe touch, leg cradle, high-knee run, straight-leg skip, backward open-hip skip, high-knee carioca"] },
       { t: "tempo", items: [["Tempo runs: 10 × 60 yards at about 70%, 35 sec rest", "Tempo runs: 12 × 60 yards at about 70%, 35 sec rest"], [null, "Strides: 4 × 55 yards, smooth and fast, walk back"]] },
+      { t: "finish", items: ["Post-work stretch: hamstring floss, seated pretzel, stand-to-squat, low-back rotation, butterfly groin, × 5 each"] } ] },
+    // From Alejandro's Nov 9 video: a bounce-and-power day. Phase 1 eases in; phase 2 is the video as filmed.
+    { name: "Speed D · Bounce and power", blocks: [
+      { t: "warm", items: ["Jog, skips and shuffles, about 400 yards", "Walking lunges, hands on hips, 2 × 10 each leg", "A-skips, 2 × 20 yards", "Step-up run-throughs, 2 × 4 each leg"] },
+      { t: "plyo", items: [["Trap-bar jump × 3, light (2 sets)", "Trap-bar jump × 3, light (3 sets)"], ["Box jump × 3, step down (2 sets)", "Box jump × 3, step down (3 sets)"],
+        ["Altitude landing and stick × 3 (2 sets)", "Depth jump off a bench × 3, hands on hips (3 sets)"], ["Banded pogo hops × 15 (2 sets)", "Banded pogo hops × 15 (3 sets)"],
+        ["Single-leg pogos × 10 each leg (2 sets)", "Banded single-leg pogos × 15 each leg (3 sets)"], ["Single-leg hops, 2 × 10 yards each leg", "Single-leg hops, 3 × 15 yards each leg"]] },
+      { t: "iso", items: ["Single-leg glute bridge hold, foot on a step, 3 × 10 sec each leg", "Seated fast leg cycles, 3 × 10 sec"] },
       { t: "finish", items: ["Post-work stretch: hamstring floss, seated pretzel, stand-to-squat, low-back rotation, butterfly groin, × 5 each"] } ] }
   ];
-  var SPEED_LAB = ["Speed A", "Speed B", "Speed C", "Tempo"];
+  var SPEED_LAB = ["Speed A", "Speed B", "Speed C", "Tempo", "Speed D"];
+  var SPEED_ORDER = [0, 1, 2, 4, 3]; // how the speed sessions are listed: D before Tempo
   var BLOCK_NAMES = { warm: "Warm-up, 8–10 min", plyo: "Plyometrics: jumps and throws, full effort, full rest", iso: "Isometrics: hold or push, no movement",
     main: "Main lift", pair: "Pair: go back and forth", finish: "Finish", sprint: "Sprints: full speed, full rest", tempo: "Tempo runs: about 70%, short rest. Not a sprint", goal: "Your goals: extra work for what you picked" };
 
@@ -1136,6 +1145,8 @@
   }
   function programFor(T) { var cl = clubLiftFor(T); if (cl) return cl; var n = T.liftDays.length; return n >= 4 ? PROGRAMS[4] : n === 3 ? PROGRAMS[3] : n === 2 ? PROGRAMS[2] : PROGRAMS[2].slice(0, 1); }
   function weekOf(T) { var w = Math.floor(daysSince(T.start) / 7) + 1; return Math.max(1, w); }
+  // Calendar week number (Monday to Sunday) since his plan started, so a whole week follows one rotation.
+  function weekAt(T, dateStr) { return Math.max(1, Math.round((daysSince(mondayOf(T.start)) - daysSince(mondayOf(dateStr || todayStr))) / 7) + 1); }
   function phaseOf(w) { return ((Math.min(w, 8) - 1) < 4) ? 1 : 2; }
   function itemText(it, ph) { return Array.isArray(it) ? it[ph - 1] : it; }
   function rxParse(rx) { var m = /(\d+)\s*×\s*(\d+)/.exec(rx); return m ? { sets: +m[1], reps: +m[2] } : { sets: 3, reps: 5 }; }
@@ -1151,18 +1162,21 @@
     var prog = programFor(T);
     if (li >= 0) return "L" + Math.min(li, prog.length - 1);
     if (si >= 0) {
-      var rot = sd.length >= 3 ? [0, 2, 1] : [0, 1];
+      // Mix and match: on even weeks Speed D (bounce and power) takes one slot. 1 day: A, then D. 2 days: A + B, then D + B. 3 days: A, C, B, then A, D, B.
+      var even = weekAt(T, dateStr) % 2 === 0;
+      var rot = sd.length >= 3 ? (even ? [0, 4, 1] : [0, 2, 1]) : sd.length === 2 ? (even ? [4, 1] : [0, 1]) : [even ? 4 : 0];
       if (sd.length >= 2 && T.auto && T.auto.goals.indexOf("lean") >= 0 && autoClubOK(T).on) rot[rot.length - 1] = 3;
       return "S" + rot[si % rot.length];
     }
     return null;
   }
   function sessionTitle(T, sel) { return sel.charAt(0) === "L" ? programFor(T)[+sel.slice(1)].name : SPEED[+sel.slice(1)].name; }
-  function sessionBlocks(T, sel) {
+  function goalFor(T, dateStr) { var A = T.auto; return weekAt(T, dateStr) % 2 === 0 && A.goalB && A.goalB.length ? A.goalB : A.goal || []; }
+  function sessionBlocks(T, sel, dateStr) {
     if (sel.charAt(0) !== "L") return SPEED[+sel.slice(1)].blocks;
     var bl = programFor(T)[+sel.slice(1)].blocks;
     if (clubLiftFor(T) || !T.auto || !autoClubOK(T).on) return bl;
-    var drop = autoClubOK(T).drop, goal = (T.auto.goal || []).filter(function (t) { return drop.indexOf(t) < 0; });
+    var drop = autoClubOK(T).drop, goal = goalFor(T, dateStr).filter(function (t) { return drop.indexOf(t) < 0; });
     if (!goal.length) return bl;
     var out = bl.slice(), fi = -1; out.forEach(function (b, i) { if (b.t === "finish") fi = i; });
     out.splice(fi >= 0 ? fi : out.length, 0, { t: "goal", items: goal });
@@ -1230,6 +1244,16 @@
     ["strides:", "Strides", "none", "Run smooth and fast, about 90% of top speed, then walk back.", "Tall and relaxed.", "Full walk-back rest."],
     ["dynamic warm-up", "Dynamic warm-up series", "none", "Walk or run 20 yards of each: knee hug, quad pull with a reach, toe touch, leg cradle, high-knee run, straight-leg skip, backward open-hip skip, high-knee carioca.", "Get a little warmer with each drill.", ""],
     ["post-work stretch", "Post-work stretch", "none", "Hamstring floss × 5 each leg, seated pretzel × 5 each side, stand-to-squat × 5, low-back rotation × 10 each way, butterfly groin × 5.", "Slow and controlled.", ""],
+    // From Alejandro's Nov 9 video (bounce and power)
+    ["trap-bar jump", "Trap-bar jump", "w", "Stand in a light trap bar, dip into a quarter squat and jump straight up. Land soft with the bar and reset before the next rep.", "Jump fast; the bar is light.", "About 20–30% of your trap-bar deadlift. No trap bar: squat jump with your hands on your hips."],
+    ["depth jump", "Depth jump", "box", "Stand on a bench or low box, hands on hips. Step off, land on both feet and jump straight up as fast as you can.", "Spend as little time on the ground as possible.", "Bench height or lower. Full rest. Stop the set if the landings get loud."],
+    ["banded single-leg pogo", "Banded single-leg pogos", "none", "Same as banded pogos, but on one leg.", "Stiff ankle, quick off the ground.", "No band: single-leg pogos on their own. Stop if your knee caves in."],
+    ["banded pogo", "Banded pogo hops", "none", "Loop a band over your shoulders, anchored low on a rack so it pulls you down. Bounce on the balls of your feet with stiff ankles.", "Fight the band; get off the ground fast.", "Light band. No band or rack: regular pogo hops."],
+    ["single-leg pogos", "Single-leg pogos", "none", "Bounce on one foot with a stiff ankle and an almost straight knee, then switch.", "Quick, like the ground is hot.", "Low height. Stop if your knee caves in."],
+    ["step-up run", "Step-up run-throughs", "none", "Jog toward a low step, plant one foot on it, drive the other knee up hard, then jog out. Alternate legs.", "Push down through the step; knee up, toe up.", "Low step, 6–8 inches. It's a warm-up."],
+    ["a-skips", "A-skips", "none", "Skip forward, driving one knee to hip height with the toe up while the other foot punches the ground under you.", "Tall posture, quick rhythm.", ""],
+    ["foot on a step", "Single-leg glute bridge hold, foot on a step", "t", "Lie on your back with one heel on a low step and the other leg up. Push your hips up and hold.", "Squeeze the glute; don't arch your low back.", "Lower step if your hamstring cramps."],
+    ["fast leg cycles", "Seated fast leg cycles", "t", "Sit on the edge of a bench, hands behind you, and cycle your legs as fast as you can, like sprinting in the air.", "Quick feet, tall chest.", "10 seconds all out, then rest."],
     // Goal work in the automatic plans
     ["shot-put throw", "Med-ball shot-put throw", "mb", "Stand sideways to a wall with the ball at your back shoulder. Shift back, then rotate and push the ball into the wall like a shot-put.", "Hips first, then the ball.", "4–8 lb ball. Full effort, full rest."],
     ["landmine rotation", "Landmine rotation", "w", "Hold the end of a landmine bar at chest height with straight arms and swing it side to side in a rainbow, pivoting your back foot.", "Turn the hips, keep the arms long.", "Light weight; control the top."],
@@ -1436,7 +1460,7 @@
         '<div class="field"><span class="label">Program week</span><div class="toggles">' + [1, 2, 3, 4, 5, 6, 7, 8].map(function (k) { return '<button type="button" class="tog" data-wk="' + k + '" aria-pressed="' + (k === Math.min(w, 8)) + '" style="min-width:34px;padding:0 4px">' + k + "</button>"; }).join("") + "</div></div>" +
       "</div></details></section>";
     // session picker
-    var opts = prog.map(function (d, i) { return ["L" + i, "Lift " + (i + 1)]; }).concat(SPEED_LAB.map(function (l, i) { return ["S" + i, l]; }));
+    var opts = prog.map(function (d, i) { return ["L" + i, "Lift " + (i + 1)]; }).concat(SPEED_ORDER.map(function (i) { return ["S" + i, SPEED_LAB[i]]; }));
     var picker = '<div class="toggles" role="group" aria-label="Session">' + opts.map(function (o) {
       return '<button type="button" class="tog" data-sel="' + o[0] + '" aria-pressed="' + (o[0] === sel) + '">' + o[1] + "</button>";
     }).join("") + "</div>";
@@ -1447,7 +1471,7 @@
     var dr = T.draft[key] || (saved ? (saved.draft ? JSON.parse(JSON.stringify(saved.draft)) : { done: JSON.parse(JSON.stringify(saved.done || {})), rows: (saved.sets || []).filter(function (x) { return x.lift; }).map(function (x) { return { w: x.w, r: x.r, v: x.v || "" }; }), varn: (saved.sets && saved.sets[0]) ? saved.sets[0].varn : null }) : null);
     if (!dr) dr = { done: {}, rows: null, varn: null };
     T.draft[key] = dr;
-    var blocks = sessionBlocks(T, sel), html = "";
+    var blocks = sessionBlocks(T, sel, date), html = "";
     var acc = T.season === "in" ? "2 sets" : light ? "2 sets" : (ph === 1 ? "3 × 8" : "3 × 6");
     blocks.forEach(function (bl, bi) {
       if (bl.t === "main") {
@@ -1618,7 +1642,7 @@
     var sixtyPts = sortedLogs(p).filter(function (l) { return num(l.vals.sixty); }).map(function (l) { return { d: l.date, y: num(l.vals.sixty) }; });
     var tenPts = sp.filter(function (x) { return num(x.ten); }).map(function (x) { return { d: x.date, y: num(x.ten) }; })
       .concat(sortedByDate(T.power).filter(function (x) { return num(x.ten); }).map(function (x) { return { d: x.date, y: num(x.ten) }; })).sort(function (a, b) { return a.d < b.d ? -1 : 1; });
-    var plan = SPEED.map(function (s) {
+    var plan = SPEED_ORDER.map(function (i) { return SPEED[i]; }).map(function (s) {
       return '<div><div class="label">' + esc(s.name) + '</div><ul class="plain small">' + s.blocks.filter(function (b) { return b.t === "sprint" || b.t === "plyo" || b.t === "tempo"; }).map(function (b) {
         return b.items.map(function (it) { var t = itemText(it, ph); return t ? "<li>" + esc(t) + "</li>" : ""; }).join("");
       }).join("") + "</ul></div>";
@@ -1630,8 +1654,8 @@
       "</section>" +
       '<section class="card"><h3>Your speed sessions</h3>' + plan +
         '<ul class="plain small"><li>Sprint fresh, before lifting, with 1–2 min rest per 10 yards (3–4 min between 60s).</li><li>Stop the session when your times drop off.</li><li>Speed days are on your weekly schedule in Today; change the days there.</li></ul>' +
-        '<div class="btns">' + SPEED_LAB.map(function (l, i) { return '<button type="button" class="btn' + (i ? "" : " red") + '" data-gosel="S' + i + '">Open ' + l + "</button>"; }).join("") + "</div>" +
-        '<span class="hint">2 speed days: A and B. 3 days: A, C, then B. Tempo is conditioning: use it on an easy day or after practice.</span></section>' +
+        '<div class="btns">' + SPEED_ORDER.map(function (i) { return '<button type="button" class="btn' + (i ? "" : " red") + '" data-gosel="S' + i + '">Open ' + SPEED_LAB[i] + "</button>"; }).join("") + "</div>" +
+        '<span class="hint">Speed D, bounce and power, mixes in every other week. 1 speed day: A, then D the next week. 2 days: A and B, then D and B. 3 days: A, C and B, then A, D and B. Tempo is conditioning: use it on an easy day or after practice.</span></section>' +
       '<section class="card"><h3>Log sprint times</h3>' + lineChart(tenPts, "sec", "10-yard sprint") + (tenPts.length >= 2 ? '<span class="hint">10-yard sprint over time. Lower is faster.</span>' : "") +
         '<form id="spform" style="display:grid;gap:10px"><div class="row2"><div class="field"><label for="sp-ten">10-yard (sec)</label><input type="number" id="sp-ten" step="0.01"></div><div class="field"><label for="sp-thirty">30-yard (sec)</label><input type="number" id="sp-thirty" step="0.01"></div></div>' +
         '<div class="row2"><div class="field"><label for="sp-sixty">60-yard (sec)</label><input type="number" id="sp-sixty" step="0.01"></div><div class="field"><label for="sp-date">Date</label><input type="date" id="sp-date" value="' + todayStr + '"></div></div>' +
@@ -1724,7 +1748,7 @@
     if ($("#varn")) $("#varn").addEventListener("change", function (e) { dr.varn = e.target.value; persist(); redrawTrain(p); });
     if ($("#add-set")) $("#add-set").addEventListener("click", function () { var last = dr.rows[dr.rows.length - 1] || {}; dr.rows.push({ w: last.w || "", r: last.r || "", v: "" }); persist(); redrawTrain(p); });
     if ($("#save-sess")) $("#save-sess").addEventListener("click", function () {
-      var blocks = sessionBlocks(T, sel), mainB = blocks.filter(function (b) { return b.t === "main"; })[0];
+      var blocks = sessionBlocks(T, sel, date), mainB = blocks.filter(function (b) { return b.t === "main"; })[0];
       var sets = [], vol = 0;
       if (mainB && dr.rows && dr.rows.length) dr.rows.forEach(function (rw) {
         var w = num(rw.w), r = num(rw.r); if (!w || !r) return;
@@ -2925,12 +2949,14 @@
   }
   // ----- Automatic plans: built from the library and his answers. Coaches' own plans always come first. -----
   // Goal work added to each lift. eq: what it needs (gym, mb = med ball, band, none). arm: skipped if his arm hurts.
-  // eq: none, band, mb (med ball), gym (dumbbells or kettlebells), bar (barbell, trap bar, cable or bench). arm: 1 = skipped if his arm hurts.
+  // eq: none, band, mb (med ball), gym (dumbbells or kettlebells), bar (barbell, trap bar, cable, bench or a rack to anchor a band). arm: 1 = skipped if his arm hurts.
   var AUTO_GOAL = {
     hit: [{ t: "Med-ball shot-put throw × 5 each side (3 sets)", eq: "mb" }, { t: "Half-kneeling cable or band torso rotation × 6 each side (3 sets)", eq: "band" }, { t: "Landmine rotation × 6 each side (3 sets)", eq: "bar" }, { t: "Rotational jump and stick × 4 each side (2 sets)", eq: "none" }],
     arm: [{ t: "Band external rotation at 90° × 10 each arm", eq: "band", arm: 1 }, { t: "Split-stance 1-arm cable or band row × 8 each arm (3 sets)", eq: "band" }, { t: "Prone Y-T-W raises × 6 each", eq: "none", arm: 1 }, { t: "Push-up plus × 10 (2 sets)", eq: "none" }],
     pitch: [{ t: "Med-ball overhead throw to a wall × 6 (3 sets)", eq: "mb", arm: 1 }, { t: "Single-leg med-ball pullover throw × 4 each leg (2 sets)", eq: "mb", arm: 1 }, { t: "Tall-plank KB pull-through × 6 each side (2 sets)", eq: "gym" }, { t: "Half-kneeling band row × 10 each arm (2 sets)", eq: "band" }],
-    speed: [{ t: "Trap-bar snapdown to squat jump × 3 (3 sets)", eq: "bar" }, { t: "Nordic hamstring lowers × 3, partner holds your feet (2 sets)", eq: "none" }, { t: "Pogo hops × 15 (2 sets)", eq: "none" }, { t: "Alternating lunge jumps × 3 each leg (2 sets)", eq: "none" }],
+    speed: [{ t: "Trap-bar snapdown to squat jump × 3 (3 sets)", eq: "bar" }, { t: "Nordic hamstring lowers × 3, partner holds your feet (2 sets)", eq: "none" },
+      { t: "Trap-bar jump × 3, light (3 sets)", eq: "bar" }, { t: "Banded pogo hops × 15 (2 sets)", eq: "bar" }, { t: "Pogo hops × 15 (2 sets)", eq: "none" },
+      { t: "Alternating lunge jumps × 3 each leg (2 sets)", eq: "none" }, { t: "Single-leg glute bridge hold, foot on a step, 3 × 10 sec each leg", eq: "none" }, { t: "Seated fast leg cycles, 3 × 10 sec", eq: "none" }],
     strength: [{ t: "Banded KB swing × 6 (3 sets)", eq: "gym" }, { t: "Back extension × 8 (2 sets)", eq: "bar" }, { t: "Goblet squat × 10 (2 sets)", eq: "gym" }, { t: "Push-up × 10 (2 sets)", eq: "none" }, { t: "Walking lunges, 2 × 20 steps", eq: "none" }],
     gain: [{ t: "DB curl to press × 10 (3 sets)", eq: "gym" }, { t: "Farmer carry, 30 yards (3 rounds)", eq: "gym" }, { t: "Push-up × 12 (3 sets)", eq: "none" }, { t: "Walking lunges, 2 × 20 steps", eq: "none" }],
     lean: [{ t: "Finisher: tempo runs, 6 × 60 yards at about 70%, 35 sec rest", eq: "none" }, { t: "Walking lunges, 2 × 20 steps", eq: "none" }],
@@ -2945,11 +2971,15 @@
   };
   var AUTO_ARMCARE = { name: "Arm care", items: ["Band external and internal rotation × 12 each arm", "Band pull-aparts × 15", "Prone Y-T-W raises × 6 each", "Wrist curls and extensions with a light dumbbell × 12 each"] };
   function buildAuto(p) {
-    var I = p.intake, gym = I.gym || "full", armHurts = I.arm === "yes", out = { made: todayStr, goals: I.goals.slice(), goal: [], hitting: [], throwing: [], throwNote: "" };
+    var I = p.intake, gym = I.gym || "full", armHurts = I.arm === "yes", out = { made: todayStr, goals: I.goals.slice(), goal: [], goalB: [], hitting: [], throwing: [], throwNote: "" };
+    // Odd weeks: the first two moves per goal that fit his equipment. Even weeks: the next two, so the work mixes and matches.
     I.goals.slice(0, 2).forEach(function (g) {
-      (AUTO_GOAL[g] || []).filter(function (x) { return !(armHurts && x.arm) && (AUTO_EQ[gym] || AUTO_EQ.full).indexOf(x.eq) >= 0; }).slice(0, 2).forEach(function (x) { if (out.goal.indexOf(x.t) < 0) out.goal.push(x.t); });
+      var pool = (AUTO_GOAL[g] || []).filter(function (x) { return !(armHurts && x.arm) && (AUTO_EQ[gym] || AUTO_EQ.full).indexOf(x.eq) >= 0; });
+      var a = pool.slice(0, 2), b = pool.slice(2, 4); if (!b.length) b = a;
+      a.forEach(function (x) { if (out.goal.indexOf(x.t) < 0) out.goal.push(x.t); });
+      b.forEach(function (x) { if (out.goalB.indexOf(x.t) < 0) out.goalB.push(x.t); });
     });
-    out.goal = out.goal.slice(0, 4);
+    out.goal = out.goal.slice(0, 4); out.goalB = out.goalB.slice(0, 4);
     if (I.pos !== "P") {
       var H = I.goals.indexOf("hit") >= 0 ? AUTO_HIT.power : AUTO_HIT.base, noCage = I.field === "none" || I.field === "field";
       out.hitting.push({ name: H.name, flex: I.goals.indexOf("hit") >= 0 ? 3 : 2, items: (noCage ? H.alt : H.items).slice(), alt: noCage ? [] : H.alt.slice() });
@@ -3077,9 +3107,11 @@
     var drop = autoClubOK(T).drop, keep = function (l) { return (l || []).filter(function (t) { return drop.indexOf(t) < 0; }); };
     var own = function (k) { return cl ? resolve(cl, p.id, k) : null; }, clubLift = !!clubLiftFor(T);
     var li = function (l) { return '<ul class="plain small">' + l.map(function (t) { return "<li>" + esc(t) + "</li>"; }).join("") + "</ul>"; };
-    var parts = [], g = keep(A.goal), hit = [], thr = [];
+    var parts = [], g = keep(A.goal), gB = keep(A.goalB || []), hit = [], thr = [];
     (A.hitting || []).forEach(function (d) { hit = hit.concat(keep(d.items)); }); (A.throwing || []).forEach(function (d) { thr = thr.concat(keep(d.items)); });
-    if (g.length && !clubLift) parts.push('<div class="label" style="margin-top:8px">Added to every lift, for ' + esc(A.goals.slice(0, 2).map(function (q) { return optName(INTAKE_GOALS, q).toLowerCase(); }).join(" and ")) + "</div>" + li(g));
+    var two = gB.length && gB.join("|") !== g.join("|");
+    if (g.length && !clubLift) parts.push('<div class="label" style="margin-top:8px">Added to every lift' + (two ? " on odd weeks" : "") + ', for ' + esc(A.goals.slice(0, 2).map(function (q) { return optName(INTAKE_GOALS, q).toLowerCase(); }).join(" and ")) + "</div>" + li(g));
+    if (two && !clubLift) parts.push('<div class="label" style="margin-top:8px">Even weeks, to mix it up</div>' + li(gB));
     if (hit.length && !own("hitting")) parts.push('<div class="label" style="margin-top:8px">Hitting, ' + esc(daysText(A.hitting[0])) + "</div>" + li(hit));
     if (!own("throwing")) parts.push('<div class="label" style="margin-top:8px">Throwing</div>' + (thr.length ? li(thr) : "") + '<div class="small">' + esc(A.throwNote) + "</div>");
     if (!parts.length) return "";
@@ -3096,7 +3128,7 @@
       ["throwing", "hitting"].forEach(function (kind) { var r = resolve(cl, p.id, kind); if (r) plan.push(KIND[kind].name + ": " + r.v.map(function (d) { return (d.name || KIND[kind].one) + " (" + daysText(d) + "): " + d.items.join(", "); }).join("; ")); });
       var nt = resolve(cl, p.id, "note"); if (nt) plan.push("Coach's note: " + nt.v);
     } else plan.push("Not on a club. Uses StandPoint's base plan.");
-    if (autoOn(p)) { var AA = trainOf(p).auto; plan.push("StandPoint automatic plan: goal work in lifts: " + (AA.goal.join(", ") || "none") + ". " + AA.throwNote); }
+    if (autoOn(p)) { var AA = trainOf(p).auto; plan.push("StandPoint automatic plan: goal work in lifts: " + (AA.goal.join(", ") || "none") + (AA.goalB && AA.goalB.length ? "; on even weeks: " + AA.goalB.join(", ") : "") + ". Speed D (bounce and power) mixes into speed days every other week. " + AA.throwNote); }
     var T = trainOf(p); plan.push("Lift days: " + T.liftDays.map(function (k) { return WEEKDAYS[k]; }).join(", ") + ". Speed days: " + (T.speedDays.map(function (k) { return WEEKDAYS[k]; }).join(", ") || "none") + ".");
     var data = [
       "Name: " + p.name + ". Class of " + p.grad + ". Positions: " + posLabel(p) + ". Bats/throws: " + (p.bats || "?") + "/" + (p.throws || "?") + "." + (p.height ? " Height: " + p.height + "." : "") + (p.weight ? " Weight: " + p.weight + " lb." : ""),
@@ -3808,7 +3840,7 @@
     var hit = [], thr = []; (A.hitting || []).forEach(function (d) { hit = hit.concat(d.items); }); (A.throwing || []).forEach(function (d) { thr = thr.concat(d.items); });
     return '<section class="card"><h3>StandPoint automatic plan</h3><div class="small">Built from his answers on ' + esc(fmtShortDate(A.made)) + " for " + esc(A.goals.map(function (g) { return optName(INTAKE_GOALS, g); }).join(", ")) + ". " +
       (c.autoPlans === false ? "Automatic plans are off for your club (Club tab)." : ind.autoOff ? "Off for him: he follows only the plans you set." : "It fills in only where you haven't set his lifts, throwing or hitting.") + "</div>" +
-      (off ? "" : part("Goal work in his lifts", A.goal || []) + part("Hitting", hit) + part("Throwing: arm care", thr) + (A.throwNote ? '<span class="hint">' + esc(A.throwNote) + "</span>" : "")) +
+      (off ? "" : part("Goal work in his lifts" + (A.goalB && A.goalB.length ? ", odd weeks" : ""), A.goal || []) + part("Goal work, even weeks", (A.goalB || []).filter(function (t) { return (A.goal || []).indexOf(t) < 0; })) + part("Hitting", hit) + part("Throwing: arm care", thr) + (A.throwNote ? '<span class="hint">' + esc(A.throwNote) + "</span>" : "")) +
       (c.autoPlans === false ? "" : '<div class="btns"><button type="button" class="btn" data-aoff="' + esc(x.id) + '">' + (ind.autoOff ? "Turn it back on for him" : "Turn it off for him") + "</button></div>") + "</section>";
   }
   function clubSettingsHTML(c) {

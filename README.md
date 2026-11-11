@@ -119,3 +119,19 @@ No database change for this one.
 - **Both apps:** the player app and the coach app use the same layout, so a coach on a laptop gets the menu and two columns too.
 - **Tested:** 19 layout checks at computer and phone size, plus every earlier suite.
 
+## Speed D and weekly mix and match (Nov 11, 2026)
+
+No database change for this one.
+
+- **Speed D · Bounce and power**, built from Alejandro's Nov 9 video:
+  - Warm-up: walking lunges, A-skips, step-up run-throughs.
+  - Jumps: trap-bar jumps, box jumps, altitude landings (weeks 1–4) then depth jumps off a bench (weeks 5–8), banded pogos, single-leg pogos (banded in weeks 5–8), single-leg hops for distance.
+  - Holds: single-leg glute bridge with the foot on a step, seated fast leg cycles.
+  - Weeks 1–4 ease in at 2 sets. Weeks 5–8 match the video at 3 sets.
+- **Mix and match by week.** Weeks run Monday to Sunday from when the plan started.
+  - On even weeks, Speed D takes one speed day: 1 day goes A then D; 2 days go A and B, then D and B; 3 days go A, C and B, then A, D and B.
+  - Goal work in lifts also alternates. Odd weeks use the first two moves per goal that fit his equipment; even weeks use the next two.
+  - The "Get faster" goal now includes trap-bar jumps, banded pogos (need a rack to anchor the band), the step bridge hold and fast leg cycles.
+- Every new drill has a how-to, a cue and a no-equipment fallback in the library.
+- Tested: 24 new checks (run_bounce.js) plus every earlier suite.
+
