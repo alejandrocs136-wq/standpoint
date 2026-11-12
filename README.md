@@ -30,7 +30,10 @@ This is a **single-file front-end prototype** (`index.html`, plain HTML, CSS and
 
 | Path | What it is |
 |---|---|
-| `index.html` | The entire app. Open it in any browser. |
+| `index.html` | The page: layout, styles and the screens' shell. Open it in any browser. |
+| `app.js` | The entire app's code (moved out of `index.html` on Nov 12 so the site can block scripts written into the page). |
+| `theme.js` | Sets light or dark before the page draws. |
+| `supabase/06_safety.sql`, `supabase/functions/` | The child-safety update and its two server functions (see below). |
 | `data/ncaa*.txt` | NCAA baseball programs by state: `ST|name|division|conference|athletics site`, from the NCAA member directory (Nov 3, 2026). |
 | `data/naia.txt`, `data/juco.txt` | NAIA and junior-college baseball programs: `State|name|NAIA or JUCO|conference||city`, from public college lists (Nov 4, 2026). Junior colleges are incomplete in some states (names P to Z after Maryland). Confirm against official NAIA and NJCAA sources. |
 | `data/softball/*.txt` | NCAA softball programs, Texas and Oklahoma (NCAA member directory, Nov 4, 2026). Not shown while softball is switched off. |
@@ -39,7 +42,7 @@ This is a **single-file front-end prototype** (`index.html`, plain HTML, CSS and
 
 Texas and Oklahoma schools, with coaches, cities and fit notes, are hand-written in `index.html`. Search for `var SCHOOLS = [`.
 
-## Where things live in index.html
+## Where things live in app.js
 
 - `METRICS`, `RANGES`, `LEVELS`: level benchmarks (GetRecruited, June 2026; JUCO from NCSA).
 - `TASKS`: recruiting checklist by grade.
@@ -135,3 +138,27 @@ No database change for this one.
 - Every new drill has a how-to, a cue and a no-equipment fallback in the library.
 - Tested: 24 new checks (run_bounce.js) plus every earlier suite.
 
+
+## Child safety update (Nov 12, 2026)
+
+Fixes the four child-safety gaps and the security items from the Nov 11 launch review. **Order:** run `supabase/06_safety.sql`, make yourself StandPoint staff (the last line of that file), push the app, then deploy the two functions. Step-by-step clicks are in the doc "StandPoint this week: steps, scripts and messages."
+
+- **Pending requests share nothing.** A coach sees a player's name and chosen team until he accepts him. Numbers, logs and videos open only for active players in approved clubs.
+- **Birthdates, not a checkbox.** Asked at sign-up (accounts made before this get asked once). Under 13 can't sign up. Coaches and club founders must be 18 or older. Birthdates live in `person_facts`, which only the person can read.
+- **Parents.** A player under 18 gets a one-time family code. His parent makes a parent account, enters it and checks the consent box (draft wording, `CONSENT_VERSION` in `app.js`, until the lawyer finalizes it). Only then do his coaches see his data. The parent sees which clubs and coaches have access, can pause sharing, and can remove him from a club. Parents don't see the player's logs or notes.
+- **Club approval.** New clubs wait for StandPoint staff to approve them (Admin tab) before players can join. Unapproving a club hides player data from its coaches again.
+- **Invite-only sign-up.** Only emails on the invite list (Admin → Who can sign up) can make an account until staff turn it off.
+- **Report a coach.** Players (More → Your club) and parents (each club) can report. Only StandPoint staff read reports. Staff can suspend a coach everywhere: his coach and admin spots are suspended and he can't start or join clubs. Only staff can undo it.
+- **Deleting an account** can't wipe out a club other people are in: the only admin has to hand admin to someone first. Videos and the account are deleted together on the server (`delete-account` function). Until that function is deployed, the app deletes videos first and stops if any fail.
+- **Club history** (Club tab): every join, accept, removal, approval, suspension and plan edit, written by database triggers into `audit_log`, which nobody can edit or delete. Plan edits log at most once per coach and player every 10 minutes.
+- **Script policy:** the site now blocks scripts written into the page (`script-src 'self'`). Styles still allow inline `style` attributes.
+- **Index:** `memberships (user_id)`.
+- **Server functions** (`supabase/functions/`):
+    - `delete-account` needs no secrets.
+    - `notify-staff` needs the secrets `RESEND_API_KEY` and `STAFF_EMAIL`, and optionally `FROM_EMAIL`. It emails staff that a report or a new club is waiting. The email never includes details.
+    - Deploy each from Supabase → Edge Functions → Deploy a new function → Via Editor, using the exact names. If they answer 401 for signed-in people, turn off "Verify JWT" for these two; they check the user themselves.
+- **Tested:**
+    - 86 database checks (every new rule, as each kind of user)
+    - 44 browser checks covering sign-up, invites, approval, pending privacy, the minor-parent flow, reporting, Admin, suspension, history, old accounts and deletion
+    - 12 checks running both functions in Deno against a fake Supabase
+    - Every earlier suite, run against both the old database and the new one

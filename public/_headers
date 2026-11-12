@@ -1,7 +1,7 @@
 # Security headers for every page and file Cloudflare serves from public/.
 # If the Supabase project ever changes, update the two supabase.co addresses below.
 /*
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://deyxaeuoaslxrezyzcic.supabase.co; media-src 'self' blob: https://deyxaeuoaslxrezyzcic.supabase.co; connect-src 'self' https://deyxaeuoaslxrezyzcic.supabase.co wss://deyxaeuoaslxrezyzcic.supabase.co; manifest-src 'self'; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'none'; object-src 'none'; form-action 'self'
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://deyxaeuoaslxrezyzcic.supabase.co; media-src 'self' blob: https://deyxaeuoaslxrezyzcic.supabase.co; connect-src 'self' https://deyxaeuoaslxrezyzcic.supabase.co wss://deyxaeuoaslxrezyzcic.supabase.co; manifest-src 'self'; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'none'; object-src 'none'; form-action 'self'
   X-Frame-Options: DENY
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
