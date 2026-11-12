@@ -510,6 +510,14 @@ begin
   update orgs set approved = yes, approved_at = case when yes then now() else null end where id = o;
 end; $$;
 
+-- Decline or remove a club (and everything in it). Staff only.
+create or replace function sp_delete_org(o uuid) returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  if not is_sp_admin() then raise exception 'StandPoint staff only'; end if;
+  delete from orgs where id = o;
+end; $$;
+
 create or replace function sp_invites() returns jsonb
 language sql stable security definer set search_path = public as $$
   select case when not is_sp_admin() then '{}'::jsonb else jsonb_build_object(
@@ -578,12 +586,12 @@ end; $$;
 revoke execute on function is_sp_admin(), is_adult(uuid), has_birthdate(uuid), is_parent_of(uuid), player_cleared(uuid), audit(uuid, text, uuid, jsonb),
   club_history(uuid, bigint), file_report(uuid, uuid, text, text), my_status(), set_birthdate(date), create_org(text, text), join_org(text, text, text),
   my_family_code(), link_child(text, boolean, text), set_consent(uuid, boolean), parent_remove_club(uuid, uuid), my_children(),
-  delete_check(), delete_me(), sp_orgs(), sp_approve_org(uuid, boolean), sp_invites(), sp_invite(text, text), sp_uninvite(text),
+  delete_check(), delete_me(), sp_orgs(), sp_approve_org(uuid, boolean), sp_delete_org(uuid), sp_invites(), sp_invite(text, text), sp_uninvite(text),
   sp_set_invite_only(boolean), sp_reports(), sp_set_report(uuid, text, text), sp_suspend(uuid, boolean, text) from anon, public;
 grant execute on function is_sp_admin(), is_adult(uuid), has_birthdate(uuid), is_parent_of(uuid), player_cleared(uuid),
   club_history(uuid, bigint), file_report(uuid, uuid, text, text), my_status(), set_birthdate(date), create_org(text, text), join_org(text, text, text),
   my_family_code(), link_child(text, boolean, text), set_consent(uuid, boolean), parent_remove_club(uuid, uuid), my_children(),
-  delete_check(), delete_me(), sp_orgs(), sp_approve_org(uuid, boolean), sp_invites(), sp_invite(text, text), sp_uninvite(text),
+  delete_check(), delete_me(), sp_orgs(), sp_approve_org(uuid, boolean), sp_delete_org(uuid), sp_invites(), sp_invite(text, text), sp_uninvite(text),
   sp_set_invite_only(boolean), sp_reports(), sp_set_report(uuid, text, text), sp_suspend(uuid, boolean, text) to authenticated;
 
 -- ============ LAST STEP: make yourself StandPoint staff ============

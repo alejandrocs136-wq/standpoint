@@ -4733,7 +4733,7 @@
       return '<div class="hitem"><div class="h"><span>' + esc(o.name) + '</span><span class="muted">' + (o.approved ? "Approved" : "Waiting") + "</span></div>" +
         '<div class="small">' + esc(o.type || "") + " · started by " + esc(o.creator || "someone") + (o.creator_email ? " (" + esc(o.creator_email) + ")" : "") + " on " + esc(fmtDay(o.created_at)) + "</div>" +
         '<div class="small muted">' + o.coaches + " coach" + (o.coaches === 1 ? "" : "es") + " · " + o.players + " player" + (o.players === 1 ? "" : "s") + "</div>" +
-        '<div class="btns">' + (o.approved ? '<button type="button" class="btn ghost small" data-adorg="' + i + '">Unapprove</button>' : '<button type="button" class="btn red small" data-adorg="' + i + '">Approve</button>') + "</div></div>";
+        '<div class="btns">' + (o.approved ? '<button type="button" class="btn ghost small" data-adorg="' + i + '">Unapprove</button>' : '<button type="button" class="btn red small" data-adorg="' + i + '">Approve</button>') + '<button type="button" class="btn ghost small" data-addel="' + i + '">' + (o.approved ? "Delete club" : "Decline and delete") + "</button></div></div>";
     }).join("") + "</div>" : '<p class="small muted" style="margin:0">No clubs yet.</p>') + "</section>";
     var inv = a.inv.invites || [];
     h += '<section class="card"><h3>Who can sign up</h3><label class="task"><input type="checkbox" id="ad-io"' + (a.inv.invite_only !== false ? " checked" : "") + '><span><strong>Invite-only</strong><br><span class="muted small">Only the emails below can make an account. Turn this off when StandPoint opens to everyone.</span></span></label>' +
@@ -4755,6 +4755,11 @@
       var o = a.orgs[+b.getAttribute("data-adorg")];
       if (o.approved && b.getAttribute("data-armed") !== "1") { b.setAttribute("data-armed", "1"); b.textContent = "Tap again: coaches lose player data"; return; }
       redo(cq(sb.rpc("sp_approve_org", { o: o.id, yes: !o.approved })), o.approved ? o.name + " unapproved." : o.name + " approved.");
+    });
+    onAll("[data-addel]", "click", function (b) {
+      var o = a.orgs[+b.getAttribute("data-addel")], people = o.coaches + o.players;
+      if (b.getAttribute("data-armed") !== "1") { b.setAttribute("data-armed", "1"); b.textContent = people ? "Tap again: delete it and its " + people + " member" + (people === 1 ? "" : "s") + "' plans" : "Tap again to delete"; return; }
+      redo(cq(sb.rpc("sp_delete_org", { o: o.id })), o.name + " deleted.");
     });
     $("#ad-io").addEventListener("change", function (e) { redo(cq(sb.rpc("sp_set_invite_only", { yes: e.target.checked })), e.target.checked ? "Sign-up is invite-only." : "Anyone can sign up now."); });
     $("#ad-inv").addEventListener("submit", function (e) { e.preventDefault(); redo(cq(sb.rpc("sp_invite", { e: $("#ad-email").value.trim(), n: $("#ad-who").value.trim() || null })), "Invite added. They can sign up with that email now."); });
@@ -4807,7 +4812,7 @@
     if (cloudRole === "parent" || cloudPage === "parent") { renderParent(); return false; }
     if (cloudRole === "coach") { store.app = "coach"; if (!store.club) { renderCoachStart(); cloudBanners(); return false; } return true; }
     store.app = "player";
-    if (!store.players.length && !cloudPicked) { renderRolePick(); return false; }
+    if (!store.players.length && !cloudPicked) { renderRolePick(); cloudBanners(); return false; }
     return true;
   }
 
